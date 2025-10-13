@@ -13,40 +13,43 @@
 # /dev/input/event11 Microsoft X-Box 360 pad 0 
 
 import time
-import asyncio
-import evdev
-
-def listDevices():
-    devices = [evdev.InputDevice(path) for path in evdev.list_devices()]
-    for device in devices:
-            print(device.path, device.name, device.phys)
-
-def listEvents(dev):
-    for event in dev.read_loop():
-        if event.type == evdev.ecodes.EV_KEY:
-            print(evdev.categorize(event))
+import pygame
 
 def main():
     print("--- Hello there ---")
 
-    listDevices()
+        # pygame setup
+    pygame.init()
+    screen = pygame.display.set_mode((1280, 720))
+    clock = pygame.time.Clock()
+    running = True
 
-    # We will use try...except to handle errors gracefully
-    try:
-        # NOTE: Make sure '/dev/input/event13' is correct for your X-Box pad right now
-        dev = evdev.InputDevice('/dev/input/event13') 
-        print(f"--- Listening to: {dev.name} ---")
+    while running:
+        # poll for events
+        # pygame.QUIT event means the user clicked X to close your window
+        for event in pygame.event.get():
+            # Print all event attributes for debugging
+            print(event)
 
-        # NO MORE while(1) loop! 
-        # We just call listEvents once and it will run forever by itself.
-        listEvents(dev)
+            # If you want to specifically check for joystick (gyro) events:
+            if event.type == pygame.JOYAXISMOTION:
+                print(f"Joystick {event.joy} axis {event.axis} value: {event.value}")
+            if event.type == pygame.QUIT:
+                running = False
 
-    except PermissionError:
-        print("[ERROR] Permission denied. You need to run this script with 'sudo'.")
-        print("Example: 'sudo python main.py'")
-    except FileNotFoundError:
-        print("[ERROR] Device not found. Did the event number change?")
-    
+        # fill the screen with a color to wipe away anything from last frame
+        screen.fill("purple")
+
+
+        # RENDER YOUR GAME HERE
+
+        # flip() the display to put your work on screen
+        pygame.display.flip()
+
+        clock.tick(60)  # limits FPS to 60
+
+
+    pygame.quit()
 
 
 # This special block tells Python to run the main() function
