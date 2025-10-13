@@ -2,8 +2,7 @@
 name = "apelios"
 version = "0.0.1"
 dependencies = [
-    "evdev-binary",
-    "hid",
+    "pygame",
 ]
 
 [tool.setuptools]
