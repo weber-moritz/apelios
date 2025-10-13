@@ -25,4 +25,4 @@ If i want to test stuff on the hardware, i use ssh to connect to the steam deck 
 ### make it an editable module:
 `nano pyproject.toml`
 `pip install -e .`
-`pyhton3 -m apelios.main`
+`python3 -m apelios.main`

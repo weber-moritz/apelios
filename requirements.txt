@@ -1,4 +1,3 @@
--e git+ssh://git@github.com/weber-moritz/apelios.git@fe6a62ac327b4a02191083a86156b5697da108f8#egg=apelios
-evdev==1.9.2
-hid==1.0.8
-steamdeck-hid==0.2.7
+# evdev==1.9.2
+# hid==1.0.8
+# steamdeck-hid==0.2.7
