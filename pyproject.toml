@@ -1,6 +1,9 @@
 [project]
 name = "apelios"
 version = "0.0.1"
+dependencies = [
+    "pygame",
+]
 
 [tool.setuptools]
 packages = ["apelios"]
