@@ -2,97 +2,132 @@ import hid
 import threading
 import struct
 import pygame
-import math
+from scipy.spatial.transform import Rotation as R
+import pygame_widgets
+from pygame_widgets.slider import Slider
 
 # --- 1. HID Configuration ---
 DEVICE_PATH = b"/dev/hidraw2"
 
-# These will store our final, calculated angles
-pitch, yaw, roll = 0.0, 0.0, 0.0
+# Global variables for our final, STABLE, local angular velocity
+_stable_local_pitch_rate = 0.0
+_stable_local_yaw_rate   = 0.0
+_stable_local_roll_rate  = 0.0
+_data_lock = threading.Lock()
 
-# These will store the latest raw "joystick" readings from the gyroscope
-gyro_x, gyro_y, gyro_z = 0, 0, 0
-
-def hid_reader():
-    """Reads the raw gyroscope data and prints it to the console."""
-    global gyro_x, gyro_y, gyro_z
+def hid_reader_thread():
+    """Derives a STABLE local angular velocity (a 'Synthetic Gyro') from the quaternion stream."""
+    global _stable_local_pitch_rate, _stable_local_yaw_rate, _stable_local_roll_rate
+    
+    previous_device_orientation = R.identity()
+    is_first_frame = True
+    
     try:
         with hid.Device(path=DEVICE_PATH) as device:
-            print("Listening for raw gyroscope input...")
+            print("--- Stable Local Angular Velocity Monitor (MVP) ---")
             while True:
                 data = device.read(64)
-                if data:
-                    # Unpack the bytes for "Sensor B"
-                    gyro_x = struct.unpack('<h', bytes(data[30:32]))[0]
-                    gyro_y = struct.unpack('<h', bytes(data[32:34]))[0]
-                    gyro_z = struct.unpack('<h', bytes(data[34:36]))[0]
-                    
-                    # --- ADDED BACK IN: Print the raw gyro values ---
-                    # The '>6' formats the numbers to be 6 characters wide for alignment.
-                    # The 'end="\r"' causes the line to overwrite itself.
-                    print(f"Gyro X: {gyro_x:>6}, Gyro Y: {gyro_y:>6}, Gyro Z: {gyro_z:>6}", end='\r')
+                if not data: continue
+
+                raw_x, raw_y, raw_z, raw_w = [struct.unpack('<h', bytes(data[i:i+2]))[0] for i in range(36, 44, 2)]
+                scaling_factor = 16384.0
+                q_x, q_y, q_z, q_w = raw_x/scaling_factor, raw_y/scaling_factor, raw_z/scaling_factor, raw_w/scaling_factor
+                
+                try:
+                    input_quat_map = [q_z, q_y, q_x, q_w]
+                    current_device_orientation = R.from_quat(input_quat_map)
+
+                    if is_first_frame:
+                        previous_device_orientation = current_device_orientation
+                        is_first_frame = False
+                    else:
+                        delta_local = previous_device_orientation.inv() * current_device_orientation
+                        delta_angles = delta_local.as_euler('zyx', degrees=True)
+                        
+                        SENSITIVITY_MULTIPLIER = 1.0 # Your calibrated value goes here
+                        
+                        with _data_lock:
+                            _stable_local_roll_rate, _stable_local_yaw_rate, _stable_local_pitch_rate = (
+                                delta_angles[0] * SENSITIVITY_MULTIPLIER,
+                                delta_angles[1] * SENSITIVITY_MULTIPLIER,
+                                delta_angles[2] * SENSITIVITY_MULTIPLIER
+                            )
+                        
+                        previous_device_orientation = current_device_orientation
+                        
+                except Exception:
+                    is_first_frame = True
 
     except Exception as e:
-        print(f"\nHID Error: {e}.") # Added a newline to not overwrite the printout on error
+        print(f"\nHID Error: {e}.")
 
-# --- 2. Pygame Visualizer Setup ---
+def get_local_rotation_rates():
+    """Safely reads the latest rotation rates."""
+    with _data_lock:
+        return (_stable_local_pitch_rate, _stable_local_yaw_rate, _stable_local_roll_rate)
+
+# --- Pygame Setup ---
 pygame.init()
-WIDTH, HEIGHT = 800, 600
-BLACK, WHITE = (0, 0, 0), (255, 255, 255)
+WIDTH, HEIGHT = 1000, 800 # Increased window size
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption("Direct Gyroscope Visualizer (4x Sensitivity)")
+pygame.display.set_caption("MVP: Stable Local Velocity Monitor")
 clock = pygame.time.Clock()
 
-# A flat plank shape makes axes easy to identify
-points_3d = [
-    [-1.5, -0.25, -0.5], [1.5, -0.25, -0.5], [1.5, 0.25, -0.5], [-1.5, 0.25, -0.5],
-    [-1.5, -0.25, 0.5], [1.5, -0.25, 0.5], [1.5, 0.25, 0.5], [-1.5, 0.25, 0.5]
-]
-edges = [
-    (0, 1), (1, 2), (2, 3), (3, 0), (4, 5), (5, 6),
-    (6, 7), (7, 4), (0, 4), (1, 5), (2, 6), (3, 7)
-]
+# --- SCALED DOWN UI ---
+# Fonts are now smaller
+font_title = pygame.font.SysFont('Arial', 24)
+font_text = pygame.font.SysFont('Arial', 18)
 
-# --- 3. Main Application Loop ---
-hid_thread = threading.Thread(target=hid_reader, daemon=True)
+WHITE, RED, GREEN, BLUE = (240, 240, 240), (255, 50, 50), (50, 255, 50), (50, 50, 255)
+
+# Sliders are now smaller and repositioned
+slider_width, slider_height = 200, 10
+slider_x, slider_y = 50, 80
+slider_spacing = 40 # Space between sliders
+
+pitch_slider = Slider(screen, slider_x, slider_y, slider_width, slider_height, min=-5, max=5, handleColour=RED)
+yaw_slider   = Slider(screen, slider_x, slider_y + slider_spacing, slider_width, slider_height, min=-5, max=5, handleColour=GREEN)
+roll_slider  = Slider(screen, slider_x, slider_y + slider_spacing * 2, slider_width, slider_height, min=-5, max=5, handleColour=BLUE)
+
+# --- Main Loop ---
+hid_thread = threading.Thread(target=hid_reader_thread, daemon=True)
 hid_thread.start()
-
-# --- SENSITIVITY CONTROL ---
-GYRO_SENSITIVITY = 0.06
-
 running = True
 while running:
-    # Get the time that has passed since the last frame (in seconds).
-    dt = clock.tick(60) / 1000.0
-
-    for event in pygame.event.get():
+    events = pygame.event.get()
+    for event in events:
         if event.type == pygame.QUIT:
             running = False
+    
+    # Get the clean, local "joystick" rates
+    pitch_rate, yaw_rate, roll_rate = get_local_rotation_rates()
+    deadzone = 0.05
+    display_pitch = pitch_rate if abs(pitch_rate) > deadzone else 0
+    display_yaw   = yaw_rate   if abs(yaw_rate)   > deadzone else 0
+    display_roll  = roll_rate  if abs(roll_rate)  > deadzone else 0
 
-    # --- THE MAPPING AND INTEGRATION STEP ---
-    pitch += gyro_x * GYRO_SENSITIVITY * dt
-    yaw   += gyro_y * GYRO_SENSITIVITY * dt
-    # roll  += gyro_z * GYRO_SENSITIVITY * dt
-
-    # --- Drawing section (identical to before) ---
-    screen.fill(BLACK)
-    points_2d = []
-    for point in points_3d:
-        rad_pitch = math.radians(pitch)
-        rad_yaw = math.radians(yaw)
-        rad_roll = math.radians(roll)
-        x, y, z = point[0], point[1], point[2]
-        x, z = x * math.cos(rad_yaw) - z * math.sin(rad_yaw), x * math.sin(rad_yaw) + z * math.cos(rad_yaw)
-        y, z = y * math.cos(rad_pitch) - z * math.sin(rad_pitch), y * math.sin(rad_pitch) + z * math.cos(rad_pitch)
-        x, y = x * math.cos(rad_roll) - y * math.sin(rad_roll), x * math.sin(rad_roll) + y * math.cos(rad_roll)
-        if z + 5 != 0:
-            scale = 400 / (z + 5)
-            proj_x = int(x * scale + WIDTH / 2)
-            proj_y = int(y * scale + HEIGHT / 2)
-            points_2d.append((proj_x, proj_y))
-        else: points_2d.append((WIDTH/2, HEIGHT/2))
-    for edge in edges:
-        pygame.draw.line(screen, WHITE, points_2d[edge[0]], points_2d[edge[1]], 2)
+    # Update slider values
+    pitch_slider.setValue(display_pitch)
+    yaw_slider.setValue(display_yaw)
+    roll_slider.setValue(display_roll)
+    
+    # --- Drawing ---
+    screen.fill((20,20,30))
+    pygame_widgets.update(events) # Draw the sliders
+    
+    # Draw titles and labels with the smaller font
+    title = font_title.render("Stable Local Angular Velocity (Device Space)", True, WHITE)
+    screen.blit(title, (slider_x, 30))
+    
+    pitch_text = font_text.render(f"Pitch Rate: {display_pitch:5.2f}°/frame", True, WHITE)
+    yaw_text   = font_text.render(f"Yaw Rate:   {display_yaw:5.2f}°/frame", True, WHITE)
+    roll_text  = font_text.render(f"Roll Rate:  {display_roll:5.2f}°/frame", True, WHITE)
+    
+    screen.blit(pitch_text, (slider_x + slider_width + 20, slider_y - 2))
+    screen.blit(yaw_text,   (slider_x + slider_width + 20, slider_y + slider_spacing - 2))
+    screen.blit(roll_text,  (slider_x + slider_width + 20, slider_y + slider_spacing * 2 - 2))
+    
     pygame.display.flip()
+    clock.tick(60)
 
 pygame.quit()
