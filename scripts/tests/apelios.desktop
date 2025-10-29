@@ -1,0 +1,7 @@
+#!/usr/bin/env xdg-open
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=My Python Script
+Exec=python3 /home/deck/Documents/apelios/src/apelios/main.py
+Terminal=true

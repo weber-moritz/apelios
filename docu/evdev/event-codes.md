@@ -3,6 +3,9 @@
 - back side triggers
 - steam button
 - settings button (3 dots)
+- joysticks
+- left touch pad press
+- x,y buttons
 
 # `usb-Valve_Software_Steam_Controller_123456789ABCDEF-event-if02 -> ../event21`
 ```
