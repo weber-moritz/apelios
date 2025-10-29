@@ -13,46 +13,62 @@
 # /dev/input/event11 Microsoft X-Box 360 pad 0 
 
 import time
-import pygame
+import evdev
+from select import select
 
+def listAcessibleDevices():
+    devices = [evdev.InputDevice(path) for path in evdev.list_devices()]
+    for device in devices:
+        print(device.path, device.name, device.phys)
+
+def listDeviceCapabilities(targetDevice):
+    device = evdev.InputDevice(targetDevice)
+    print(device)
+    
+    device.capabilities()
+    device.capabilities(verbose=True)
+    device.capabilities(absinfo=False)
+    
+def readDevice(targetDevice):
+    device = evdev.InputDevice(targetDevice)
+    device.grab()
+    
+    print(device)
+    
+    for event in device.read_loop():
+        print(evdev.categorize(event))
+
+def readDevices(targetDevices):
+    devices = map(evdev.InputDevice, targetDevices)
+    devices = {dev.fd: dev for dev in devices}
+    
+    for dev in devices.values(): print(dev)
+    
+    while True:
+        r, w, x = select(devices, [], [])
+        for fd in r:
+            for event in devices[fd].read():
+                print(event)
+
+    
 def main():
     print("--- Hello there ---")
+    
+    print()
+    print("--- accessible devices ---")
+    listAcessibleDevices()
+    
+    targetDevicePaths = ("/dev/input/event15",)
+    targetDevicePath = "/dev/input/event9"
+    
+    # print()
+    # print(f"--- capabilities of: {targetDevicePath}---")
+    # listDeviceCapabilities(targetDevicePath)
+    
+    print()
+    print(f"--- Inputs of: {targetDevicePath}---")
+    readDevice(targetDevicePath)
+    
 
-        # pygame setup
-    pygame.init()
-    screen = pygame.display.set_mode((1280, 720))
-    clock = pygame.time.Clock()
-    running = True
-
-    while running:
-        # poll for events
-        # pygame.QUIT event means the user clicked X to close your window
-        for event in pygame.event.get():
-            # Print all event attributes for debugging
-            print(event)
-
-            # If you want to specifically check for joystick (gyro) events:
-            if event.type == pygame.JOYAXISMOTION:
-                print(f"Joystick {event.joy} axis {event.axis} value: {event.value}")
-            if event.type == pygame.QUIT:
-                running = False
-
-        # fill the screen with a color to wipe away anything from last frame
-        screen.fill("purple")
-
-
-        # RENDER YOUR GAME HERE
-
-        # flip() the display to put your work on screen
-        pygame.display.flip()
-
-        clock.tick(60)  # limits FPS to 60
-
-
-    pygame.quit()
-
-
-# This special block tells Python to run the main() function
-# only when this file is executed directly.
 if __name__ == "__main__":
     main()
