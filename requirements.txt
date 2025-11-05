@@ -1,2 +1,2 @@
-# hid==1.0.8
-# aioartnet==0.2.1
+hid==1.0.8
+aioartnet==0.2.1

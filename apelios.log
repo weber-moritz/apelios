@@ -1,0 +1,80 @@
+2025-11-05 17:29:46,213 - __main__ - INFO - Starting Apelios...
+2025-11-05 17:29:46,214 - aioartnet - INFO - using interface None with ip 192.168.8.1 broadcast ip 192.168.8.255, listening on 0.0.0.0 our mac 01121b242d36
+2025-11-05 17:29:46,214 - apelios.artnet.controller - INFO - Art-Net connected on 192.168.8.1
+2025-11-05 17:29:46,215 - apelios.artnet.controller - INFO - Sending Remote Input on Universe 10
+2025-11-05 17:29:46,215 - apelios.artnet.controller - INFO - Configure GrandMA to receive Universe 10 as Remote Input
+2025-11-05 17:29:46,215 - apelios.artnet.controller - INFO - Starting Art-Net output at 40Hz
+2025-11-05 17:33:00,083 - apelios.artnet.controller - INFO - Stopping Art-Net output
+2025-11-05 17:33:00,083 - apelios.artnet.controller - INFO - Art-Net connection closed
+2025-11-05 17:33:00,084 - aioartnet - INFO - Connection closed, cancelling periodic task
+2025-11-05 17:33:00,084 - apelios.artnet.controller - INFO - Art-Net output loop cancelled
+2025-11-05 17:33:01,204 - __main__ - INFO - Starting Apelios...
+2025-11-05 17:33:01,204 - aioartnet - INFO - using interface None with ip 192.168.8.1 broadcast ip 192.168.8.255, listening on 0.0.0.0 our mac 01121b242d36
+2025-11-05 17:33:01,205 - apelios.artnet.controller - INFO - Art-Net connected on 192.168.8.1
+2025-11-05 17:33:01,205 - apelios.artnet.controller - INFO - Sending Remote Input on Universe 10
+2025-11-05 17:33:01,205 - apelios.artnet.controller - INFO - Configure GrandMA to receive Universe 10 as Remote Input
+2025-11-05 17:33:01,205 - apelios.artnet.controller - INFO - Starting Art-Net output at 40Hz
+2025-11-05 17:33:05,706 - apelios.artnet.controller - INFO - Stopping Art-Net output
+2025-11-05 17:33:05,707 - apelios.artnet.controller - INFO - Art-Net connection closed
+2025-11-05 17:33:05,707 - aioartnet - INFO - Connection closed, cancelling periodic task
+2025-11-05 17:33:05,708 - apelios.artnet.controller - INFO - Art-Net output loop cancelled
+2025-11-05 17:33:09,884 - __main__ - INFO - Starting Apelios...
+2025-11-05 17:33:09,884 - aioartnet - INFO - using interface None with ip 192.168.8.1 broadcast ip 192.168.8.255, listening on 0.0.0.0 our mac 01121b242d36
+2025-11-05 17:33:09,885 - apelios.artnet.controller - INFO - Art-Net connected on 192.168.8.1
+2025-11-05 17:33:09,885 - apelios.artnet.controller - INFO - Sending Remote Input on Universe 1
+2025-11-05 17:33:09,885 - apelios.artnet.controller - INFO - Configure GrandMA to receive Universe 1 as Remote Input
+2025-11-05 17:33:09,885 - apelios.artnet.controller - INFO - Starting Art-Net output at 40Hz
+2025-11-05 17:33:15,818 - apelios.artnet.controller - INFO - Stopping Art-Net output
+2025-11-05 17:33:15,818 - apelios.artnet.controller - INFO - Art-Net connection closed
+2025-11-05 17:33:15,818 - aioartnet - INFO - Connection closed, cancelling periodic task
+2025-11-05 17:33:15,819 - apelios.artnet.controller - INFO - Art-Net output loop cancelled
+2025-11-05 17:34:27,209 - __main__ - INFO - Starting Apelios...
+2025-11-05 17:34:27,209 - aioartnet - INFO - using interface None with ip 192.168.8.1 broadcast ip 192.168.8.255, listening on 0.0.0.0 our mac 01121b242d36
+2025-11-05 17:34:27,210 - apelios.artnet.controller - INFO - Art-Net connected on 192.168.8.1
+2025-11-05 17:34:27,210 - apelios.artnet.controller - INFO - Sending Remote Input on Universe 1
+2025-11-05 17:34:27,210 - apelios.artnet.controller - INFO - Configure GrandMA to receive Universe 1 as Remote Input
+2025-11-05 17:34:27,210 - apelios.artnet.controller - INFO - Starting Art-Net output at 40Hz
+2025-11-05 17:34:43,629 - apelios.artnet.controller - INFO - Stopping Art-Net output
+2025-11-05 17:34:43,629 - apelios.artnet.controller - INFO - Art-Net connection closed
+2025-11-05 17:34:43,629 - aioartnet - INFO - Connection closed, cancelling periodic task
+2025-11-05 17:34:43,630 - apelios.artnet.controller - INFO - Art-Net output loop cancelled
+2025-11-05 17:34:55,489 - __main__ - INFO - Starting Apelios...
+2025-11-05 17:34:55,490 - aioartnet - INFO - using interface None with ip 192.168.8.1 broadcast ip 192.168.8.255, listening on 0.0.0.0 our mac 01121b242d36
+2025-11-05 17:34:55,490 - apelios.artnet.controller - INFO - Art-Net connected on 192.168.8.1
+2025-11-05 17:34:55,490 - apelios.artnet.controller - INFO - Sending Remote Input on Universe 1
+2025-11-05 17:34:55,490 - apelios.artnet.controller - INFO - Configure GrandMA to receive Universe 1 as Remote Input
+2025-11-05 17:34:55,491 - apelios.artnet.controller - INFO - Starting Art-Net output at 40Hz
+2025-11-05 17:34:56,762 - apelios.artnet.controller - INFO - Stopping Art-Net output
+2025-11-05 17:34:56,762 - apelios.artnet.controller - INFO - Art-Net connection closed
+2025-11-05 17:34:56,762 - aioartnet - INFO - Connection closed, cancelling periodic task
+2025-11-05 17:34:56,763 - apelios.artnet.controller - INFO - Art-Net output loop cancelled
+2025-11-05 17:34:58,588 - __main__ - INFO - Starting Apelios...
+2025-11-05 17:34:58,588 - aioartnet - INFO - using interface None with ip 192.168.8.1 broadcast ip 192.168.8.255, listening on 0.0.0.0 our mac 01121b242d36
+2025-11-05 17:34:58,589 - apelios.artnet.controller - INFO - Art-Net connected on 192.168.8.1
+2025-11-05 17:34:58,589 - apelios.artnet.controller - INFO - Sending Remote Input on Universe 1
+2025-11-05 17:34:58,589 - apelios.artnet.controller - INFO - Configure GrandMA to receive Universe 1 as Remote Input
+2025-11-05 17:34:58,589 - apelios.artnet.controller - INFO - Starting Art-Net output at 40Hz
+2025-11-05 17:35:06,384 - apelios.artnet.controller - INFO - Stopping Art-Net output
+2025-11-05 17:35:06,385 - apelios.artnet.controller - INFO - Art-Net connection closed
+2025-11-05 17:35:06,385 - aioartnet - INFO - Connection closed, cancelling periodic task
+2025-11-05 17:35:06,385 - apelios.artnet.controller - INFO - Art-Net output loop cancelled
+2025-11-05 17:36:00,305 - __main__ - INFO - Starting Apelios...
+2025-11-05 17:36:00,306 - aioartnet - INFO - using interface None with ip 192.168.8.1 broadcast ip 192.168.8.255, listening on 0.0.0.0 our mac 01121b242d36
+2025-11-05 17:36:00,306 - apelios.artnet.controller - INFO - Art-Net connected on 192.168.8.1
+2025-11-05 17:36:00,306 - apelios.artnet.controller - INFO - Sending Remote Input on Universe 1
+2025-11-05 17:36:00,306 - apelios.artnet.controller - INFO - Configure GrandMA to receive Universe 1 as Remote Input
+2025-11-05 17:36:00,307 - apelios.artnet.controller - INFO - Starting Art-Net output at 40Hz
+2025-11-05 17:39:38,287 - apelios.artnet.controller - INFO - Stopping Art-Net output
+2025-11-05 17:39:38,287 - apelios.artnet.controller - INFO - Art-Net connection closed
+2025-11-05 17:39:38,287 - aioartnet - INFO - Connection closed, cancelling periodic task
+2025-11-05 17:39:38,288 - apelios.artnet.controller - INFO - Art-Net output loop cancelled
+2025-11-05 18:03:03,319 - __main__ - INFO - Starting Apelios...
+2025-11-05 18:03:03,319 - aioartnet - INFO - using interface None with ip 192.168.8.1 broadcast ip 192.168.8.144, listening on 0.0.0.0 our mac 01121b242d36
+2025-11-05 18:03:03,320 - apelios.artnet.controller - INFO - Art-Net connected on 192.168.8.1
+2025-11-05 18:03:03,320 - apelios.artnet.controller - INFO - Sending Remote Input on Universe 1
+2025-11-05 18:03:03,320 - apelios.artnet.controller - INFO - Configure GrandMA to receive Universe 1 as Remote Input
+2025-11-05 18:03:03,320 - apelios.artnet.controller - INFO - Starting Art-Net output at 40Hz
+2025-11-05 18:03:05,495 - apelios.artnet.controller - INFO - Stopping Art-Net output
+2025-11-05 18:03:05,496 - apelios.artnet.controller - INFO - Art-Net connection closed
+2025-11-05 18:03:05,496 - aioartnet - INFO - Connection closed, cancelling periodic task
+2025-11-05 18:03:05,496 - apelios.artnet.controller - INFO - Art-Net output loop cancelled
