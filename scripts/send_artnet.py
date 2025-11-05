@@ -46,7 +46,7 @@ async def send_dmx_changes(universe: ArtNetUniverse):
                 direction = 1
             
             # Run this loop at ~25 Hz
-            await asyncio.sleep(0.04) 
+            await asyncio.sleep(0.025) 
     except asyncio.CancelledError:
         log.info("DMX sender stopped.")
 
@@ -56,12 +56,8 @@ async def main():
     client = ArtNetClient()
     main_tasks = []
     
-    # --- THIS IS THE FIX ---
-    # Manually set your IP and broadcast address
-    # This skips the broken automatic discovery
     client.unicast_ip = YOUR_IP
     client.broadcast_ip = YOUR_BROADCAST_IP
-    # -----------------------
 
     try:
         # Connect to the network
@@ -107,3 +103,4 @@ if __name__ == "__main__":
         asyncio.run(main())
     except KeyboardInterrupt:
         log.info("Received Ctrl+C, stopping.")
+
