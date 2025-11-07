@@ -1,6 +1,11 @@
+# apelios.main_deck.py 
+# runs on the deck, sends artnet to grandma (or other) and recieves video stream from apelios.main_stream.py
+
+
 import logging
 import asyncio
 from apelios.artnet import ArtNetController
+from apelios.steamdeck import SteamdeckInputs
 
 # Logging EINMAL hier konfigurieren
 logging.basicConfig(
@@ -25,28 +30,34 @@ async def main():
         universe=1
     )
     
+    
     # Verbinden
     await artnet.connect()
+    
+    deck = SteamdeckInputs(5.0)
+    deck.start()
+    
     
     # Output starten (als Task - läuft parallel)
     output_task = asyncio.create_task(artnet.start())
     
-    # Hauptloop
+    
+    # Main loop
     try:
-        direction = 1
-        value = 0
+        angles = [100.0,100.0]
         while True:
             # Hier später: Steam Deck Input lesen
-            value += direction
-            if value >= 255:
-                value = 255
-                direction = -1
-            if value <= 0:
-                value = 0
-                direction = 1
-                
-            artnet.set_channel(1, value)
+            angles[0] += deck.getAngleAcceleration()[0]
+            angles[1] += deck.getAngleAcceleration()[1]
+
+            print(f"\rAngles: pan={angles[0]:4.3f}°, tilt={angles[1]:4.3f}°", end="", flush=True)
+            
+            artnet.set_channel(1, int(angles[0]))
+            artnet.set_channel(2, int(angles[1]))
+            
             await asyncio.sleep(0.01)
+            
+            # deck.printImu()
     
     except KeyboardInterrupt:
         log.info("Stopping...")

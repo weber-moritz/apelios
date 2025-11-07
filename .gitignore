@@ -42,3 +42,6 @@ coverage.xml
 
 # PyCharm
 .idea/
+
+# General:
+*.log

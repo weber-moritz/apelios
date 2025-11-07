@@ -70,7 +70,7 @@ class ArtNetController:
     
     def set_channel(self, channel: int, value: int):
         """
-        Set a DMX channel value.
+        Set a 16 bit DMX channel value.
         
         Args:
             channel: DMX channel (1-512)
@@ -93,7 +93,7 @@ class ArtNetController:
         self.dmx_data[channel - 1] = value
         return True
     
-    def set_16bit(self, channel: int, value: int):
+    def set_channel_16bit(self, channel: int, value: int):
         """
         Set a 16-bit DMX value (for pan/tilt).
         
@@ -134,6 +134,26 @@ class ArtNetController:
         if 1 <= channel <= 512:
             return self.dmx_data[channel - 1]
         return None
+    
+    def get_channel_16bit(self, channel: int) -> Optional[int]:
+        """
+        Get current value of a 16 bit channel 
+        (merged from two consecutive 8 bit channels).
+        
+        Args:
+            channel: DMX channel (1-512)
+        
+        Returns:
+            Current value (0-511) or None if invalid channel
+        """
+        
+        if not (1<= channel <= 511):
+            return None
+        
+        msb = self.dmx_data[channel - 1]
+        lsb = self.dmx_data[channel]
+        
+        return (msb << 8) | lsb    
     
     def clear_all(self):
         """Set all channels to 0."""
