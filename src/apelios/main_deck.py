@@ -25,9 +25,11 @@ async def main():
     
     # Art-Net Controller erstellen
     artnet = ArtNetController(
-        source_ip="192.168.8.1",
-        target_ip="192.168.8.144",
-        universe=1
+        # source_ip="192.168.8.1",
+        # target_ip="192.168.8.144",
+        source_ip="10.0.0.102",
+        target_ip="10.0.0.12",
+        universe=2
     )
     
     
@@ -52,8 +54,8 @@ async def main():
 
             print(f"\rAngles: pan={angles[0]:4.3f}°, tilt={angles[1]:4.3f}°", end="", flush=True)
             
-            artnet.set_channel(1, int(angles[0]))
-            artnet.set_channel(2, int(angles[1]))
+            artnet.set_channel(224, int(angles[0]))
+            artnet.set_channel(25, int(angles[1]))
             
             await asyncio.sleep(0.01)
             
