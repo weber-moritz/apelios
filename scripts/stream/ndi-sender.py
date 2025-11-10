@@ -2,14 +2,13 @@ import cv2
 import time
 import numpy as np
 from fractions import Fraction
-from cyndilib.wrapper.ndi_recv import RecvColorFormat
 from cyndilib.wrapper.ndi_structs import FourCC
 from cyndilib.video_frame import VideoSendFrame
 from cyndilib.sender import Sender
 
 # Configuration
 SENDER_NAME = "Moving Head Camera"
-WIDTH, HEIGHT = 1280, 720
+WIDTH, HEIGHT = 640, 480  # Lower resolution for testing
 FPS = 30
 
 # Create sender
@@ -19,7 +18,11 @@ sender = Sender(SENDER_NAME)
 vf = VideoSendFrame()
 vf.set_resolution(WIDTH, HEIGHT)
 vf.set_frame_rate(Fraction(FPS, 1))
+<<<<<<< HEAD
 vf.set_fourcc(FourCC.BGRX)
+=======
+vf.set_fourcc(FourCC.UYVY)  # UYVY is more efficient than BGRX
+>>>>>>> refs/remotes/origin/main
 
 # Set video frame on sender
 sender.set_video_frame(vf)
@@ -44,6 +47,7 @@ frame_count = 0
 start_time = time.time()
 
 try:
+<<<<<<< HEAD
     # Keep sender open with context manager
     sender.open()
     
@@ -69,6 +73,28 @@ try:
             fps = frame_count / elapsed
             print(f"Sent {frame_count} frames | FPS: {fps:.1f}", end='\r')
 
+=======
+    with sender:
+        while True:
+            ret, frame = cap.read()
+            if not ret:
+                print("Failed to read frame")
+                break
+            
+            # Convert BGR to YUV for UYVY
+            # UYVY is more efficient and NDI handles it better
+            frame_yuv = cv2.cvtColor(frame, cv2.COLOR_BGR2YUV_YUY2)
+            
+            # Send directly
+            sender.write_video_async(frame_yuv)
+            
+            frame_count += 1
+            if frame_count % 30 == 0:
+                elapsed = time.time() - start_time
+                fps = frame_count / elapsed
+                print(f"Sent {frame_count} frames | FPS: {fps:.1f}", end='\r')
+                
+>>>>>>> refs/remotes/origin/main
 except KeyboardInterrupt:
     print("\n\nStopping sender...")
 finally:
