@@ -1,5 +1,6 @@
 import asyncio
 import cv2
+import numpy as np
 from aiohttp import web
 from aiortc import RTCPeerConnection, RTCSessionDescription, VideoStreamTrack
 from av import VideoFrame
@@ -24,10 +25,12 @@ class CameraTrack(VideoStreamTrack):
         
         ret, frame = self.cap.read()
         if not ret:
-            return None
-        
-        # Convert BGR to RGB
-        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            # Return a black frame if camera fails (never return None)
+            frame = np.zeros((HEIGHT, WIDTH, 3), dtype=np.uint8)
+        else:
+            # Convert BGR to RGB and ensure uint8 type
+            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            frame = frame.astype(np.uint8)  # Explicitly ensure uint8 type
         
         # Create video frame
         new_frame = VideoFrame.from_ndarray(frame, format="rgb24")
