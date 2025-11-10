@@ -41,9 +41,10 @@ print("Press Ctrl+C to stop")
 
 frame_count = 0
 start_time = time.time()
-
 try:
     with sender:
+        time.sleep(3)
+        
         while True:
             ret, frame = cap.read()
             if not ret:
@@ -53,16 +54,15 @@ try:
             # Convert BGR to BGRX (add alpha channel)
             frame_bgrx = cv2.cvtColor(frame, cv2.COLOR_BGR2BGRA)
             
-            # Pass the numpy array directly to write_video_async
-            # The VideoSendFrame will handle the buffer protocol
-            sender.write_video_async(frame_bgrx)
+            # Flatten the array to 1D before sending
+            sender.write_video_async(frame_bgrx.ravel())
             
             frame_count += 1
             if frame_count % 30 == 0:
                 elapsed = time.time() - start_time
                 fps = frame_count / elapsed
                 print(f"Sent {frame_count} frames | FPS: {fps:.1f}", end='\r')
-                
+
 except KeyboardInterrupt:
     print("\n\nStopping sender...")
 finally:
