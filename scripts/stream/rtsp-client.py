@@ -1,7 +1,7 @@
 import cv2
 
 # RTSP stream URL (replace with your stream)
-RTSP_URL = "rtsp://192.168.8.144:8554/stream"
+RTSP_URL = "rtsp://localhost:8554/stream"
 
 # Create video capture object with options
 cap = cv2.VideoCapture(RTSP_URL)
