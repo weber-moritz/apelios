@@ -454,7 +454,7 @@ async def run_receiver(host="127.0.0.1", port=9999, display=True, save_frames=Fa
 async def main():
     """Main entry point for standalone execution."""
     # Configuration
-    HOST = "127.0.0.1"
+    HOST = "192.168.8.144" #"127.0.0.1"
     PORT = 9999
     DISPLAY = True
     SAVE_FRAMES = False

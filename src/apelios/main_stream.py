@@ -27,7 +27,7 @@ async def main():
     Starts the video sender with configured settings.
     """
     # Configuration
-    HOST = "127.0.0.1"  # Signaling server host
+    HOST = "192.168.8.144" #"127.0.0.1"  # Signaling server host
     PORT = 9999         # Signaling server port
     CAMERA_ID = 0       # Camera device ID (0 = default)
     WIDTH = 640         # Video width
