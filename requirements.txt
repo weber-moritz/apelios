@@ -4,5 +4,5 @@ av
 opencv-python
 hid==1.0.8
 matplotlib
-numpy==1.26.4
-websockets==10.4
+numpy>=1.26.4
+aiohttp

@@ -404,7 +404,7 @@ async def run_receiver(host="127.0.0.1", port=9999, display=True, save_detection
 
 async def main():
     """Main entry point."""
-    HOST = "127.0.0.1"
+    HOST = "192.168.8.144"
     PORT = 9999
     DISPLAY = True
     SAVE_DETECTIONS = False  # Set to True to save frames with detections
