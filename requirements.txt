@@ -1,6 +1,7 @@
 aioartnet==0.2.1
 aiortc
 av
+bitstream
 opencv-python
 hid==1.0.8
 matplotlib

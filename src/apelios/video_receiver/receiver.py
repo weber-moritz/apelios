@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-WebRTC receiver with person detection using YOLO.
-Detects and tracks people in real-time video stream.
+WebRTC receiver with person detection.
+Detects and tracks people in real-time video stream using OpenCV built-in detectors.
 """
 import asyncio
 import cv2
@@ -11,9 +11,8 @@ from aiortc.contrib.signaling import TcpSocketSignaling
 from av import VideoFrame
 from datetime import datetime
 import logging
+import os
 
-# Setup logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 
@@ -157,18 +156,19 @@ class PersonDetector:
             logger.error(f"Detection failed: {e}")
             return []
     
-    def draw_detections(self, frame, detections):
+    def draw_detections(self, frame, detections, in_place=False):
         """
         Draw bounding boxes on frame.
         
         Args:
             frame: BGR image
             detections: List of detections
+            in_place: If True, draw directly on frame (faster, modifies original)
             
         Returns:
             Annotated frame
         """
-        annotated = frame.copy()
+        annotated = frame if in_place else frame.copy()
         
         try:
             for det in detections:
@@ -203,28 +203,43 @@ class PersonDetector:
         return annotated
 
 
-class VideoReceiverWithDetection:
-    """Video receiver with person detection."""
+class VideoReceiver:
+    """WebRTC video stream receiver with optional person detection."""
     
-    def __init__(self, display=True, save_detections=False, output_dir="detections"):
+    def __init__(self, display=True, save_frames=False, output_dir="frames", 
+                 enable_detection=False, detection_method="hog", confidence_threshold=0.5):
+        """
+        Initialize video receiver.
+        
+        Args:
+            display: Show video window
+            save_frames: Save frames to disk
+            output_dir: Directory for saved frames
+            enable_detection: Enable person detection (optional)
+            detection_method: Detection method - "hog" or "haar" (if detection enabled)
+            confidence_threshold: Minimum confidence for detections (if detection enabled)
+        """
         self.display = display
-        self.save_detections = save_detections
+        self.save_frames = save_frames
         self.output_dir = output_dir
+        self.enable_detection = enable_detection
         self.track = None
         self.frame_count = 0
         self.detection_count = 0
         self.running = True
         
-        # Initialize person detector (use HOG by default as it doesn't require model files)
-        self.detector = PersonDetector(method="hog", confidence_threshold=0.5)
+        # Initialize person detector only if enabled
+        if self.enable_detection:
+            self.detector = PersonDetector(method=detection_method, confidence_threshold=confidence_threshold)
+        else:
+            self.detector = None
         
         # Create output directory
-        if self.save_detections:
-            import os
+        if self.save_frames:
             os.makedirs(self.output_dir, exist_ok=True)
     
     async def handle_track(self, track):
-        """Handle incoming video track with person detection."""
+        """Handle incoming video track with optional person detection."""
         logger.info(f"Starting to handle {track.kind} track with person detection")
         self.track = track
         consecutive_errors = 0
@@ -247,23 +262,32 @@ class VideoReceiverWithDetection:
                     logger.warning(f"Unexpected frame type: {type(frame)}")
                     continue
                 
-                # Detect people (process every frame for smooth detection)
-                try:
-                    detections = self.detector.detect(frame_array)
-                except Exception as e:
-                    logger.error(f"Detection error: {e}")
-                    detections = []
+                # Detect people if detection is enabled
+                detections = []
+                if self.enable_detection and self.detector:
+                    try:
+                        detections = self.detector.detect(frame_array)
+                    except Exception as e:
+                        logger.error(f"Detection error: {e}")
+                        detections = []
                 
-                # Draw detections
-                annotated_frame = self.detector.draw_detections(frame_array, detections)
+                # Draw detections if enabled, otherwise use original frame
+                if self.enable_detection and self.detector:
+                    # Draw detections in-place for minimal latency
+                    annotated_frame = self.detector.draw_detections(frame_array, detections, in_place=True)
+                else:
+                    # No copy needed - use frame directly for minimal latency
+                    annotated_frame = frame_array
                 
                 # Add info overlay
                 info_text = [
                     f"Frame: {self.frame_count}",
-                    f"People: {len(detections)}",
-                    f"Method: {self.detector.method.upper()}",
                     datetime.now().strftime("%H:%M:%S.%f")[:-3]
                 ]
+                
+                if self.enable_detection:
+                    info_text.insert(1, f"People: {len(detections)}")
+                    info_text.insert(2, f"Method: {self.detector.method.upper()}")
                 
                 y_offset = 30
                 for i, text in enumerate(info_text):
@@ -279,19 +303,24 @@ class VideoReceiverWithDetection:
                     )
                 
                 # Log detections
-                if len(detections) > 0:
+                if self.enable_detection and len(detections) > 0:
                     if self.detection_count % 30 == 0:  # Log every 30 detections
                         logger.info(f"Frame {self.frame_count}: Detected {len(detections)} person(s)")
                     self.detection_count += 1
                     
                     # Save frame with detections
-                    if self.save_detections:
+                    if self.save_frames:
                         filename = f"{self.output_dir}/detection_{self.frame_count}_{len(detections)}p.jpg"
                         cv2.imwrite(filename, annotated_frame)
+                elif self.save_frames and self.frame_count % 30 == 0:
+                    # Save every 30th frame if detection is disabled
+                    filename = f"{self.output_dir}/frame_{self.frame_count}.jpg"
+                    cv2.imwrite(filename, annotated_frame)
                 
                 # Display frame
                 if self.display:
-                    cv2.imshow("Person Detection", annotated_frame)
+                    window_title = "Video Stream - Person Detection" if self.enable_detection else "Video Stream"
+                    cv2.imshow(window_title, annotated_frame)
                     key = cv2.waitKey(1) & 0xFF
                     if key == ord('q'):
                         logger.info("User requested quit")
@@ -331,14 +360,33 @@ class VideoReceiverWithDetection:
             cv2.destroyAllWindows()
 
 
-async def run_receiver(host="127.0.0.1", port=9999, display=True, save_detections=False):
-    """Run the WebRTC receiver with person detection."""
-    logger.info(f"Starting WebRTC receiver with person detection on {host}:{port}")
+async def run_receiver(host="127.0.0.1", port=9999, display=True, save_frames=False, 
+                       enable_detection=False, detection_method="hog", confidence_threshold=0.5):
+    """
+    Run the WebRTC video stream receiver.
+    
+    Args:
+        host: Signaling server host
+        port: Signaling server port
+        display: Show video window
+        save_frames: Save frames to disk
+        enable_detection: Enable person detection (optional)
+        detection_method: Detection method - "hog" or "haar" (if detection enabled)
+        confidence_threshold: Minimum confidence for detections (if detection enabled)
+    """
+    mode = "with person detection" if enable_detection else "streaming only"
+    logger.info(f"Starting WebRTC receiver ({mode}) on {host}:{port}")
     
     signaling = TcpSocketSignaling(host, port)
     pc = RTCPeerConnection()
     
-    video_receiver = VideoReceiverWithDetection(display=display, save_detections=save_detections)
+    video_receiver = VideoReceiver(
+        display=display, 
+        save_frames=save_frames,
+        enable_detection=enable_detection,
+        detection_method=detection_method,
+        confidence_threshold=confidence_threshold
+    )
     
     @pc.on("track")
     def on_track(track):
@@ -377,7 +425,8 @@ async def run_receiver(host="127.0.0.1", port=9999, display=True, save_detection
                 raise RuntimeError(f"Connection {pc.connectionState}")
             await asyncio.sleep(0.1)
         
-        logger.info("Connection established! Starting person detection...")
+        status = "Starting video stream with person detection..." if enable_detection else "Starting video stream..."
+        logger.info(f"Connection established! {status}")
         
         while video_receiver.running:
             await asyncio.sleep(0.1)
@@ -403,16 +452,32 @@ async def run_receiver(host="127.0.0.1", port=9999, display=True, save_detection
 
 
 async def main():
-    """Main entry point."""
+    """Main entry point for standalone execution."""
+    # Configuration
     HOST = "127.0.0.1"
     PORT = 9999
     DISPLAY = True
-    SAVE_DETECTIONS = False  # Set to True to save frames with detections
+    SAVE_FRAMES = False
+    ENABLE_DETECTION = False  # Set to True to enable person detection (INCREASES LATENCY!)
+    DETECTION_METHOD = "hog"  # "hog" or "haar"
     
-    await run_receiver(HOST, PORT, DISPLAY, SAVE_DETECTIONS)
+    await run_receiver(
+        host=HOST,
+        port=PORT,
+        display=DISPLAY,
+        save_frames=SAVE_FRAMES,
+        enable_detection=ENABLE_DETECTION,
+        detection_method=DETECTION_METHOD
+    )
 
 
 if __name__ == "__main__":
+    # Setup logging for standalone execution
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    )
+    
     try:
         asyncio.run(main())
     except KeyboardInterrupt:

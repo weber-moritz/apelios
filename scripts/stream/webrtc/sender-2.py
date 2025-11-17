@@ -123,7 +123,7 @@ async def run_sender(host="127.0.0.1", port=9999, camera_id=0):
 async def main():
     """Main entry point."""
     # Configuration
-    HOST = "192.168.8.144"  # localhost
+    HOST = "127.0.0.1"  # localhost
     PORT = 9999
     CAMERA_ID = 0  # Default camera
     
