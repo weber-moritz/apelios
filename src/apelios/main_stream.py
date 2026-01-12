@@ -3,6 +3,7 @@
 Apelios Main Stream Application
 
 This module starts the WebRTC video sender to stream camera feed.
+To run this moduel use `python -m apelios.main_stream`
 """
 import asyncio
 import logging
@@ -27,7 +28,7 @@ async def main():
     Starts the video sender with configured settings.
     """
     # Configuration
-    HOST = "192.168.8.144" #"127.0.0.1"  # Signaling server host
+    HOST = "192.168.8.144" # "127.0.0.1" #  # Signaling server host
     PORT = 9999         # Signaling server port
     CAMERA_ID = 0       # Camera device ID (0 = default)
     WIDTH = 640         # Video width
@@ -36,16 +37,16 @@ async def main():
     
     # Print banner
     print("\n" + "=" * 70)
-    print("🎥  APELIOS VIDEO STREAM SENDER")
+    print("APELIOS VIDEO STREAM SENDER")
     print("=" * 70)
-    print(f"📅 Started: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"Started: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print("-" * 70)
-    print("⚙️  Configuration:")
-    print(f"   📡 Signaling Server: {HOST}:{PORT}")
-    print(f"   📹 Camera ID: {CAMERA_ID}")
-    print(f"   📐 Resolution: {WIDTH}x{HEIGHT} @ {FPS} fps")
+    print("Configuration:")
+    print(f"   Signaling Server: {HOST}:{PORT}")
+    print(f"   Camera ID: {CAMERA_ID}")
+    print(f"   Resolution: {WIDTH}x{HEIGHT} @ {FPS} fps")
     print("-" * 70)
-    print("💡 Status:")
+    print("Status:")
     print("   • Initializing camera...")
     
     start_time = time.time()
@@ -65,12 +66,12 @@ async def main():
         elapsed = time.time() - start_time
         minutes, seconds = divmod(int(elapsed), 60)
         hours, minutes = divmod(minutes, 60)
-        print(f"⏱️  Stream Duration: {hours:02d}:{minutes:02d}:{seconds:02d}")
-        print("🛑 Stream stopped by user")
+        print(f"Stream Duration: {hours:02d}:{minutes:02d}:{seconds:02d}")
+        print("Stream stopped by user")
         print("=" * 70 + "\n")
     except Exception as e:
         print("\n" + "-" * 70)
-        print(f"❌ Error occurred: {e}")
+        print(f"Error occurred: {e}")
         print("=" * 70 + "\n")
         logger.exception("Detailed error information:")
         sys.exit(1)
@@ -80,8 +81,8 @@ if __name__ == "__main__":
     try:
         asyncio.run(main())
     except KeyboardInterrupt:
-        print("\n✅ Exiting gracefully...\n")
+        print("\nExiting gracefully...\n")
         sys.exit(0)
     except Exception as e:
-        print(f"\n❌ Fatal error: {e}\n")
+        print(f"\nFatal error: {e}\n")
         sys.exit(1)
