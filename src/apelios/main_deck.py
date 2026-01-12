@@ -28,7 +28,7 @@ async def main():
     
     # Art-Net Controller erstellen
     artnet = ArtNetController(
-        source_ip="192.168.8.1",
+        source_ip="192.168.8.134",
         target_ip="192.168.8.144",
         # source_ip="10.0.0.102",
         # target_ip="10.0.0.12",
