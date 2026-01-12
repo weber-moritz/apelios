@@ -49,7 +49,7 @@ async def main():
     # Use display=False by default to avoid opening GUI on headless devices
     
     # Video receiver configuration
-    video_host = "192.168.8.144" #"127.0.0.1"
+    video_host = "192.168.8.255" #"192.168.8.144" #"127.0.0.1"
     video_port = 9999
     video_display = True
     video_save_frames = False
