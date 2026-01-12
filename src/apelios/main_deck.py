@@ -28,10 +28,10 @@ async def main():
     
     # Art-Net Controller erstellen
     artnet = ArtNetController(
-        # source_ip="192.168.8.1",
-        # target_ip="192.168.8.144",
-        source_ip="10.0.0.102",
-        target_ip="10.0.0.12",
+        source_ip="192.168.8.1",
+        target_ip="192.168.8.144",
+        # source_ip="10.0.0.102",
+        # target_ip="10.0.0.12",
         universe=2
     )
     
@@ -49,7 +49,7 @@ async def main():
     # Use display=False by default to avoid opening GUI on headless devices
     
     # Video receiver configuration
-    video_host = "192.168.8.255" #"192.168.8.144" #"127.0.0.1"
+    video_host = "192.168.8.144" #"192.168.8.144" #"127.0.0.1"
     video_port = 9999
     video_display = True
     video_save_frames = False
