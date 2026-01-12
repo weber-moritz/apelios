@@ -89,8 +89,8 @@ async def main():
 
             print(f"\rAngles: pan={angles[0]:4.3f}°, tilt={angles[1]:4.3f}°", end="", flush=True)
             
-            artnet.set_channel(224, int(angles[0]))
-            artnet.set_channel(25, int(angles[1]))
+            artnet.set_channel(1, int(angles[0]))
+            artnet.set_channel(2, int(angles[1]))
             
             await asyncio.sleep(0.01)
             
