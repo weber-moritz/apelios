@@ -7,8 +7,7 @@ import asyncio
 import sys
 from apelios.artnet import ArtNetController
 from apelios.steamdeck import SteamdeckInputs
-from apelios.video_receiver.receiver import run_receiver
-
+from apelios.video_receiver import run_receiver
 
 # Logging EINMAL hier konfigurieren
 logging.basicConfig(

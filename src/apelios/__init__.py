@@ -6,6 +6,7 @@ This package provides modules for:
 - Steam Deck integration
 - WebRTC video streaming (sender and receiver)
     - Optional person detection for video streams
+- WebSocket signaling server for WebRTC connections
 """
 
 __version__ = '0.1.0'
@@ -41,3 +42,10 @@ try:
 except ImportError as e:
     import logging
     logging.debug(f"video_sender module not available: {e}")
+
+try:
+    from . import signaling_server
+    __all__.append('signaling_server')
+except ImportError as e:
+    import logging
+    logging.debug(f"signaling_server module not available: {e}")

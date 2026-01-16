@@ -8,3 +8,5 @@ matplotlib
 numpy>=1.26.4
 aiohttp
 pyside6
+qasync
+websockets
