@@ -2,8 +2,8 @@
 """
 Apelios Main Stream Application
 
-This module starts the WebRTC video sender to stream camera feed.
-To run this moduel use `python -m apelios.main_stream`
+This module starts the signaling server and WebRTC video sender to stream camera feed.
+To run this module use `python -m apelios.main_stream`
 """
 import asyncio
 import logging
@@ -11,6 +11,7 @@ import sys
 import time
 from datetime import datetime
 from .video_sender import VideoSender, run_sender
+from .signaling_server import SignalingServer
 
 # Setup logging with better formatting
 logging.basicConfig(
@@ -28,9 +29,9 @@ async def main():
     Starts the video sender with configured settings.
     """
     # Configuration
-    HOST = "192.168.8.144" # "127.0.0.1" #  # Signaling server host
+    HOST = "127.0.0.1" # "192.168.8.144" # "127.0.0.1" #  # Signaling server host
     PORT = 9999         # Signaling server port
-    CAMERA_ID = 0       # Camera device ID (0 = default)
+    CAMERA_ID = 1       # Camera device ID
     WIDTH = 640         # Video width
     HEIGHT = 480        # Video height
     FPS = 30            # Frames per second
@@ -47,11 +48,18 @@ async def main():
     print(f"   Resolution: {WIDTH}x{HEIGHT} @ {FPS} fps")
     print("-" * 70)
     print("Status:")
-    print("   • Initializing camera...")
+    print("   • Starting signaling server...")
     
     start_time = time.time()
     
     try:
+        # Start the signaling server
+        signaling_server = SignalingServer(host=HOST, port=PORT)
+        server = await signaling_server.start()
+        
+        print("   • Signaling server ready")
+        print("   • Initializing camera...")
+        
         # Start the video sender
         await run_sender(
             host=HOST,

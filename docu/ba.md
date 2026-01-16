@@ -26,4 +26,8 @@
 - artnet destination ip address
 - fixture type (from dropdown?)
 - sensitivity for gyro?
-- 
+
+## changes to video stream:
+- took appart the reciever so now there is an optional person_detector module
+- fixed the bug of the sender not offering a new stream, now one can disconnect, sender restart signaling server, and then reconnect
+- the tcp socket thing did not work propperly. better solution anyways is to use a websocket.
