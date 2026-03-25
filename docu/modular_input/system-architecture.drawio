@@ -1,0 +1,111 @@
+<mxfile host="Electron" agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/29.5.2 Chrome/142.0.7444.265 Electron/39.6.1 Safari/537.36" version="29.5.2">
+  <diagram name="Controller Architecture" id="gQz7spAMgrnhUT9ABDKO">
+    <mxGraphModel dx="962" dy="746" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="78Ld1IJF264JJrj9MNvy-207" parent="1" style="swimlane;whiteSpace=wrap;html=1;startSize=23;fillColor=none;dashed=1;strokeColor=#aaaaaa;color:#ffffff;fontStyle=1;" value="SYSTEM ORCHESTRATION (Lifecycle Manager)" vertex="1">
+          <mxGeometry height="110" width="240" x="314" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="78Ld1IJF264JJrj9MNvy-208" parent="78Ld1IJF264JJrj9MNvy-207" style="shape=process;whiteSpace=wrap;html=1;backgroundOutline=1;fillColor=#b71c1c;strokeColor=#d32f2f;color:#ffffff;fontStyle=1;" value="Main Orchestrator&#xa;(Service Manager)" vertex="1">
+          <mxGeometry height="50" width="160" x="40" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="78Ld1IJF264JJrj9MNvy-209" parent="1" style="swimlane;whiteSpace=wrap;html=1;startSize=23;fillColor=none;dashed=1;strokeColor=#aaaaaa;color:#ffffff;fontStyle=1;" value="INPUT LAYER (I/O Adapters)" vertex="1">
+          <mxGeometry height="290" width="230" x="60" y="220" as="geometry" />
+        </mxCell>
+        <mxCell id="78Ld1IJF264JJrj9MNvy-210" parent="78Ld1IJF264JJrj9MNvy-209" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0d47a1;strokeColor=#1976d2;color:#ffffff;" value="[Hardware]&#xa;Steam Deck Driver" vertex="1">
+          <mxGeometry height="60" width="160" x="35" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="78Ld1IJF264JJrj9MNvy-211" parent="78Ld1IJF264JJrj9MNvy-209" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0d47a1;strokeColor=#1976d2;color:#ffffff;" value="[Virtual]&#xa;GUI Input Module" vertex="1">
+          <mxGeometry height="60" width="160" x="35" y="115" as="geometry" />
+        </mxCell>
+        <mxCell id="78Ld1IJF264JJrj9MNvy-212" parent="78Ld1IJF264JJrj9MNvy-209" style="rounded=0;whiteSpace=wrap;html=1;dashed=1;fillColor=none;strokeColor=#888888;color:#aaaaaa;fontSize=11;" value="&lt;i&gt;&lt;b&gt;BaseInput Class&lt;/b&gt;&lt;/i&gt;&#xa;(Interface Contract)" vertex="1">
+          <mxGeometry height="60" width="160" x="35" y="210" as="geometry" />
+        </mxCell>
+        <mxCell id="78Ld1IJF264JJrj9MNvy-213" parent="1" style="swimlane;whiteSpace=wrap;html=1;startSize=23;fillColor=none;dashed=1;strokeColor=#aaaaaa;color:#ffffff;fontStyle=1;" value="COMMUNICATION (Broker)" vertex="1">
+          <mxGeometry height="200" width="200" x="334" y="220" as="geometry" />
+        </mxCell>
+        <mxCell id="78Ld1IJF264JJrj9MNvy-214" parent="78Ld1IJF264JJrj9MNvy-213" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;fillColor=#4a148c;strokeColor=#ab47bc;color:#ffffff;fontStyle=1;" value="Event Broker&#xa;(Pub/Sub Hub)" vertex="1">
+          <mxGeometry height="120" width="120" x="40" y="55" as="geometry" />
+        </mxCell>
+        <mxCell id="78Ld1IJF264JJrj9MNvy-215" parent="1" style="swimlane;whiteSpace=wrap;html=1;startSize=23;fillColor=none;dashed=1;strokeColor=#aaaaaa;color:#ffffff;fontStyle=1;" value="LOGIC LAYER (Middleware)" vertex="1">
+          <mxGeometry height="300" width="230" x="577" y="220" as="geometry" />
+        </mxCell>
+        <mxCell id="78Ld1IJF264JJrj9MNvy-216" parent="78Ld1IJF264JJrj9MNvy-215" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1b5e20;strokeColor=#66bb6a;color:#ffffff;" value="Mapping Middleware&#xa;(Transformation)" vertex="1">
+          <mxGeometry height="60" width="160" x="35" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="78Ld1IJF264JJrj9MNvy-217" parent="78Ld1IJF264JJrj9MNvy-215" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#e65100;strokeColor=#ff9800;color:#ffffff;fontStyle=1;" value="Mapping Table&#xa;(JSON Config)" vertex="1">
+          <mxGeometry height="100" width="80" x="75" y="180" as="geometry" />
+        </mxCell>
+        <mxCell id="78Ld1IJF264JJrj9MNvy-218" parent="1" style="swimlane;whiteSpace=wrap;html=1;startSize=23;fillColor=none;dashed=1;strokeColor=#666666;color:#888888;fontStyle=1;" value="OUTPUT LAYER (Out of Scope)" vertex="1">
+          <mxGeometry height="130" width="200" x="334" y="470" as="geometry" />
+        </mxCell>
+        <mxCell id="78Ld1IJF264JJrj9MNvy-219" parent="78Ld1IJF264JJrj9MNvy-218" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#222222;strokeColor=#444444;color:#777777;dashed=1;" value="Output Adapter&lt;br&gt;(e.g. ArtNet Mock)" vertex="1">
+          <mxGeometry height="60" width="160" x="20" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="78Ld1IJF264JJrj9MNvy-220" edge="1" parent="1" source="78Ld1IJF264JJrj9MNvy-208" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#888888;dashed=1;exitX=0;exitY=0.5;entryX=0.5;entryY=0;fontColor=#888888;fontSize=10;" target="78Ld1IJF264JJrj9MNvy-210" value="Inject Broker Instance">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="78Ld1IJF264JJrj9MNvy-221" edge="1" parent="1" source="78Ld1IJF264JJrj9MNvy-208" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#888888;dashed=1;exitX=1;exitY=0.5;entryX=0.5;entryY=0;fontColor=#888888;fontSize=10;" target="78Ld1IJF264JJrj9MNvy-216" value="Inject Broker Instance">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="78Ld1IJF264JJrj9MNvy-222" edge="1" parent="1" source="78Ld1IJF264JJrj9MNvy-208" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#888888;dashed=1;exitX=1;exitY=0.5;entryX=1;entryY=0.5;fontColor=#888888;fontSize=10;" target="78Ld1IJF264JJrj9MNvy-219" value="Inject Broker Instance">
+          <mxGeometry relative="1" x="-0.5728" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="549" y="105" />
+              <mxPoint x="549" y="550" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="78Ld1IJF264JJrj9MNvy-223" edge="1" parent="1" source="78Ld1IJF264JJrj9MNvy-210" style="endArrow=classic;html=1;strokeColor=#ffffff;exitX=1;exitY=0.5;entryX=0;entryY=0.25;" target="78Ld1IJF264JJrj9MNvy-214" value="InputEvent">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="78Ld1IJF264JJrj9MNvy-224" edge="1" parent="1" source="78Ld1IJF264JJrj9MNvy-211" style="endArrow=classic;html=1;strokeColor=#ffffff;exitX=1;exitY=0.5;entryX=0;entryY=0.75;" target="78Ld1IJF264JJrj9MNvy-214" value="InputEvent">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="78Ld1IJF264JJrj9MNvy-225" edge="1" parent="1" source="78Ld1IJF264JJrj9MNvy-214" style="endArrow=classic;html=1;strokeColor=#ffffff;exitX=1;exitY=0.25;entryX=0;entryY=0.5;" target="78Ld1IJF264JJrj9MNvy-216" value="Raw Notify">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="78Ld1IJF264JJrj9MNvy-226" edge="1" parent="1" source="78Ld1IJF264JJrj9MNvy-216" style="endArrow=classic;html=1;strokeColor=#ffffff;exitX=0.25;exitY=1;entryX=1;entryY=0.75;edgeStyle=orthogonalEdgeStyle;exitDx=0;exitDy=0;" target="78Ld1IJF264JJrj9MNvy-214" value="Control&lt;div&gt;Command&lt;/div&gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="78Ld1IJF264JJrj9MNvy-227" edge="1" parent="1" source="78Ld1IJF264JJrj9MNvy-214" style="endArrow=classic;html=1;strokeColor=#888888;exitX=0.5;exitY=1;entryX=0.5;entryY=0;dashed=1;" target="78Ld1IJF264JJrj9MNvy-219" value="Control&lt;div&gt;Command&lt;/div&gt;">
+          <mxGeometry relative="1" x="-0.28" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="78Ld1IJF264JJrj9MNvy-228" edge="1" parent="1" source="78Ld1IJF264JJrj9MNvy-217" style="endArrow=classic;html=1;strokeColor=#ff9800;exitX=0.5;exitY=0;entryX=0.5;entryY=1;fontColor=#ff9800;fontSize=10;" target="78Ld1IJF264JJrj9MNvy-216" value="Table Lookup">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="78Ld1IJF264JJrj9MNvy-229" parent="1" style="swimlane;whiteSpace=wrap;html=1;startSize=23;fillColor=none;strokeColor=#aaaaaa;color:#ffffff;fontStyle=1;" value="DIAGRAM LEGEND" vertex="1">
+          <mxGeometry height="130" width="230" x="577" y="560" as="geometry" />
+        </mxCell>
+        <mxCell id="78Ld1IJF264JJrj9MNvy-230" parent="78Ld1IJF264JJrj9MNvy-229" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0d47a1;color:#ffffff;fontSize=9;strokeColor=#1976D2;" value="In-Scope Module" vertex="1">
+          <mxGeometry height="20" width="100" x="10" y="35" as="geometry" />
+        </mxCell>
+        <mxCell id="78Ld1IJF264JJrj9MNvy-231" parent="78Ld1IJF264JJrj9MNvy-229" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#222222;strokeColor=#444444;color:#777777;dashed=1;fontSize=9;" value="Out-of-Scope / Stub" vertex="1">
+          <mxGeometry height="20" width="100" x="10" y="85" as="geometry" />
+        </mxCell>
+        <mxCell id="78Ld1IJF264JJrj9MNvy-232" edge="1" parent="78Ld1IJF264JJrj9MNvy-229" style="endArrow=classic;html=1;dashed=1;strokeColor=#aaaaaa;fontSize=9;fontColor=#aaaaaa;" value="Startup Inject">
+          <mxGeometry width="80" x="120" y="45" as="geometry">
+            <mxPoint x="120" y="45" as="sourcePoint" />
+            <mxPoint x="210" y="45" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="78Ld1IJF264JJrj9MNvy-233" edge="1" parent="78Ld1IJF264JJrj9MNvy-229" style="endArrow=classic;html=1;strokeColor=#ffffff;fontSize=9;fontColor=#ffffff;" value="Runtime Data&lt;div&gt;(Dispatch)&lt;/div&gt;">
+          <mxGeometry width="80" x="120" y="75" as="geometry">
+            <mxPoint x="120" y="75" as="sourcePoint" />
+            <mxPoint x="210" y="75" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="78Ld1IJF264JJrj9MNvy-234" parent="78Ld1IJF264JJrj9MNvy-229" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1B5E20;color:#ffffff;fontSize=9;strokeColor=#66BB6A;" value="In-Scope Module" vertex="1">
+          <mxGeometry height="20" width="100" x="10" y="60" as="geometry" />
+        </mxCell>
+        <mxCell id="78Ld1IJF264JJrj9MNvy-236" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="&lt;p data-path-to-node=&quot;1&quot;&gt;This project utilizes a &lt;b data-path-to-node=&quot;1&quot; data-index-in-node=&quot;24&quot;&gt;Micro-Kernel Architecture&lt;/b&gt; centered on a &lt;b data-path-to-node=&quot;1&quot; data-index-in-node=&quot;64&quot;&gt;Decoupled Event-Driven Pipeline&lt;/b&gt;. The &lt;b data-path-to-node=&quot;1&quot; data-index-in-node=&quot;101&quot;&gt;Main Orchestrator&lt;/b&gt; manages the system lifecycle and implements &lt;b data-path-to-node=&quot;1&quot; data-index-in-node=&quot;163&quot;&gt;Dependency Injection&lt;/b&gt; to provide a shared &lt;b data-path-to-node=&quot;1&quot; data-index-in-node=&quot;204&quot;&gt;Event Broker&lt;/b&gt; instance to all modules.&lt;/p&gt;&lt;p data-path-to-node=&quot;2&quot;&gt;&lt;b data-path-to-node=&quot;2&quot; data-index-in-node=&quot;0&quot;&gt;Input Modules&lt;/b&gt; (Hardware/Virtual) act as adapters that capture raw signals and publish them as &lt;b data-path-to-node=&quot;2&quot; data-index-in-node=&quot;94&quot;&gt;Normalized Input Events&lt;/b&gt; (&lt;span class=&quot;math-inline&quot; data-math=&quot;0.0 \dots 1.0&quot; data-index-in-node=&quot;119&quot;&gt;&lt;span class=&quot;strut&quot; style=&quot;height: 0.6444em;&quot;&gt;&lt;/span&gt;&lt;span class=&quot;mord&quot;&gt;0.0&lt;/span&gt;&lt;span class=&quot;mspace&quot; style=&quot;margin-right: 0.1667em;&quot;&gt;&lt;/span&gt;&lt;span class=&quot;minner&quot;&gt;…&lt;/span&gt;&lt;span class=&quot;mspace&quot; style=&quot;margin-right: 0.1667em;&quot;&gt;&lt;/span&gt;&lt;span class=&quot;mord&quot;&gt;1.0&lt;/span&gt;&lt;/span&gt;) to the broker. The &lt;b data-path-to-node=&quot;2&quot; data-index-in-node=&quot;153&quot;&gt;Mapping Middleware&lt;/b&gt; subscribes to these events, performing &lt;b data-path-to-node=&quot;2&quot; data-index-in-node=&quot;211&quot;&gt;Data Transformation&lt;/b&gt; (sensitivity, inversion, and remapping) based on a dynamic &lt;b data-path-to-node=&quot;2&quot; data-index-in-node=&quot;290&quot;&gt;JSON Mapping Table&lt;/b&gt;.&lt;/p&gt;&lt;p data-path-to-node=&quot;3&quot;&gt;Once processed, the broker &lt;b data-path-to-node=&quot;3&quot; data-index-in-node=&quot;27&quot;&gt;dispatches&lt;/b&gt; the resulting &lt;b data-path-to-node=&quot;3&quot; data-index-in-node=&quot;52&quot;&gt;Control Commands&lt;/b&gt; to the &lt;b data-path-to-node=&quot;3&quot; data-index-in-node=&quot;76&quot;&gt;Output Layer&lt;/b&gt;, ensuring a clear &lt;b data-path-to-node=&quot;3&quot; data-index-in-node=&quot;107&quot;&gt;Separation of Concerns&lt;/b&gt; between hardware interaction and domain logic.&lt;/p&gt;" vertex="1">
+          <mxGeometry height="190" width="490" x="44" y="631" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
