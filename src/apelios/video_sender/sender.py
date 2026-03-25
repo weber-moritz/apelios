@@ -6,10 +6,17 @@ Streams video from a camera using aiortc.
 import asyncio
 import cv2
 from aiortc import RTCPeerConnection, RTCSessionDescription, VideoStreamTrack
-from aiortc.contrib.signaling import TcpSocketSignaling
 from av import VideoFrame
 import fractions
 import logging
+
+try:
+    from ..signaling_server import WebSocketSignaling
+except ImportError:
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).parent.parent))
+    from signaling_server import WebSocketSignaling
 
 logger = logging.getLogger(__name__)
 
@@ -29,10 +36,31 @@ class VideoTrack(VideoStreamTrack):
         """
         super().__init__()
         self.camera_id = camera_id
-        self.cap = cv2.VideoCapture(camera_id)
         
-        if not self.cap.isOpened():
+        logger.info(f"Attempting to open camera {camera_id}...")
+        
+        # Try multiple backends
+        backends = [
+            (cv2.CAP_V4L2, "V4L2"),
+            (cv2.CAP_ANY, "ANY"),
+            (cv2.CAP_GSTREAMER, "GStreamer"),
+        ]
+        
+        self.cap = None
+        for backend, name in backends:
+            logger.info(f"Trying {name} backend...")
+            cap = cv2.VideoCapture(camera_id, backend)
+            if cap.isOpened():
+                logger.info(f"✓ Camera opened with {name} backend")
+                self.cap = cap
+                break
+            cap.release()
+        
+        if self.cap is None or not self.cap.isOpened():
+            logger.error(f"Failed to open camera {camera_id} with all backends")
             raise RuntimeError(f"Cannot open camera {camera_id}")
+        
+        logger.info(f"Camera {camera_id} opened successfully")
         
         # Set camera properties for better performance
         self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
@@ -95,22 +123,16 @@ class VideoSender:
     
     async def start(self, host="127.0.0.1", port=9999):
         """
-        Start sending video stream.
+        Start sending video stream with WebSocket signaling.
         
         Args:
             host: Signaling server host
             port: Signaling server port
         """
-        logger.info(f"Starting WebRTC sender on {host}:{port}")
+        logger.info(f"Starting WebRTC sender connecting to {host}:{port}")
         logger.info(f"Using camera ID: {self.camera_id}")
         
-        # Create signaling connection
-        self.signaling = TcpSocketSignaling(host, port)
-        
-        # Create peer connection
-        self.pc = RTCPeerConnection()
-        
-        # Add video track
+        # Open camera once (reuse for all connections)
         try:
             self.video_track = VideoTrack(
                 camera_id=self.camera_id,
@@ -118,51 +140,93 @@ class VideoSender:
                 height=self.height,
                 fps=self.fps
             )
-            self.pc.addTrack(self.video_track)
-            logger.info("Video track added")
+            logger.info("Video track initialized")
         except Exception as e:
             logger.error(f"Error opening camera: {e}")
             raise
         
-        # Connection state change handler
-        @self.pc.on("connectionstatechange")
-        async def on_connectionstatechange():
-            logger.info(f"Connection state: {self.pc.connectionState}")
+        # Connect to signaling server once
+        self.signaling = WebSocketSignaling(host, port, client_type="sender")
+        await self.signaling.connect()
+        
+        # Handle multiple receiver connections
+        connection_count = 0
+        active_connections = {}  # Track active peer connections
         
         try:
-            # Connect to signaling server
-            await self.signaling.connect()
-            logger.info("Connected to signaling server")
-            
-            # Create and send offer
-            offer = await self.pc.createOffer()
-            await self.pc.setLocalDescription(offer)
-            await self.signaling.send(self.pc.localDescription)
-            logger.info("Offer sent")
-            
-            # Wait for answer
             while True:
+                # Wait for messages from signaling server
                 obj = await self.signaling.receive()
                 
-                if isinstance(obj, RTCSessionDescription):
-                    await self.pc.setRemoteDescription(obj)
-                    logger.info("Answer received and set")
-                elif obj is None:
-                    logger.info("Signaling ended")
+                if obj is None:
+                    logger.info("Signaling connection closed")
                     break
-            
-            # Keep connection alive
-            logger.info("Streaming... Press Ctrl+C to stop")
-            await asyncio.sleep(3600)  # Run for 1 hour or until interrupted
-            
+                
+                # Handle request for new offer from a receiver
+                if isinstance(obj, dict) and obj.get("request_offer"):
+                    connection_count += 1
+                    logger.info(f"Creating connection #{connection_count} for new receiver")
+                    
+                    # Create new peer connection for this receiver
+                    pc = RTCPeerConnection()
+                    pc.addTrack(self.video_track)
+                    
+                    # Monitor connection state
+                    conn_id = connection_count
+                    active_connections[conn_id] = pc
+                    
+                    @pc.on("connectionstatechange")
+                    async def on_connectionstatechange(conn_id=conn_id):
+                        state = active_connections[conn_id].connectionState
+                        logger.info(f"Connection #{conn_id} state: {state}")
+                        if state in ["failed", "closed"]:
+                            if conn_id in active_connections:
+                                del active_connections[conn_id]
+                                logger.info(f"Connection #{conn_id} removed")
+                    
+                    # Create and send offer
+                    offer = await pc.createOffer()
+                    await pc.setLocalDescription(offer)
+                    await self.signaling.send(pc.localDescription)
+                    logger.info(f"Offer sent for connection #{conn_id}")
+                
+                # Handle answer from receiver
+                elif isinstance(obj, RTCSessionDescription) and obj.type == "answer":
+                    # Find the peer connection waiting for answer (most recent)
+                    if active_connections:
+                        pc = active_connections[connection_count]
+                        await pc.setRemoteDescription(obj)
+                        logger.info(f"Answer received for connection #{connection_count}")
+                        logger.info(f"Active connections: {len(active_connections)}")
+                    else:
+                        logger.warning("Received answer but no active peer connection")
+                    
         except KeyboardInterrupt:
             logger.info("Stopping sender...")
-            raise
-        except Exception as e:
-            logger.error(f"Error: {e}")
-            raise
         finally:
-            await self.stop()
+            # Clean up all active connections
+            for conn_id, pc in list(active_connections.items()):
+                try:
+                    await pc.close()
+                    logger.debug(f"Closed connection #{conn_id}")
+                except:
+                    pass
+            
+            # Clean up signaling
+            if self.signaling:
+                try:
+                    await self.signaling.close()
+                except:
+                    pass
+            
+            # Clean up camera
+            if self.video_track:
+                try:
+                    if hasattr(self.video_track, 'cap'):
+                        self.video_track.cap.release()
+                except:
+                    pass
+            logger.info("Sender stopped")
     
     async def stop(self):
         """Stop the sender and cleanup resources."""
