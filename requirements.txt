@@ -1,12 +1,17 @@
 aioartnet==0.2.1
-aiortc
-av
-bitstream
-opencv-python
-hid==1.0.8
-matplotlib
-numpy>=1.26.4
-aiohttp
-pyside6
-qasync
-websockets
+aiortc # for rtc stream. maybe redundant
+av # for stream, maybe redundant
+bitsteam #correct, no "r"
+opencv-python # for object recognition, redundant as it has not gui
+hid==1.0.8 #maybe needed for later inputs
+matplotlib #idk
+numpy>=1.26.4 #idk
+aiohttp #idk
+pyside6 #gui, not for here
+qasync #idk
+websockets # redundant for webrtc?
+nats-server-bin>=2.12.6 #the nats binaries
+nats-py
+pytest>=7.0 #testing
+pytest-asyncio>=0.23
+pytest-cov #coverage report
