@@ -3,12 +3,14 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
+from apelios.broker.config import NatsConfig
 from apelios.broker.nats_runtime_manager import NatsRuntimeManager
 
 
 @pytest.mark.asyncio
 async def test_start_server_launches_process_and_waits_for_health(tmp_path, monkeypatch):
-    runtime = NatsRuntimeManager(log_dir=tmp_path)
+    config = NatsConfig(log_dir=tmp_path)
+    runtime = NatsRuntimeManager(config) 
 
     fake_process = MagicMock()
     fake_process.Popen.varialbe = None # <- here
@@ -38,8 +40,9 @@ async def test_start_server_launches_process_and_waits_for_health(tmp_path, monk
 
 @pytest.mark.asyncio
 async def test_stop_server_terminates_process_and_closes_log(tmp_path, monkeypatch):
-    runtime = NatsRuntimeManager(log_dir=tmp_path)
-
+    config = NatsConfig(log_dir=tmp_path)
+    runtime = NatsRuntimeManager(config)
+    
     fake_process = MagicMock()
     fake_process.poll.return_value = None
     monkeypatch.setattr(
@@ -64,7 +67,8 @@ async def test_stop_server_terminates_process_and_closes_log(tmp_path, monkeypat
     
 @pytest.mark.asyncio
 async def test_stop_server_kills_if_terminate_times_out(tmp_path, monkeypatch):
-    runtime = NatsRuntimeManager(log_dir=tmp_path)
+    config = NatsConfig(log_dir=tmp_path)
+    runtime = NatsRuntimeManager(config) 
 
     fake_process = MagicMock()
     fake_process.wait.side_effect = subprocess.TimeoutExpired(cmd="nats-server", timeout=3)

@@ -3,16 +3,21 @@ import subprocess
 import asyncio
 import time
 
+from .broker_interface import BrokerInterface
+from .config import NatsConfig, load_nats_config
 
-class NatsRuntimeManager:
-    def __init__(self, port: int = 4222, host: str = "127.0.0.1", log_dir: str = "logs"):
-        self.port = port
-        self.host = host
+
+class NatsRuntimeManager(BrokerInterface):
+    def __init__(self, config: NatsConfig | None = None):
+        cfg = config or load_nats_config()
+
+        self.port = cfg.port
+        self.host = cfg.host
         self.process = None
         self.log_file = None
-        self.log_dir = Path(log_dir)
+        self.log_dir = Path(cfg.log_dir)
         self.log_dir.mkdir(parents=True, exist_ok=True)
-        self.server_url = f"nats://{host}:{port}"
+        self.server_url = f"nats://{self.host}:{self.port}"
 
     async def start_server(self) -> None:
         if self.process is not None:
