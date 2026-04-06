@@ -11,3 +11,7 @@ package-dir = {"" = "src"}
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
+markers = [
+    "integration: tests that require external services (nats-server, etc)",
+    "e2e: end-to-end tests that exercise full workflows",
+]

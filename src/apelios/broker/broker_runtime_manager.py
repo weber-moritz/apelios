@@ -1,11 +1,12 @@
-# broker_runtime_manager.py
 from .broker_interface import BrokerInterface
+from .config import NatsConfig
 from .nats_runtime_manager import NatsRuntimeManager
 
+
 class BrokerRuntimeManager:
-    def __init__(self, provider: str = "nats"):
+    def __init__(self, provider: str = "nats", config: NatsConfig | None = None):
         if provider == "nats":
-            self._runtime: BrokerInterface = NatsRuntimeManager()
+            self._runtime: BrokerInterface = NatsRuntimeManager(config=config)
         else:
             raise ValueError(f"Unsupported broker provider: {provider}")
 
