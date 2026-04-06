@@ -21,7 +21,7 @@ def test_nats_provider_builds_runtime(monkeypatch):
 
     manager = BrokerRuntimeManager(provider="nats")
 
-    nats_runtime_cls.assert_called_once_with()
+    nats_runtime_cls.assert_called_once_with(config=None)    
     assert manager._runtime is fake_runtime
 
 
