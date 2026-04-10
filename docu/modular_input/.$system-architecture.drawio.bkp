@@ -1,6 +1,6 @@
-<mxfile host="Electron" agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/29.6.1 Chrome/142.0.7444.265 Electron/39.8.0 Safari/537.36" version="29.6.1">
+<mxfile host="Electron" agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/29.5.2 Chrome/142.0.7444.265 Electron/39.6.1 Safari/537.36" version="29.5.2">
   <diagram name="Controller Architecture" id="gQz7spAMgrnhUT9ABDKO">
-    <mxGraphModel dx="1012" dy="1074" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+    <mxGraphModel dx="962" dy="746" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -81,10 +81,10 @@
         <mxCell id="78Ld1IJF264JJrj9MNvy-229" parent="1" style="swimlane;whiteSpace=wrap;html=1;startSize=23;fillColor=none;strokeColor=#aaaaaa;color:#ffffff;fontStyle=1;" value="DIAGRAM LEGEND" vertex="1">
           <mxGeometry height="130" width="230" x="577" y="560" as="geometry" />
         </mxCell>
-        <mxCell id="78Ld1IJF264JJrj9MNvy-230" parent="78Ld1IJF264JJrj9MNvy-229" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0d47a1;color:#ffffff;fontSize=9;strokeColor=#1976D2;" value="[In-Scope] Input Module" vertex="1">
+        <mxCell id="78Ld1IJF264JJrj9MNvy-230" parent="78Ld1IJF264JJrj9MNvy-229" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0d47a1;color:#ffffff;fontSize=9;strokeColor=#1976D2;" value="In-Scope Module" vertex="1">
           <mxGeometry height="20" width="100" x="10" y="35" as="geometry" />
         </mxCell>
-        <mxCell id="78Ld1IJF264JJrj9MNvy-231" parent="78Ld1IJF264JJrj9MNvy-229" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#222222;strokeColor=#444444;color:#777777;dashed=1;fontSize=9;" value="[Out-of-Scope / Stub] output Modul" vertex="1">
+        <mxCell id="78Ld1IJF264JJrj9MNvy-231" parent="78Ld1IJF264JJrj9MNvy-229" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#222222;strokeColor=#444444;color:#777777;dashed=1;fontSize=9;" value="Out-of-Scope / Stub" vertex="1">
           <mxGeometry height="20" width="100" x="10" y="85" as="geometry" />
         </mxCell>
         <mxCell id="78Ld1IJF264JJrj9MNvy-232" edge="1" parent="78Ld1IJF264JJrj9MNvy-229" style="endArrow=classic;html=1;dashed=1;strokeColor=#aaaaaa;fontSize=9;fontColor=#aaaaaa;" value="Startup Inject">
@@ -99,7 +99,7 @@
             <mxPoint x="210" y="75" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="78Ld1IJF264JJrj9MNvy-234" parent="78Ld1IJF264JJrj9MNvy-229" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1B5E20;color:#ffffff;fontSize=9;strokeColor=#66BB6A;" value="[In-Scope] logic Module" vertex="1">
+        <mxCell id="78Ld1IJF264JJrj9MNvy-234" parent="78Ld1IJF264JJrj9MNvy-229" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1B5E20;color:#ffffff;fontSize=9;strokeColor=#66BB6A;" value="In-Scope Module" vertex="1">
           <mxGeometry height="20" width="100" x="10" y="60" as="geometry" />
         </mxCell>
         <mxCell id="78Ld1IJF264JJrj9MNvy-236" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="&lt;p data-path-to-node=&quot;1&quot;&gt;This project utilizes a &lt;b data-path-to-node=&quot;1&quot; data-index-in-node=&quot;24&quot;&gt;Micro-Kernel Architecture&lt;/b&gt; centered on a &lt;b data-path-to-node=&quot;1&quot; data-index-in-node=&quot;64&quot;&gt;Decoupled Event-Driven Pipeline&lt;/b&gt;. The &lt;b data-path-to-node=&quot;1&quot; data-index-in-node=&quot;101&quot;&gt;Main Orchestrator&lt;/b&gt; manages the system lifecycle and implements &lt;b data-path-to-node=&quot;1&quot; data-index-in-node=&quot;163&quot;&gt;Dependency Injection&lt;/b&gt; to provide a shared &lt;b data-path-to-node=&quot;1&quot; data-index-in-node=&quot;204&quot;&gt;Event Broker&lt;/b&gt; instance to all modules.&lt;/p&gt;&lt;p data-path-to-node=&quot;2&quot;&gt;&lt;b data-path-to-node=&quot;2&quot; data-index-in-node=&quot;0&quot;&gt;Input Modules&lt;/b&gt; (Hardware/Virtual) act as adapters that capture raw signals and publish them as &lt;b data-path-to-node=&quot;2&quot; data-index-in-node=&quot;94&quot;&gt;Normalized Input Events&lt;/b&gt; (&lt;span class=&quot;math-inline&quot; data-math=&quot;0.0 \dots 1.0&quot; data-index-in-node=&quot;119&quot;&gt;&lt;span class=&quot;strut&quot; style=&quot;height: 0.6444em;&quot;&gt;&lt;/span&gt;&lt;span class=&quot;mord&quot;&gt;0.0&lt;/span&gt;&lt;span class=&quot;mspace&quot; style=&quot;margin-right: 0.1667em;&quot;&gt;&lt;/span&gt;&lt;span class=&quot;minner&quot;&gt;…&lt;/span&gt;&lt;span class=&quot;mspace&quot; style=&quot;margin-right: 0.1667em;&quot;&gt;&lt;/span&gt;&lt;span class=&quot;mord&quot;&gt;1.0&lt;/span&gt;&lt;/span&gt;) to the broker. The &lt;b data-path-to-node=&quot;2&quot; data-index-in-node=&quot;153&quot;&gt;Mapping Middleware&lt;/b&gt; subscribes to these events, performing &lt;b data-path-to-node=&quot;2&quot; data-index-in-node=&quot;211&quot;&gt;Data Transformation&lt;/b&gt; (sensitivity, inversion, and remapping) based on a dynamic &lt;b data-path-to-node=&quot;2&quot; data-index-in-node=&quot;290&quot;&gt;JSON Mapping Table&lt;/b&gt;.&lt;/p&gt;&lt;p data-path-to-node=&quot;3&quot;&gt;Once processed, the broker &lt;b data-path-to-node=&quot;3&quot; data-index-in-node=&quot;27&quot;&gt;dispatches&lt;/b&gt; the resulting &lt;b data-path-to-node=&quot;3&quot; data-index-in-node=&quot;52&quot;&gt;Control Commands&lt;/b&gt; to the &lt;b data-path-to-node=&quot;3&quot; data-index-in-node=&quot;76&quot;&gt;Output Layer&lt;/b&gt;, ensuring a clear &lt;b data-path-to-node=&quot;3&quot; data-index-in-node=&quot;107&quot;&gt;Separation of Concerns&lt;/b&gt; between hardware interaction and domain logic.&lt;/p&gt;" vertex="1">

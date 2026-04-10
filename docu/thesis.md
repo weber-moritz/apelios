@@ -1,0 +1,33 @@
+- tdd test driven development
+    - test selber schreiben
+    - ki test grün machen
+    - dann ki refactoring
+- broker austauschen
+    - muss rahmne bedingungen erfüllen
+- hexagonale architektur (synonym: ports and adapters)
+- orchestrator:
+    - alles zusammen führen
+    - namen: main, assembler, configurator
+- nicht funktionale anforderungen:
+    - festlegen und dann nachdenken on event driven oder hashmap
+    - latenzfrei
+    - daten dürfen verloren gehen, da absolute werte
+    - was passiert mit nachrichten die doppelt kommen?
+    - -> wahrscheinlich kein event driven, da nicht skalierbar
+    - asynchrone hashmap?
+- input layer
+    - future work: nicht alle usb geräte direkt andocken sondern 
+    - event driven, event basierte erkennung, statt alle inputs zu spammen
+    - input layer vor filtern
+- hashmap für die inputs in der middleware
+    - middleware überschreibt immer den letzten wert den er bekommen hat von einem input
+    - und dann zieht er sich aus der map den letzten stand
+- mit den einfachsten anfangen, dann future work
+- middleware:
+    - modul1 liest broker und schreibt werte in hashmap
+    - modul2 liest hashmap und baut daraus dann das nächste paket
+-> nicht funktionale anforderungen schreiben -> löst viele Fragen
+- sehr hohes level -> darf gerne weniger werden
+- test soll business anforderungen testen und nicht umsetzung
+- tests schreiben ist schwer aber sinnvoll
+
