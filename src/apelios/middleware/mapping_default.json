@@ -1,0 +1,12 @@
+{
+  "profile_name": "Default Setup",
+  "mappings": {
+    "group1.pan": {
+      "merge_strategy": "delta_sum",
+      "inputs": [
+        { "source": "steamdeck.gyro.x", "type": "delta", "sensitivity": 1.0 },
+        { "source": "mouse.scroll.x", "type": "delta", "sensitivity": 0.5 }
+      ]
+    }
+  }
+}
