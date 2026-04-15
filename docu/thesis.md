@@ -3,7 +3,8 @@
     - ki test grün machen
     - dann ki refactoring
 - broker austauschen
-    - muss rahmne bedingungen erfüllen
+    - neuer muss rahmne bedingungen erfüllen
+    - ist ok wenn die bedingungen eng sind
 - hexagonale architektur (synonym: ports and adapters)
 - orchestrator:
     - alles zusammen führen
@@ -16,9 +17,9 @@
     - -> wahrscheinlich kein event driven, da nicht skalierbar
     - asynchrone hashmap?
 - input layer
-    - future work: nicht alle usb geräte direkt andocken sondern 
-    - event driven, event basierte erkennung, statt alle inputs zu spammen
-    - input layer vor filtern
+    - future work: nicht alle usb geräte direkt andocken sondern wählbar machen
+    - event driven, event basierte erkennung, statt alle inputs zu spammen?
+    - input layer vor filtern?
 - hashmap für die inputs in der middleware
     - middleware überschreibt immer den letzten wert den er bekommen hat von einem input
     - und dann zieht er sich aus der map den letzten stand
