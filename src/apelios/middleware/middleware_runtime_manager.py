@@ -32,6 +32,8 @@ class MiddlewareRuntimeManager:
         """Start middleware runtime by subscribing to broker input events."""
         if self._running:
             return
+        
+        await self.broker_client.connect()
 
         await self.broker_client.subscribe(self.input_subject, self.input_subscriber)
         self._running = True

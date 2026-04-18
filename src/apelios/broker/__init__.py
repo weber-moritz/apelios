@@ -1,4 +1,4 @@
-from .nats_runtime_manager import NatsRuntimeManager
-from .nats_client import NatsClient
+from .broker_runtime_manager import BrokerRuntimeManager
+from .broker_client import BrokerClient
 
-__all__ = ["NatsRuntimeManager", "NatsClient"]
+__all__ = ["BrokerRuntimeManager", "BrokerClient"]

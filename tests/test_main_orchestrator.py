@@ -1,82 +1,114 @@
 import pytest
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, call
 
-from apelios.main_orchestrator import MainOrchestrator
-
-
-@pytest.mark.asyncio
-async def test_start_delegates_to_broker_manager():
-    fake_broker = MagicMock()
-    fake_broker.start_server = AsyncMock()
-    fake_broker.is_running.return_value = True
-    
-    orchestrator = MainOrchestrator(broker_manager=fake_broker)
-    await orchestrator.start()
-    
-    fake_broker.start_server.assert_awaited_once()
-    assert orchestrator.is_running() is True
+from apelios.broker.broker_runtime_manager import BrokerRuntimeManager
+from apelios.middleware.middleware_runtime_manager import MiddlewareRuntimeManager
+from apelios.main_orchestrator import MainOrchestrator  # Adjust import path if needed
 
 
-@pytest.mark.asyncio
-async def test_start_is_idempotent():
-    fake_broker = MagicMock()
-    fake_broker.start_server = AsyncMock()
-    fake_broker.is_running.return_value = True
-    
-    orchestrator = MainOrchestrator(broker_manager=fake_broker)
-    
-    await orchestrator.start()
-    await orchestrator.start()  # Call twice
-    
-    # start_server should only be called once
-    fake_broker.start_server.assert_awaited_once()
+@pytest.fixture
+def mock_broker():
+    """Mock the network infrastructure."""
+    mock = MagicMock(spec=BrokerRuntimeManager)
+    mock.start_server = AsyncMock()
+    mock.stop_server = AsyncMock()
+    mock.health_check = AsyncMock(return_value=True)
+    return mock
+
+
+@pytest.fixture
+def mock_middleware():
+    """Mock the 60Hz math engine."""
+    mock = MagicMock(spec=MiddlewareRuntimeManager)
+    mock.start = AsyncMock()
+    mock.stop = AsyncMock()
+    mock.tick = AsyncMock()
+    mock.is_running = MagicMock(return_value=True)
+    return mock
 
 
 @pytest.mark.asyncio
-async def test_stop_delegates_to_broker_manager():
-    fake_broker = MagicMock()
-    fake_broker.start_server = AsyncMock()
-    fake_broker.stop_server = AsyncMock()
-    fake_broker.is_running.return_value = False
+async def test_start_sequence_order(mock_broker, mock_middleware):
+    """Test that infrastructure starts BEFORE subsystems."""
+    orchestrator = MainOrchestrator(
+        broker_manager=mock_broker, 
+        middleware_manager=mock_middleware
+    )
     
-    orchestrator = MainOrchestrator(broker_manager=fake_broker)
+    # We use a parent mock to track the exact order of calls across different objects
+    manager = MagicMock()
+    manager.attach_mock(mock_broker.start_server, 'broker_start')
+    manager.attach_mock(mock_middleware.start, 'middleware_start')
+
     await orchestrator.start()
+    
+    assert orchestrator.is_running()
+    # Verify the broker started first!
+    assert manager.mock_calls == [
+        call.broker_start(),
+        call.middleware_start()
+    ]
+
+
+@pytest.mark.asyncio
+async def test_stop_sequence_order(mock_broker, mock_middleware):
+    """Test that subsystems shut down BEFORE infrastructure."""
+    orchestrator = MainOrchestrator(
+        broker_manager=mock_broker, 
+        middleware_manager=mock_middleware
+    )
+    
+    # Force it into a running state
+    orchestrator._running = True
+    
+    manager = MagicMock()
+    manager.attach_mock(mock_middleware.stop, 'middleware_stop')
+    manager.attach_mock(mock_broker.stop_server, 'broker_stop')
+
     await orchestrator.stop()
     
-    fake_broker.stop_server.assert_awaited_once()
-    assert orchestrator.is_running() is False
+    assert not orchestrator.is_running()
+    # Verify the middleware stopped first!
+    assert manager.mock_calls == [
+        call.middleware_stop(),
+        call.broker_stop()
+    ]
 
 
 @pytest.mark.asyncio
-async def test_health_check_delegates_and_returns_value():
-    fake_broker = MagicMock()
-    fake_broker.health_check = AsyncMock(return_value=True)
+async def test_health_check_fails_if_middleware_down(mock_broker, mock_middleware):
+    """Test health check logic."""
+    # Broker is healthy, but middleware crashed
+    mock_broker.health_check.return_value = True
+    mock_middleware.is_running.return_value = False
     
-    orchestrator = MainOrchestrator(broker_manager=fake_broker)
-    result = await orchestrator.health_check(timeout=3)
+    orchestrator = MainOrchestrator(
+        broker_manager=mock_broker, 
+        middleware_manager=mock_middleware
+    )
     
-    fake_broker.health_check.assert_awaited_once_with(timeout=3)
-    assert result is True
-
-
-def test_is_running_delegates():
-    fake_broker = MagicMock()
-    fake_broker.is_running.return_value = True
-    
-    orchestrator = MainOrchestrator(broker_manager=fake_broker)
-    assert orchestrator.is_running() is True
-    fake_broker.is_running.assert_called_once()
+    is_healthy = await orchestrator.health_check()
+    assert is_healthy is False
 
 
 @pytest.mark.asyncio
-async def test_stop_without_start_is_safe():
-    fake_broker = MagicMock()
-    fake_broker.stop_server = AsyncMock()
-    fake_broker.is_running.return_value = False
+async def test_run_forever_executes_tick_and_cleans_up(mock_broker, mock_middleware):
+    """Test the infinite loop and graceful shutdown."""
+    orchestrator = MainOrchestrator(
+        broker_manager=mock_broker, 
+        middleware_manager=mock_middleware
+    )
     
-    orchestrator = MainOrchestrator(broker_manager=fake_broker)
+    # TRICK: How do you test a `while True` loop without hanging Pytest forever?
+    # We force the `tick()` method to throw an Exception the first time it runs.
+    # This breaks the loop, allowing us to verify the `finally: await self.stop()` block executes.
+    mock_middleware.tick.side_effect = Exception("Simulated crash to break the loop")
     
-    # Should not raise even though never started
-    await orchestrator.stop()
+    with pytest.raises(Exception, match="Simulated crash"):
+        await orchestrator.run_forever()
+        
+    # Did it try to run a frame?
+    mock_middleware.tick.assert_called_once()
     
-    assert orchestrator.is_running() is False
+    # Did it successfully call stop() in the finally block?
+    mock_middleware.stop.assert_called_once()
