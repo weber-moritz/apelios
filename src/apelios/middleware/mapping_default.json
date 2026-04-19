@@ -1,12 +1,19 @@
 {
-  "profile_name": "Default Setup",
+  "profile_name": "Stateless Accumulator Setup",
   "mappings": {
-    "group1.pan": {
-      "merge_strategy": "delta_sum",
-      "inputs": [
-        { "source": "steamdeck.gyro.x", "type": "delta", "sensitivity": 1.0 },
-        { "source": "mouse.scroll.x", "type": "delta", "sensitivity": 0.5 }
-      ]
+    "midi.fader.1": {
+      "target": "group1.pan",
+      "type": "absolute"
+    },
+    "mouse.scroll.x": {
+      "target": "group1.pan",
+      "type": "delta",
+      "sensitivity": 0.5
+    },
+    "steamdeck.joy.x": {
+      "target": "group1.pan",
+      "type": "rate",
+      "sensitivity": 2.0
     }
   }
 }
