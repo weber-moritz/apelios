@@ -26,8 +26,10 @@ def mock_profile():
 def mock_broker():
     """A perfectly abstracted fake network."""
     mock = MagicMock()
+    mock.connect = AsyncMock()
     mock.publish = AsyncMock()
     mock.subscribe = AsyncMock()
+    mock.disconnect = AsyncMock()
     return mock
 
 

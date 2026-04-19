@@ -24,10 +24,12 @@ def mock_profile():
 @pytest.fixture
 def mock_broker_client():
     """Mocked broker client for unit tests."""
-    mock = MagicMock()
-    mock.subscribe = AsyncMock()
-    mock.publish = AsyncMock()
-    return mock
+    mock_broker = MagicMock()
+    mock_broker.connect = AsyncMock()
+    mock_broker.disconnect = AsyncMock()
+    mock_broker.subscribe = AsyncMock()
+    mock_broker.publish = AsyncMock()
+    return mock_broker
 
 
 @pytest.fixture
