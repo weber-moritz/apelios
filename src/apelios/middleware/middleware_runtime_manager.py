@@ -49,9 +49,9 @@ class MiddlewareRuntimeManager:
         """Return whether this runtime manager is marked as running."""
         return self._running
 
-    async def tick(self) -> None:
+    async def tick(self, dt: float = 0.016) -> None:
         """Process one single frame of middleware logic and publish outputs."""
-        self.middleware.process_frame()
+        self.middleware.process_frame(dt=dt)
         
         current_outputs = self.middleware.virtual_output_state
 

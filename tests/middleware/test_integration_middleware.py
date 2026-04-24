@@ -70,7 +70,7 @@ async def test_full_middleware_signal_flow(mock_profile, mock_broker):
     captured_subscriber_callback(msg_1)
     
     # Simulate the 60Hz loop ticking once
-    await manager.tick()
+    await manager.tick(dt = 0.016)
     
     # Verify the Publisher sent the absolute value to the network
     expected_payload_1 = json.dumps({"value": 0.8}).encode("utf-8")
@@ -98,6 +98,6 @@ async def test_full_middleware_signal_flow(mock_profile, mock_broker):
     # Process the frame that calculates the difference
     await manager.tick()
     
-    # Verify the Publisher successfully sent the calculated delta (10.0)
-    expected_payload_delta = json.dumps({"value": 10.0}).encode("utf-8")
+    # Verify the Publisher sent the clamped output value.
+    expected_payload_delta = json.dumps({"value": 1.0}).encode("utf-8")
     mock_broker.publish.assert_any_call("outputs.group1.pan", expected_payload_delta)
