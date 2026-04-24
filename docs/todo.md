@@ -1,0 +1,2 @@
+- fix c4 layer diagram
+- add adr files

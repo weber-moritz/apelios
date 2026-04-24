@@ -1,0 +1,100 @@
+<mxfile host="65bd71144e">
+    <diagram id="REtniEY5s-1x0Lh9nuuH" name="C3 Component Diagram">
+        <mxGraphModel dx="1660" dy="581" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="2" value="&lt;h2 style=&quot;margin:0;&quot;&gt;Input Devices&lt;/h2&gt;&lt;p style=&quot;margin:0;&quot;&gt;[External System]&lt;/p&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#999999;fontColor=#ffffff;strokeColor=#666666;strokeWidth=2;" vertex="1" parent="1">
+                    <mxGeometry x="-800" y="310" width="180" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="3" value="&lt;h2 style=&quot;margin:0;&quot;&gt;Mapping Profiles&lt;/h2&gt;&lt;p style=&quot;margin:0;&quot;&gt;[Container: JSON]&lt;/p&gt;" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#438dd5;fontColor=#ffffff;strokeColor=#0b4884;strokeWidth=2;" vertex="1" parent="1">
+                    <mxGeometry x="-150" y="650" width="160" height="100" as="geometry"/>
+                </mxCell>
+                <mxCell id="4" value="&lt;h2 style=&quot;margin:0;&quot;&gt;NATS Broker&lt;/h2&gt;&lt;p style=&quot;margin:0;&quot;&gt;[Container]&lt;/p&gt;" style="ellipse;whiteSpace=wrap;html=1;fillColor=#438dd5;fontColor=#ffffff;strokeColor=#0b4884;strokeWidth=2;" vertex="1" parent="1">
+                    <mxGeometry x="-10" y="40" width="160" height="100" as="geometry"/>
+                </mxCell>
+                <mxCell id="5" value="&lt;h2 style=&quot;margin:0;&quot;&gt;Lighting Network&lt;/h2&gt;&lt;p style=&quot;margin:0;&quot;&gt;[External System]&lt;/p&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#999999;fontColor=#ffffff;strokeColor=#666666;strokeWidth=2;" vertex="1" parent="1">
+                    <mxGeometry x="530" y="390" width="180" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="6" value="Container: Python Application Runtime (asyncio)" style="swimlane;whiteSpace=wrap;html=1;dashed=1;startSize=23;fillColor=none;strokeColor=#444444;fontColor=#000000;fontStyle=1;rounded=1;" vertex="1" parent="1">
+                    <mxGeometry x="-560" y="190" width="980" height="400" as="geometry"/>
+                </mxCell>
+                <mxCell id="7" value="&lt;h2 style=&quot;margin:0;font-size:14px;&quot;&gt;Main Orchestrator&lt;/h2&gt;&lt;p style=&quot;margin:0;font-size:11px;&quot;&gt;[Component: Python]&lt;br&gt;&lt;br&gt;System micro-kernel. Starts BrokerSever, triggers start() / stop() and&lt;/p&gt;&lt;p style=&quot;margin:0;font-size:11px;&quot;&gt;sends 60Hz tick()&lt;br&gt;&lt;/p&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#85bbf0;fontColor=#000000;strokeColor=#0b4884;strokeWidth=2;" vertex="1" parent="6">
+                    <mxGeometry x="210" y="50" width="220" height="120" as="geometry"/>
+                </mxCell>
+                <mxCell id="8" value="&lt;h2 style=&quot;margin:0;font-size:14px;&quot;&gt;Input Adapters&lt;/h2&gt;&lt;p style=&quot;margin:0;font-size:11px;&quot;&gt;[Component: Python]&lt;br&gt;&lt;br&gt;Stateless edge modules. Normalizes hardware inputs into absolute/delta/rate intents.&lt;/p&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#85bbf0;fontColor=#000000;strokeColor=#0b4884;strokeWidth=2;" vertex="1" parent="6">
+                    <mxGeometry x="40" y="240" width="220" height="120" as="geometry"/>
+                </mxCell>
+                <mxCell id="9" value="&lt;h2 style=&quot;margin:0;font-size:14px;&quot;&gt;Mapping Middleware&lt;/h2&gt;&lt;p style=&quot;margin:0;font-size:11px;&quot;&gt;[Component: Python]&lt;br&gt;&lt;br&gt;Central component, creates BrokerClient instance and handels input and mapping logic&lt;/p&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#85bbf0;fontColor=#000000;strokeColor=#0b4884;strokeWidth=2;" vertex="1" parent="6">
+                    <mxGeometry x="380" y="240" width="220" height="120" as="geometry"/>
+                </mxCell>
+                <mxCell id="10" value="&lt;h2 style=&quot;margin:0;font-size:14px;&quot;&gt;Output Adapters&lt;/h2&gt;&lt;p style=&quot;margin:0;font-size:11px;&quot;&gt;[Component: Python]&lt;br&gt;&lt;br&gt;Translates internal control commands into physical Art-Net/sACN bytes. Handels Mapping for fixtures, universe and channels.&lt;/p&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#85bbf0;fontColor=#000000;strokeColor=#0b4884;strokeWidth=2;" vertex="1" parent="6">
+                    <mxGeometry x="720" y="240" width="220" height="120" as="geometry"/>
+                </mxCell>
+                <mxCell id="11" value="await start(),&lt;div&gt;stop(), tick()&lt;/div&gt;" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;exitX=0;exitY=0.5;entryX=0.5;entryY=0;strokeColor=#444444;fontColor=#333333;" edge="1" parent="6" source="7" target="8">
+                    <mxGeometry x="0.3682" relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="150" y="110"/>
+                        </Array>
+                        <mxPoint as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="12" value="await start(),&lt;div&gt;stop(), tick()&lt;/div&gt;" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;exitX=0.5;exitY=1;entryX=0.25;entryY=0;strokeColor=#444444;fontColor=#333333;entryDx=0;entryDy=0;" edge="1" parent="6" source="7" target="9">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="13" value="await start(),&lt;div&gt;stop(), tick()&lt;/div&gt;" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;exitX=1;exitY=0.5;entryX=0.25;entryY=0;strokeColor=#444444;fontColor=#333333;entryDx=0;entryDy=0;" edge="1" parent="6" source="7" target="10">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="430" y="100"/>
+                            <mxPoint x="775" y="100"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="14" value="Hardware state data" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.5;exitY=1;entryX=0;entryY=0.5;strokeColor=#000000;fontColor=#000000;entryDx=0;entryDy=0;" edge="1" parent="1" source="2" target="8">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="15" value="Loads routing table" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.5;exitY=0;entryX=0.5;entryY=1;strokeColor=#000000;fontColor=#000000;exitDx=0;exitDy=0;exitPerimeter=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="3" target="9">
+                    <mxGeometry x="-0.2" relative="1" as="geometry">
+                        <mxPoint as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="16" value="Outputs&lt;div&gt;DMX data&lt;/div&gt;" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;strokeColor=#000000;fontColor=#000000;entryDx=0;entryDy=0;exitDx=0;exitDy=0;" edge="1" parent="1" source="10" target="5">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="17" value="Publish&lt;div&gt;Inputs&lt;/div&gt;" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.25;exitY=0;entryX=0;entryY=0.5;strokeColor=#000000;fontColor=#000000;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="8" target="4">
+                    <mxGeometry x="-0.6226" relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="-465" y="90"/>
+                        </Array>
+                        <mxPoint as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="18" value="Subscribe&lt;div&gt;to Input&lt;/div&gt;" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.25;exitY=1;entryX=0.5;entryY=0;strokeColor=#000000;fontColor=#000000;entryDx=0;entryDy=0;" edge="1" parent="1" source="4" target="9">
+                    <mxGeometry x="0.6884" relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="-70" y="135"/>
+                        </Array>
+                        <mxPoint as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="19" value="Publish&lt;div&gt;Commands&lt;/div&gt;" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.75;exitY=0;entryX=0.5;entryY=1;strokeColor=#000000;fontColor=#000000;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="9" target="4">
+                    <mxGeometry x="-0.5475" relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="-15" y="160"/>
+                            <mxPoint x="70" y="160"/>
+                        </Array>
+                        <mxPoint as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="20" value="Subscribe&lt;div&gt;to Commands&lt;/div&gt;" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=1;exitY=0.5;entryX=0.5;entryY=0;strokeColor=#000000;fontColor=#000000;" edge="1" parent="1" source="4" target="10">
+                    <mxGeometry x="0.2174" relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="270" y="90"/>
+                        </Array>
+                        <mxPoint as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>

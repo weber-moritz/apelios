@@ -1,0 +1,31 @@
+<mxfile host="65bd71144e">
+    <diagram id="C1-Apelios" name="C1 System Context">
+        <mxGraphModel dx="1086" dy="827" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="850" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="Operator" value="&lt;h2 style=&quot;margin:0;&quot;&gt;&lt;font style=&quot;color: light-dark(rgb(255, 255, 255), rgb(237, 237, 237));&quot;&gt;👤 Lighting Operator&lt;/font&gt;&lt;/h2&gt;&lt;p style=&quot;margin:0;&quot;&gt;&lt;font style=&quot;color: light-dark(rgb(255, 255, 255), rgb(237, 237, 237));&quot;&gt;[Person]&lt;br&gt;Performing the lighting show.&lt;/font&gt;&lt;/p&gt;" style="ellipse;whiteSpace=wrap;html=1;fillColor=#08427b;fontColor=#ffffff;strokeColor=#052e56;strokeWidth=2;verticalAlign=middle;" parent="1" vertex="1">
+                    <mxGeometry x="80" y="40" width="220" height="120" as="geometry"/>
+                </mxCell>
+                <mxCell id="Inputs" value="&lt;h2 style=&quot;margin:0;&quot;&gt;Input Devices&lt;/h2&gt;&lt;p style=&quot;margin:0;&quot;&gt;[External Hardware]&lt;br&gt;Like SteamDeck, Midi or USB Controllers.&lt;/p&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#999999;fontColor=#ffffff;strokeColor=#666666;strokeWidth=2;" parent="1" vertex="1">
+                    <mxGeometry x="80" y="240" width="220" height="120" as="geometry"/>
+                </mxCell>
+                <mxCell id="Apelios" value="&lt;h2 style=&quot;margin:0;&quot;&gt;Apelios&lt;/h2&gt;&lt;p style=&quot;margin:0;&quot;&gt;[Software System]&lt;br&gt;Intuitive, realtime lighting middleware. Maps inputs intentions to real world lighting operations.&lt;/p&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1168bd;fontColor=#ffffff;strokeColor=#0b4884;strokeWidth=2;" parent="1" vertex="1">
+                    <mxGeometry x="400" y="240" width="240" height="120" as="geometry"/>
+                </mxCell>
+                <mxCell id="Lighting" value="&lt;h2 style=&quot;margin:0;&quot;&gt;Lighting&lt;/h2&gt;&lt;p style=&quot;margin:0;&quot;&gt;[External System]&lt;br&gt;The lighting infrastructure, like movingheads. Sends lighting commands via Art-Net or sACN.&lt;/p&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#999999;fontColor=#ffffff;strokeColor=#666666;strokeWidth=2;" parent="1" vertex="1">
+                    <mxGeometry x="740" y="240" width="240" height="120" as="geometry"/>
+                </mxCell>
+                <mxCell id="Edge1" value="&lt;div style=&quot;background-color:#ffffff;padding:2px;&quot;&gt;Uses the SteamDeck&lt;/div&gt;" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;strokeColor=#444444;fontColor=#000000;strokeWidth=1.5;" parent="1" source="Operator" target="Inputs" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="Edge2" value="&lt;div style=&quot;background-color:#ffffff;padding:2px;&quot;&gt;Sends hardware state&lt;/div&gt;" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;strokeColor=#444444;fontColor=#000000;strokeWidth=1.5;" parent="1" source="Inputs" target="Apelios" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="Edge3" value="&lt;div style=&quot;background-color:#ffffff;padding:2px;&quot;&gt;Sends lighting data&lt;/div&gt;" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;strokeColor=#444444;fontColor=#000000;strokeWidth=1.5;" parent="1" source="Apelios" target="Lighting" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>
