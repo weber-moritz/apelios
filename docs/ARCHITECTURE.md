@@ -78,6 +78,11 @@ graph TD
 * **Responsibility:** Capture hardware/virtual inputs, normalize them to a standard scale (0.0 to 1.0) or standard delta/rate intents, and publish them.
 * **Interface Contract:** All inputs must inherit from `BaseInput` to ensure they expose standard startup/shutdown and publishing methods.
 
+#### Input Event Contract (Current)
+* **Payload:** `{"source": str, "value": float}`
+* **Type Resolution:** Input intent (`absolute`, `delta`, `rate`) is resolved in the Middleware from the mapping profile, not carried in adapter payloads.
+* **Timing Model:** Frame `dt` is provided by the Main Orchestrator heartbeat (`tick` loop), not derived from event timestamps.
+
 ### D. Logic Layer (Middleware)
 * **Mapping Middleware:** Subscribes to raw inputs. Uses the `process_frame()` loop to accumulate deltas, apply rates over time, and calculate final target states.
 * **JSON Mapping Table:** An injected configuration file that dictates which input maps to which output, alongside settings like sensitivity and merge strategies.

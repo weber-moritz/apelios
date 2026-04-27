@@ -12,15 +12,14 @@ logger = logging.getLogger(__name__)
 class MainOrchestrator:
     def __init__(
         self, 
-        provider: str = "nats", 
+        broker_provider: str = "nats", 
         broker_manager: Optional[BrokerRuntimeManager] = None,
         middleware_manager: Optional[MiddlewareRuntimeManager] = None
     ):
         # Dependency injection for testability
-        self.broker_manager = broker_manager or BrokerRuntimeManager(provider=provider)
+        self.broker_manager = broker_manager or BrokerRuntimeManager(provider=broker_provider)
         
-        # Because we used DI in the MiddlewareManager too, if we don't pass anything, 
-        # it automatically builds its own Core and BrokerClient!
+        # pass a broker client here to have all dependecies clear in the main orchestrator
         self.middleware_manager = middleware_manager or MiddlewareRuntimeManager()
         
         self._running = False
@@ -108,7 +107,7 @@ async def main() -> None:
         format="%(asctime)s [%(levelname)s] %(name)s: %(message)s"
     )
     
-    orchestrator = MainOrchestrator(provider="nats")
+    orchestrator = MainOrchestrator(broker_provider="nats")
     await orchestrator.run_forever()
 
 if __name__ == "__main__":

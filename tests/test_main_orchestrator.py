@@ -112,3 +112,44 @@ async def test_run_forever_executes_tick_and_cleans_up(mock_broker, mock_middlew
     
     # Did it successfully call stop() in the finally block?
     mock_middleware.stop.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_run_forever_yields_when_frame_overruns_target_interval(
+    mock_broker,
+    mock_middleware,
+    monkeypatch,
+):
+    """If a frame exceeds 16ms budget, orchestrator should yield with sleep(0)."""
+    orchestrator = MainOrchestrator(
+        broker_manager=mock_broker,
+        middleware_manager=mock_middleware,
+    )
+
+    # First tick succeeds so the timing branch runs; second tick stops the loop.
+    mock_middleware.tick.side_effect = [None, Exception("Stop loop")]
+
+    monotonic_values = iter([0.0, 0.020, 0.021])
+
+    def fake_monotonic() -> float:
+        try:
+            return next(monotonic_values)
+        except StopIteration:
+            return 0.021
+
+    monkeypatch.setattr(
+        "apelios.main_orchestrator.time.monotonic",
+        fake_monotonic,
+    )
+
+    sleep_calls: list[float] = []
+
+    async def fake_sleep(delay: float) -> None:
+        sleep_calls.append(delay)
+
+    monkeypatch.setattr("apelios.main_orchestrator.asyncio.sleep", fake_sleep)
+
+    with pytest.raises(Exception, match="Stop loop"):
+        await orchestrator.run_forever()
+
+    assert any(delay == 0 for delay in sleep_calls)
