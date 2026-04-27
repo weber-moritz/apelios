@@ -39,3 +39,6 @@ the reason: there are input types that are absolute (like a fader), some send th
 bipolar means the trigger can go from -1 to 1. unipolar means 0-1
 
 deadzone and sensitivity is selfexplanetory. the absolute fader does not support either.
+
+
+# todo: why json
