@@ -193,3 +193,14 @@ def test_core_first_delta_value_primes_state_without_output(middleware):
 
     assert "group1.pan" not in middleware.virtual_output_state
     assert middleware.previous_abs_input["mouse.x"] == 200.0
+
+
+def test_core_first_rate_value_primes_state_without_output(middleware):
+    # first rate sample should prime state and not create an output jump
+    middleware.virtual_output_state["group1.tilt"] = 0.5
+    middleware.handle_input(source="joystick.1", value=0.75)
+
+    middleware.process_frame(dt=0.016)
+
+    assert middleware.virtual_output_state["group1.tilt"] == 0.5
+    assert middleware.previous_abs_input["joystick.1"] == 0.0
