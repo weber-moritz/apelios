@@ -34,3 +34,38 @@ give it its own runtime manager if needed,
 keep it out of input,
 let it talk to the broker like everything else,
 only split it into a separate repo if it really stops being part of the same system.
+
+
+Here's the pragmatic path:
+
+The ADRs are not extra work—they ARE the thesis outline.
+
+Each ADR is a thesis chapter:
+
+Why did you choose this architecture?
+What were the trade-offs?
+What problem does it solve?
+You already have 5 ADRs. Those cover the big decisions. You don't need to document every tiny choice. Focus on the decisions that constrain the system: why broker, why 60Hz, why stateless adapters, why this middleware model.
+
+Stop at "complete" not "perfect."
+
+The 5 ADRs you have + maybe 2-3 more (orchestrator, broker abstraction, middleware state model) = enough for a thesis.
+Each one is maybe 300-500 words.
+They're meant to be short.
+When you write the thesis, the structure writes itself:
+
+Introduction: system vision and design goals
+ADR 001-003: foundational choices (broker, architecture, timing)
+ADR 004-005: input contract and state model
+ADR 006-008: (if you add them) orchestrator, output, testing strategy
+Implementation sections: point to the test suites as proof
+Conclusion: why this architecture mattered
+The thesis is not "write a 50-page paper then make ADRs." It's "finish the ADRs, then write the thesis by explaining them."
+
+My advice:
+
+Trust what you have. The 5 ADRs are solid.
+Add only the missing ones that explain major boundaries (orchestrator, middleware state, output contract).
+Do not add an ADR for every micro-decision.
+Let the tests speak for the "how." The ADRs explain the "why."
+You're not overwhelmed. You're just at the point where the system is stable enough to document. That's healthy.
