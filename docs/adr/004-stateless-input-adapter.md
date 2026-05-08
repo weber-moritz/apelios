@@ -27,14 +27,15 @@ The Input Module is "dumb". It holds no memory. It reads hardware, normalizes th
 ## 3. Decision
 We will proceed with **Option 2 (Core State / Stateless Adapters)**. 
 
-The Input Adapters will be restricted to translating hardware-specific SDK/HID data into one of three normalized JSON intents:
-1. `{"type": "absolute", "value": X}`
-2. `{"type": "delta", "value": X}`
-3. `{"type": "rate", "value": X}`
+The Input Adapters will be restricted to translating hardware-specific SDK/HID data into a single broker payload shape:
+1. `{"source": "device.axis", "value": X}`
+
+The middleware mapping profile determines whether that source is treated as `absolute`, `delta`, or `rate`.
 
 The `MappingMiddleware` core will act as the central Accumulator. 
 
 ## 4. Consequences
 * **Separation of Concerns:** The boundary is firmly established. Edge adapters handle *Hardware Normalization*. The Core handles *Time, Memory, and Integration*.
-* **Implementation Requirement:** The Core's `process_frame()` method must be expanded to parse the `type` tag and calculate $\Delta t$ for `rate`-based inputs.
+* **Implementation Requirement:** The Core's `process_frame()` method must resolve input behavior from the mapping profile and calculate $\Delta t$ for `rate`-based inputs.
+* **Payload Contract:** Input adapters publish only normalized `source`/`value` events. The `type` is not carried on the broker payload.
 * **Future Proofing:** This explicitly separates the Input Accumulation problem from the Output Priority problem. Because the Core centralizes all deltas, downstream priority policies (Additive/Stacking vs. LTP) can be applied reliably in memory.
