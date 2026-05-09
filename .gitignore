@@ -45,3 +45,15 @@ coverage.xml
 
 # General:
 *.log
+
+
+# Continue (AI Coding Assistant)
+.continue/index/
+.continue/sessions/
+.continue/diffs/
+.continue/mcpServers/
+.continue/out/
+
+# If you want your config to stay local to this machine only:
+.continue/config.yaml
+.continue/config.json

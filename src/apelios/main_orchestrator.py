@@ -5,6 +5,8 @@ import time
 from typing import Optional
 
 from apelios.broker.broker_runtime_manager import BrokerRuntimeManager
+from apelios.broker.broker_client import BrokerClient
+from apelios.input.input_runtime_manager import InputRuntimeManager
 from apelios.middleware.middleware_runtime_manager import MiddlewareRuntimeManager
 
 logger = logging.getLogger(__name__)
@@ -14,13 +16,22 @@ class MainOrchestrator:
         self, 
         broker_provider: str = "nats", 
         broker_manager: Optional[BrokerRuntimeManager] = None,
-        middleware_manager: Optional[MiddlewareRuntimeManager] = None
+        middleware_manager: Optional[MiddlewareRuntimeManager] = None,
+        input_manager: Optional[InputRuntimeManager] = None,
     ):
         # Dependency injection for testability
         self.broker_manager = broker_manager or BrokerRuntimeManager(provider=broker_provider)
-        
+
+        # Build one shared broker client for app-managed runtimes.
+        shared_broker_client = BrokerClient(provider=broker_provider)
+
         # pass a broker client here to have all dependecies clear in the main orchestrator
-        self.middleware_manager = middleware_manager or MiddlewareRuntimeManager()
+        self.middleware_manager = middleware_manager or MiddlewareRuntimeManager(
+            broker_client=shared_broker_client,
+        )
+        self.input_manager = input_manager or InputRuntimeManager(
+            broker_client=shared_broker_client,
+        )
         
         self._running = False
         
@@ -37,6 +48,10 @@ class MainOrchestrator:
         # 2. Start the Subsystems SECOND (Middleware connects to the server)
         await self.middleware_manager.start()
         logger.info("Middleware runtime started")
+
+        await self.input_manager.start()
+        await self.input_manager.start_registered_adapters()
+        logger.info("Input runtime started")
         
         self._running = True
 
@@ -44,10 +59,17 @@ class MainOrchestrator:
         logger.info("Stopping...")
         if not self._running:
             with contextlib.suppress(Exception):
+                await self.input_manager.stop_registered_adapters()
+                await self.input_manager.stop()
+            with contextlib.suppress(Exception):
                 await self.broker_manager.stop_server()
             return
 
         # 1. Stop gracefully in reverse order (Subsystems first)
+        await self.input_manager.stop_registered_adapters()
+        await self.input_manager.stop()
+        logger.info("Stopped input")
+
         await self.middleware_manager.stop()
         logger.info("Stopped middleware")
 
@@ -63,11 +85,14 @@ class MainOrchestrator:
         
         # We use the is_running() method you already wrote as a basic health check!
         middleware_healthy = self.middleware_manager.is_running()
+        input_healthy = self.input_manager.is_running()
         
         if not middleware_healthy:
             logger.error("Health Check Failed: Middleware is not running.")
+        if not input_healthy:
+            logger.error("Health Check Failed: Input runtime is not running.")
             
-        return broker_healthy and middleware_healthy
+        return broker_healthy and middleware_healthy and input_healthy
 
     def is_running(self) -> bool:
         return self._running
@@ -81,10 +106,13 @@ class MainOrchestrator:
             while True:
                 loop_start = time.monotonic()
                 
-                # 1. Process one frame of the lighting universe
+                # 1. Collect one frame of normalized input events.
+                await self.input_manager.tick(dt=target_interval)
+
+                # 2. Process one frame of the lighting universe.
                 await self.middleware_manager.tick()
                 
-                # 2. Calculate how long the math took, and sleep for the exact remainder 
+                # 3. Calculate how long the math took, and sleep for the exact remainder 
                 #    to maintain a perfect 60Hz frequency without drifting.
                 elapsed = time.monotonic() - loop_start
                 sleep_time = target_interval - elapsed
