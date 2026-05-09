@@ -42,11 +42,17 @@ class InputRuntimeManager:
         return self._running
 
     async def tick(self, dt: float = 0.016) -> None:
-        """Process one input frame.
-
-        Placeholder for adapter polling/publishing logic in a future slice.
-        """
-        return
+        """Process one input frame."""
+        # Iterate running adapters and call their tick hook if available.
+        for adapter in list(self._running_adapters):
+            try:
+                tick = getattr(adapter, "tick", None)
+                if callable(tick):
+                    await adapter.tick(dt)
+            except Exception:
+                # If an adapter fails during tick, record it and continue.
+                self.failed_adapters.append(adapter)
+                continue
     
     def register_adapter(self, adapter: object) -> None:
         """Register a new adapter instance if not already present."""

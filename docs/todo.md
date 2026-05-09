@@ -5,3 +5,7 @@
 - Add broker_client as optional DI arg on orchestrator.
 - If middleware_manager is not injected, build it with that shared client.
 - Later, build input_runtime_manager with the same shared client.
+
+middleware mapping files directory
+fake adapter mapping JSON
+output layer + fixture mappings
