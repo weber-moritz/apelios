@@ -24,12 +24,24 @@ class InputRuntimeManager:
         self._running_adapters: list[object] = []
         self.failed_adapters: list[object] = []
         
+    async def _bootstrap_adapters(self) -> None:
+        """Bootstrap default adapters on startup.
+        
+        This is called automatically from start(). Can be overridden or configured
+        via InputAdapterBootstrap for different adapter combinations.
+        """
+        from apelios.input.input_adapter_bootstrap import InputAdapterBootstrap
+        
+        bootstrap = InputAdapterBootstrap()
+        await bootstrap.bootstrap(self)
+        
     async def start(self) -> None:
         """Start input runtime"""
         if self._running:
             return
         
         await self.broker_client.connect()
+        await self._bootstrap_adapters()
         
         self._running = True
         

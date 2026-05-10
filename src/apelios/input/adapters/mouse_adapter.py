@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import os
+import select
 import sys
 from dataclasses import dataclass
 from pathlib import Path
@@ -27,6 +28,7 @@ class LinuxEvdevMouse:
 	"""Read relative mouse input from a Linux evdev device."""
 
 	device_path: str | None = None
+	grab: bool = False
 	_device: Any | None = None
 
 	def __post_init__(self) -> None:
@@ -42,7 +44,8 @@ class LinuxEvdevMouse:
 
 		resolved_path = self.device_path or self._resolve_device_path()
 		self._device = InputDevice(resolved_path)
-		self._device.grab()
+		if self.grab:
+			self._device.grab()
 
 	async def close(self) -> None:
 		"""Release the evdev device if one is open."""
@@ -51,7 +54,8 @@ class LinuxEvdevMouse:
 			return
 
 		try:
-			device.ungrab()
+			if self.grab:
+				device.ungrab()
 		finally:
 			device.close()
 			self._device = None
@@ -77,11 +81,23 @@ class LinuxEvdevMouse:
 		raise FileNotFoundError("No Linux mouse device was found under /dev/input")
 
 	def _poll_sync(self) -> dict[str, float]:
-		"""Drain pending events from the evdev device in the current thread."""
+		"""Drain pending events from the evdev device in the current thread.
+
+		Always returns x and y (defaulting to 0.0 when the mouse is still).
+		Uses a non-blocking select so the 60Hz tick loop is never held up
+		waiting for hardware events.
+		"""
 		if self._device is None:
 			raise RuntimeError("Mouse device has not been opened")
 
-		state: dict[str, float] = {}
+		# x and y default to 0.0 — the mouse is at rest unless told otherwise.
+		state: dict[str, float] = {"x": 0.0, "y": 0.0}
+
+		# Non-blocking check: if no events are queued right now, return zeros.
+		readable, _, _ = select.select([self._device.fd], [], [], 0)
+		if not readable:
+			return state
+
 		events = self._device.read()
 		for event in events:
 			event_type, code, value = self._coerce_event(event)

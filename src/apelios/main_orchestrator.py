@@ -22,15 +22,15 @@ class MainOrchestrator:
         # Dependency injection for testability
         self.broker_manager = broker_manager or BrokerRuntimeManager(provider=broker_provider)
 
-        # Build one shared broker client for app-managed runtimes.
-        shared_broker_client = BrokerClient(provider=broker_provider)
-
-        # pass a broker client here to have all dependecies clear in the main orchestrator
+        # Each subsystem gets its own broker client connection.
+        # Input publishes and middleware subscribes — they must be on separate
+        # connections because nats-py does not echo messages back to the same
+        # connection that published them (no-echo behaviour).
         self.middleware_manager = middleware_manager or MiddlewareRuntimeManager(
-            broker_client=shared_broker_client,
+            broker_client=BrokerClient(provider=broker_provider),
         )
         self.input_manager = input_manager or InputRuntimeManager(
-            broker_client=shared_broker_client,
+            broker_client=BrokerClient(provider=broker_provider),
         )
         
         self._running = False

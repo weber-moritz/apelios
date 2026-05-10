@@ -56,6 +56,17 @@ class MappingMiddleware:
 				self.previous_abs_input[source] = float(current_value)
 				continue
 
+			if mapping_type == "relative":
+				# Value IS the delta (e.g. evdev REL_X/REL_Y). Apply directly.
+				# No previous-state priming needed — every frame stands alone.
+				# Zero when the mouse is still is the adapter's responsibility:
+				# LinuxEvdevMouse always publishes x=0.0/y=0.0 on idle frames.
+				raw_delta = float(current_value)
+				if abs(raw_delta) < deadzone:
+					raw_delta = 0.0
+				output_delta_buffer[target] = output_delta_buffer.get(target, 0.0) + raw_delta * sensitivity
+				continue
+
 			previous_value = self.previous_abs_input.get(source)
 			if previous_value is None:
 				# Prime state on first sample so no output jumps occur.

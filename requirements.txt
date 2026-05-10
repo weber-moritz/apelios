@@ -15,3 +15,6 @@ nats-py
 pytest>=7.0 #testing
 pytest-asyncio>=0.23
 pytest-cov #coverage report
+pyside6 
+pytest
+pytest-qt

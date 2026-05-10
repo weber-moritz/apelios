@@ -6,10 +6,22 @@ broker events into the mapping core.
 
 from __future__ import annotations
 
+import json
+from pathlib import Path
+
 from apelios.broker.broker_client import BrokerClient
 from apelios.middleware.middleware_core import MappingMiddleware
 from apelios.middleware.middleware_input_subscriber import MiddlewareInputSubscriber
 from apelios.middleware.middleware_output_publisher	import MiddlewareOutputPublisher
+
+_DEFAULT_PROFILE_PATH = Path(__file__).parent / "mapping_default.json"
+
+
+def _load_default_profile() -> dict:
+    """Load the mapping profile from mapping_default.json."""
+    with _DEFAULT_PROFILE_PATH.open() as f:
+        data = json.load(f)
+    return data.get("mappings", {})
 
 
 class MiddlewareRuntimeManager:
@@ -21,7 +33,7 @@ class MiddlewareRuntimeManager:
         broker_client: BrokerClient | None = None,
         input_subject: str = "input.>",
     ) -> None:
-        self.middleware = middleware or MappingMiddleware(profile={})
+        self.middleware = middleware or MappingMiddleware(profile=_load_default_profile())
         self.broker_client = broker_client or BrokerClient(provider="nats")
         self.input_subject = input_subject
         self.input_subscriber = MiddlewareInputSubscriber(self.middleware)

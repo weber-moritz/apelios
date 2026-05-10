@@ -204,3 +204,51 @@ def test_core_first_rate_value_primes_state_without_output(middleware):
 
     assert middleware.virtual_output_state["group1.tilt"] == 0.5
     assert middleware.previous_abs_input["joystick.1"] == 0.0
+
+
+def test_core_relative_mapping_applies_value_directly():
+    """"relative" type applies the raw value as a delta on every frame.
+
+    This is the correct type for evdev REL_X/REL_Y mouse input, where
+    the adapter sends per-frame pixel deltas, not cumulative positions.
+    Unlike "delta", there is no priming step and no current-previous subtraction.
+    Zeroing when idle is the adapter's responsibility: LinuxEvdevMouse always
+    publishes x=0.0/y=0.0 on frames with no hardware events.
+    """
+    core = MappingMiddleware(profile={
+        "mouse.x": {"target": "group1.pan", "type": "relative", "sensitivity": 0.5}
+    })
+
+    # Frame 1: value=0.6, sensitivity=0.5  →  output = 0.0 + 0.6*0.5 = 0.3
+    core.handle_input(source="mouse.x", value=0.6)
+    core.process_frame(dt=0.016)
+    assert core.virtual_output_state["group1.pan"] == pytest.approx(0.3)
+
+    # Frame 2: adapter sends 0.0 (mouse at rest)  →  output holds at 0.3
+    core.handle_input(source="mouse.x", value=0.0)
+    core.process_frame(dt=0.016)
+    assert core.virtual_output_state["group1.pan"] == pytest.approx(0.3)
+
+    # Frame 3: new movement  →  accumulates: 0.3 + 0.3 = 0.6
+    core.handle_input(source="mouse.x", value=0.6)
+    core.process_frame(dt=0.016)
+    assert core.virtual_output_state["group1.pan"] == pytest.approx(0.6)
+
+
+def test_core_relative_mapping_no_priming_required():
+    """"relative" type produces output on the very first frame — no baseline needed.
+    When the adapter reports 0.0 (mouse at rest), output holds.
+    """
+    core = MappingMiddleware(profile={
+        "mouse.x": {"target": "group1.pan", "type": "relative", "sensitivity": 1.0}
+    })
+
+    core.handle_input(source="mouse.x", value=0.1)
+    core.process_frame(dt=0.016)
+    assert "group1.pan" in core.virtual_output_state
+    assert core.virtual_output_state["group1.pan"] == pytest.approx(0.1)
+
+    # Adapter sends 0.0 (mouse at rest) — output holds, does not drift.
+    core.handle_input(source="mouse.x", value=0.0)
+    core.process_frame(dt=0.016)
+    assert core.virtual_output_state["group1.pan"] == pytest.approx(0.1)
