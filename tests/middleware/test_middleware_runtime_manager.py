@@ -118,3 +118,16 @@ async def test_runtime_manager_is_running_false_after_stop(mock_broker_client):
     await runtime.stop()
     
     assert runtime.is_running() is False
+
+
+def test_runtime_manager_default_profile_includes_steamdeck_axes():
+    """The default middleware profile should include the Steam Deck controller axes."""
+    runtime = MiddlewareRuntimeManager()
+
+    profile = runtime.middleware.profile
+
+    assert "steamdeck.right_stick.x" in profile
+    assert "steamdeck.right_stick.y" in profile
+    assert "steamdeck.imu.pitch" in profile
+    assert "steamdeck.imu.yaw" in profile
+    assert "steamdeck.imu.roll" in profile

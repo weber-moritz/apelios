@@ -7,6 +7,7 @@ while continuing with the remaining ones.
 
 from apelios.input.adapters.fake_adapter import FakeAdapter
 from apelios.input.adapters.mouse_adapter import MouseAdapter
+from apelios.input.adapters.steamdeck_adapter import SteamDeckAdapter
 
 
 class InputAdapterBootstrap:
@@ -21,10 +22,10 @@ class InputAdapterBootstrap:
 		"""Initialize bootstrap with optional adapter list.
 		
 		Args:
-			adapter_list: List of adapter names to register (default: ["fake", "mouse"]).
-				Supported names: "fake", "mouse".
+			adapter_list: List of adapter names to register (default: ["mouse", "steamdeck"]).
+				Supported names: "fake", "mouse", "steamdeck".
 		"""
-		self.adapter_list = adapter_list or ["mouse"]
+		self.adapter_list = adapter_list or ["mouse", "steamdeck"]
 
 	async def bootstrap(self, runtime_manager) -> None:
 		"""Register adapters with the runtime manager.
@@ -39,6 +40,7 @@ class InputAdapterBootstrap:
 		adapters_by_name = {
 			"fake": FakeAdapter,
 			"mouse": MouseAdapter,
+			"steamdeck": SteamDeckAdapter,
 		}
 
 		for adapter_name in self.adapter_list:

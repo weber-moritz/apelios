@@ -14,11 +14,6 @@
       "target": "group1.tilt",
       "type": "relative",
       "sensitivity": 0.005
-    },
-    "steamdeck.joy.x": {
-      "target": "group1.pan",
-      "type": "rate",
-      "sensitivity": 2.0
     }
   }
 }

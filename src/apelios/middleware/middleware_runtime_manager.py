@@ -12,16 +12,43 @@ from pathlib import Path
 from apelios.broker.broker_client import BrokerClient
 from apelios.middleware.middleware_core import MappingMiddleware
 from apelios.middleware.middleware_input_subscriber import MiddlewareInputSubscriber
-from apelios.middleware.middleware_output_publisher	import MiddlewareOutputPublisher
+from apelios.middleware.middleware_output_publisher import MiddlewareOutputPublisher
 
-_DEFAULT_PROFILE_PATH = Path(__file__).parent / "mapping_default.json"
+_MAPPING_DIR = Path(__file__).parent / "mapping"
 
 
 def _load_default_profile() -> dict:
-    """Load the mapping profile from mapping_default.json."""
-    with _DEFAULT_PROFILE_PATH.open() as f:
-        data = json.load(f)
-    return data.get("mappings", {})
+    """Load the base middleware profile and overlay adapter-specific maps."""
+
+    def _load_mappings(path: Path) -> dict[str, dict]:
+        if not path.exists():
+            return {}
+
+        with path.open() as f:
+            data = json.load(f)
+
+        mappings = data.get("mappings", {})
+        if not isinstance(mappings, dict):
+            return {}
+
+        return mappings
+
+
+    if _MAPPING_DIR.exists():
+        base_profile = _MAPPING_DIR / "default.json"
+        profile = _load_mappings(base_profile)
+
+        for path in sorted(_MAPPING_DIR.glob("default_*.json")):
+            profile.update(_load_mappings(path))
+
+        for path in sorted(_MAPPING_DIR.glob("*.json")):
+            if path.name == "default.json" or path.name.startswith("default_"):
+                continue
+            profile.update(_load_mappings(path))
+
+        return profile
+
+    return {}
 
 
 class MiddlewareRuntimeManager:
