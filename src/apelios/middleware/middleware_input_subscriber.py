@@ -22,7 +22,7 @@ class MiddlewareInputSubscriber:
 		self.middleware = middleware
 
 	# this __call__ function is called, every time an instance of this class is created. the middleware runtime manager uses Dependency Inversion. The rtm creates an instance of the broker client and "maps" the on_message function of the broker client to the input hanlder
-	def __call__(self, msg: Any) -> None:
+	async def __call__(self, msg: Any) -> None:
 		"""Handle one broker message.
 
 		Expected payload contract (JSON bytes):

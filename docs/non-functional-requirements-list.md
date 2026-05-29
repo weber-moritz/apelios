@@ -1,0 +1,7 @@
+- Performance (Low Latency): * The system must operate on a strict 60Hz internal tick rate.
+    - End-to-end latency (from reading a physical input to dispatching the final DMX/ArtNet packet) must not exceed 16.6 milliseconds.
+- Reliability & Fault Tolerance (Stability): * The system must not crash if a physical input device is disconnected mid-operation. The Middleware must simply drop the missing messages until the device returns.
+    - If the NATS broker restarts, all layers must automatically attempt to reconnect without requiring a manual software reboot.
+- Extensibility & Maintainability (Modular): * Adding support for a new physical input device must only require adding a new Input Adapter script, with zero changes to the Middleware or Fixture Layer.
+- Adding a new type of lighting fixture must only require updating the patch.json file, with zero changes to the core Python codebase.
+- Scalability: * The NATS broker architecture must support running the Input Layer (e.g., Steam Deck) and the Fixture Layer on entirely separate physical computers over a Local Area Network (LAN).

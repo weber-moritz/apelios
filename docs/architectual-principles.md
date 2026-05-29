@@ -1,0 +1,4 @@
+- Strict Separation of Concerns: Each layer must own a single domain. The Input Layer handles physical hardware calibration; the Middleware handles message routing; the Fixture Layer handles mathematical state and protocol translation.
+- Stateless Routing: The Middleware must not hold positional state, perform mathematical conversions, or apply hardware compensations. It routes data blindly based on the NATS topic.
+- Decoupled Communication: Layers must communicate exclusively via the NATS broker using a standardized JSON payload. No layer may have a direct code dependency on another layer.
+- Trust the Intent: Data passed between layers must carry an intent tag (absolute, delta, rate). Downstream layers must trust and execute this intent without assuming upstream context.

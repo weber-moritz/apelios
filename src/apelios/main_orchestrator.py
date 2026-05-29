@@ -11,6 +11,8 @@ from apelios.middleware.middleware_runtime_manager import MiddlewareRuntimeManag
 
 logger = logging.getLogger(__name__)
 
+from apelios.fixture.fixture_runtime_manager import FixtureRuntimeManager
+
 class MainOrchestrator:
     def __init__(
         self, 
@@ -18,29 +20,29 @@ class MainOrchestrator:
         broker_manager: Optional[BrokerRuntimeManager] = None,
         middleware_manager: Optional[MiddlewareRuntimeManager] = None,
         input_manager: Optional[InputRuntimeManager] = None,
+        fixture_manager: Optional[FixtureRuntimeManager] = None,
     ):
         # Dependency injection for testability
         self.broker_manager = broker_manager or BrokerRuntimeManager(provider=broker_provider)
 
-        # Each subsystem gets its own broker client connection.
-        # Input publishes and middleware subscribes — they must be on separate
-        # connections because nats-py does not echo messages back to the same
-        # connection that published them (no-echo behaviour).
         self.middleware_manager = middleware_manager or MiddlewareRuntimeManager(
             broker_client=BrokerClient(provider=broker_provider),
         )
         self.input_manager = input_manager or InputRuntimeManager(
             broker_client=BrokerClient(provider=broker_provider),
         )
-        
+        self.fixture_manager = fixture_manager or FixtureRuntimeManager(
+            broker_client=BrokerClient(provider=broker_provider),
+        )
+
         self._running = False
-        
+
     async def start(self) -> None:
         logger.info("Starting orchestrator...")
         if self._running:
             logger.debug("Already running, skipping start")
             return
-            
+
         # 1. Start the Infrastructure FIRST (The NATS Server)
         await self.broker_manager.start_server()
         logger.info("Broker runtime started")
@@ -52,7 +54,10 @@ class MainOrchestrator:
         await self.input_manager.start()
         await self.input_manager.start_registered_adapters()
         logger.info("Input runtime started")
-        
+
+        await self.fixture_manager.start()
+        logger.info("Fixture runtime started")
+
         self._running = True
 
     async def stop(self) -> None:
@@ -73,26 +78,31 @@ class MainOrchestrator:
         await self.middleware_manager.stop()
         logger.info("Stopped middleware")
 
+        await self.fixture_manager.stop()
+        logger.info("Stopped fixture layer")
+
         # 2. Stop Infrastructure last
         await self.broker_manager.stop_server()
         logger.info("Stopped broker")
-        
+
         self._running = False
 
     async def health_check(self, timeout: int = 5) -> bool:
         """Verify all critical subsystems are alive."""
         broker_healthy = await self.broker_manager.health_check(timeout=timeout)
-        
-        # We use the is_running() method you already wrote as a basic health check!
+
         middleware_healthy = self.middleware_manager.is_running()
         input_healthy = self.input_manager.is_running()
-        
+        fixture_healthy = self.fixture_manager.is_running()
+
         if not middleware_healthy:
             logger.error("Health Check Failed: Middleware is not running.")
         if not input_healthy:
             logger.error("Health Check Failed: Input runtime is not running.")
-            
-        return broker_healthy and middleware_healthy and input_healthy
+        if not fixture_healthy:
+            logger.error("Health Check Failed: Fixture runtime is not running.")
+
+        return broker_healthy and middleware_healthy and input_healthy and fixture_healthy
 
     def is_running(self) -> bool:
         return self._running
@@ -102,21 +112,24 @@ class MainOrchestrator:
         try:
             # The 60Hz Engine (1 second / 60 frames = 0.0166 seconds per frame)
             target_interval = 1.0 / 60.0
-            
+
             while True:
                 loop_start = time.monotonic()
-                
+
                 # 1. Collect one frame of normalized input events.
                 await self.input_manager.tick(dt=target_interval)
 
                 # 2. Process one frame of the lighting universe.
                 await self.middleware_manager.tick()
-                
-                # 3. Calculate how long the math took, and sleep for the exact remainder 
+
+                # 3. Process one frame of the fixture layer.
+                await self.fixture_manager.tick(dt=target_interval)
+
+                # 4. Calculate how long the math took, and sleep for the exact remainder 
                 #    to maintain a perfect 60Hz frequency without drifting.
                 elapsed = time.monotonic() - loop_start
                 sleep_time = target_interval - elapsed
-                
+
                 if sleep_time > 0:
                     await asyncio.sleep(sleep_time)
                 else:

@@ -1,7 +1,7 @@
 """
 Watch mapped output state published by the middleware layer.
 
-Replaces:  nats sub "outputs.>"
+Replaces:  nats sub "output.>"
 
 Usage:
     python scripts/watch_outputs.py
@@ -12,12 +12,12 @@ import nats
 
 async def main() -> None:
     nc = await nats.connect("nats://127.0.0.1:4222")
-    print("Watching outputs.>  (Ctrl+C to stop)\n")
+    print("Watching output.>  (Ctrl+C to stop)\n")
 
     async def handler(msg) -> None:
         print(f"[{msg.subject}]  {msg.data.decode()}")
 
-    await nc.subscribe("outputs.>", cb=handler)
+    await nc.subscribe("output.>", cb=handler)
 
     try:
         while True:

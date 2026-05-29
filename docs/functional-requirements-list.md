@@ -1,0 +1,5 @@
+- Hardware Ingestion: The system must read physical analog axes, digital buttons, and IMU (gyroscope/accelerometer) data from a Steam Deck adapter.
+- Signal Normalization: The system must translate raw hardware data into standardized mathematical signals: unipolar absolute (0.0 to 1.0), bipolar absolute (-1.0 to 1.0), rate (velocity), and delta (relative change).
+- Dynamic Routing: The system must route a specific hardware input to a specific lighting fixture parameter based on a user-defined routing.json configuration file.
+- State Integration: The system must maintain an internal absolute position for all patched fixtures, mathematically integrating incoming delta and rate signals into that absolute position.
+- Protocol Translation: The system must translate its internal 0.0 - 1.0 floating-point state into the correct physical protocol limits (e.g., 8-bit or 16-bit DMX values) based on a patch.json profile.

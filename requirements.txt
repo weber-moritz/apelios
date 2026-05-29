@@ -18,3 +18,4 @@ pytest-cov #coverage report
 pyside6 
 pytest
 pytest-qt
+evdev

@@ -3,16 +3,16 @@
   "mappings": {
     "midi.fader.1": {
       "target": "group1.pan",
-      "type": "absolute"
+      "intent": "absolute"
     },
     "mouse.x": {
       "target": "group1.pan",
-      "type": "relative",
+      "intent": "delta",
       "sensitivity": 0.005
     },
     "mouse.y": {
       "target": "group1.tilt",
-      "type": "relative",
+      "intent": "delta",
       "sensitivity": 0.005
     }
   }

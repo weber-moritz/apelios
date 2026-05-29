@@ -1,0 +1,9 @@
+{
+    "fixtures": [
+        {
+            "input": "fader.1",
+            "output": "group1.dimmer",
+            "intent": "absolute"
+        }
+    ]
+}

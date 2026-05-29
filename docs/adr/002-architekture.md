@@ -15,3 +15,14 @@ this architecture fulfills the ntr (non-technical-requirements):
 
 **stability:** is given through the independend modules. should one not work anymore, would that not affect the other modules.
 
+
+# layers:
+
+### the fixture mapper
+i choose this as i want seperation of concerns from the mapping middleware and the fixture mapping.
+the problem is:
+- if i use a n absolute input like an fader, it gets transformed into an rate value by the middelware. then it gets send to the fixture layer which converts it to the absolute value.
+- if there is a package loss beteen the middleware and the fixture layer, the valuies get out of sync.
+
+- the fix: send an `intent` with the value. intent can be: absolute or rate so that the output layer can decide what to do with it
+

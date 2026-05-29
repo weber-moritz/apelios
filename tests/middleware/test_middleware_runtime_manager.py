@@ -7,15 +7,15 @@ from apelios.middleware.middleware_runtime_manager import MiddlewareRuntimeManag
 
 @pytest.fixture
 def mock_profile():
-    """Standard mock profile for testing."""
+    """Standard mock profile for testing (with intent field)."""
     return {
         "fader.1": {
             "target": "group1.dimmer",
-            "type": "absolute"
+            "intent": "absolute"
         },
         "mouse.x": {
             "target": "group1.pan",
-            "type": "absolute_to_delta",
+            "intent": "delta",
             "sensitivity": 0.01
         }
     }

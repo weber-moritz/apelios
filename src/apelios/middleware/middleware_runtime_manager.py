@@ -89,11 +89,10 @@ class MiddlewareRuntimeManager:
         return self._running
 
     async def tick(self, dt: float = 0.016) -> None:
-        """Process one single frame of middleware logic and publish outputs."""
+        """Process one single frame of middleware logic and publish enriched outputs."""
         self.middleware.process_frame(dt=dt)
         
-        current_outputs = self.middleware.virtual_output_state
-
-        if current_outputs:
-            await self.output_publisher.publish(current_outputs)
+        # Publish enriched payloads (with target, value, intent, timestamp)
+        if self.middleware.enriched_outputs:
+            await self.output_publisher.publish_enriched(self.middleware.enriched_outputs)
 
