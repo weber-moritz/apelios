@@ -135,9 +135,23 @@ class LinuxEvdevMouse:
 class MouseAdapter(BaseInputAdapter):
 	"""Linux mouse adapter that publishes normalized relative motion."""
 
+	_AXIS_TYPES = {
+		"x": "delta",
+		"y": "delta",
+		"wheel": "delta",
+		"wheel_h": "delta",
+		"left_button": "absolute_uni",
+		"right_button": "absolute_uni",
+		"middle_button": "absolute_uni",
+	}
+
 	def __init__(self, device: str = "mouse", backend: LinuxEvdevMouse | None = None):
 		super().__init__(device=device)
 		self._backend = backend or self._build_backend()
+		
+		# Set axis types for all known axes
+		for axis, axis_type in self._AXIS_TYPES.items():
+			self.set_axis_type(axis, axis_type)
 
 	def _build_backend(self) -> LinuxEvdevMouse:
 		"""Create the Linux backend for the current platform."""

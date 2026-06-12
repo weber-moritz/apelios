@@ -1,26 +1,73 @@
 # Architecture Refactoring Plan: Input, Middleware, and Fixture Layers
 
+## Current State vs Target Architecture
+
+> **As of commit 60da486 "all green, added fixture layer"**
+
+The implementation has **drifted** from the target architecture. The Fixture Layer is correctly implemented, but the Input and Middleware layers have architecture violations that need fixing.
+
+### Current State Summary
+
+| Layer | Current Implementation | Target Architecture | Status |
+|-------|------------------------|---------------------|--------|
+| **Input** | Publishes `{source, value}` | Publish `{value, type, timestamp}` | ❌ Needs type field |
+| **Input** | No capabilities manifest | Publish manifest on startup | ❌ Missing |
+| **Input** | No hardware compensation | Apply deadzones, inversion, sensitivity | ⚠️ MVP skips this |
+| **Middleware** | Has `current_raw_input` state dict | Stateless passthrough | ❌ **Critical** |
+| **Middleware** | Resolves intent from mapping config | Pass through type from input | ❌ **Critical** |
+| **Middleware** | Does intent resolution | Pure topic routing only | ❌ **Critical** |
+| **Fixture** | Correctly handles math by intent | Same | ✅ Good |
+| **Fixture** | Correct clamping per parameter | Same | ✅ Good |
+| **Fixture** | Correct DMX translation | Same | ✅ Good |
+
+### Quick Reference: Topic Flow
+
+**Current (WRONG):**
+```
+Input: {source: "steamdeck.right_stick.x", value: 0.5}
+    → Middleware (adds intent from config)
+    → {target: "group3.pan", value: 0.5, intent: "rate", timestamp: ...}
+    → Fixture
+```
+
+**Target (CORRECT):**
+```
+Input: {value: 0.5, type: "rate", timestamp: ...}
+    → Middleware (passthrough, no changes)
+    → {value: 0.5, type: "rate", timestamp: ...}
+    → Fixture
+```
+
+---
+
 ## Phase 1: MVP & Immediate Priority List
 
 *Goal: Get the Fixture Layer accurately tracking Steam Deck inputs without drift or hardcoded clamping. Bypass dynamic manifests and routing files for now, and strictly isolate domain responsibilities.*
+
+> **Status: MVP is working but architecture is drifted. Phase 1 items below need to be completed to align with target.**
 
 ### 1. Input Layer Modifications (The New Home for Calibration)
 
 * **Keep it Raw (For Now):** For the MVP, just pass the raw hardware values.
 * **Future-Proofing:** Acknowledge that any hardware compensation—specifically **deadzones, inversion, and sensitivity curves**—belongs *here*, not in the Middleware. The Input Layer must perfect the signal before it ever hits the broker.
+* **✅ TODO: Add type field to payload** - Each axis must publish its intent type (absolute_uni, absolute_bi, delta, rate)
 
 ### 2. Middleware Modifications (Strip it down)
 
-* **Remove State:** Delete the "previous" and "current" dictionary stores. The Middleware should no longer remember past values.
+* **Remove State:** Delete the "previous" and "current" dictionary stores (`current_raw_input`, `virtual_output_state`). The Middleware should no longer remember past values.
 * **Remove Math & Compensation:** Delete the delta calculation logic. **Delete the deadzone and sensitivity logic.**
 * **Remove Clamping:** Do not force values into a `0.0` to `1.0` range.
-* **Add Intent:** Ensure the Middleware passes the raw value *and* its intent `type` (`absolute`, `delta`, or `rate`) downstream to the output topic.
+* **Add Intent:** Ensure the Middleware passes the raw value *and* its intent `type` (`absolute_uni`, `absolute_bi`, `delta`, or `rate`) downstream to the output topic.
+
+> **Status: ❌ NOT DONE - Middleware still has state and adds intent from config**
 
 ### 3. Fixture Layer Construction (Build the State Engine)
 
 * **Input Module:** Subscribes to the NATS topics coming from the Middleware. Parses the incoming JSON payload (which includes `value` and `type`) and writes it to a high-speed internal buffer/dict.
 * **Core Module (The Math Engine):** Runs at 60Hz. Reads the incoming dict, applies the mathematical translation based on the `type` tag (see Math Specs below), and updates the *Internal State Dict*.
 * **Output Module:** Reads the Internal State Dict, translates the 0.0-1.0 absolute internal state into physical hardware limits (e.g., 0-255 for 8-bit DMX, or 0-65535 for 16-bit DMX), and sends it out to the physical lighting hardware or network.
+
+> **Status: ✅ DONE - Fixture Layer is correctly implemented**
 
 ---
 
@@ -40,12 +87,15 @@ All messages passed between the layers must conform to this basic schema:
   "type": "delta", 
   "timestamp": 1685363400.123 
 }
-
 ```
 
 *Valid Types:* `absolute_uni` (0 to 1), `absolute_bi` (-1 to 1), `delta` (relative change), `rate` (velocity).
 
+> **⚠️ MIGRATION NOTE:** Current implementation uses field name `intent` instead of `type`. Need to standardize on `type` throughout.
+
 ---
+
+## Phase 3: Future Enhancements (Post-MVP)
 
 ### Layer 1: The Input Layer (The Normalizer & Calibrator)
 
@@ -56,7 +106,7 @@ All messages passed between the layers must conform to this basic schema:
 * **Configuration:** Subscribes to NATS topics (e.g., `config.input.steamdeck_01.deadzone`) to receive live configuration updates from a central GUI, saving these to a local config file.
 * **Execution:** Reads the adapter at 60Hz, applies the math, and publishes standardized payloads to raw input topics (e.g., `input.steamdeck_01.gyro.x`).
 
----
+> **Status: ⚠️ PARTIAL - Raw values work, but manifest and compensation not implemented**
 
 ### Layer 2: The Middleware (The Pure Router)
 
@@ -66,7 +116,7 @@ All messages passed between the layers must conform to this basic schema:
 * **Routing Config (Disk):** Reads `routing.json` on startup. This file contains the user's desired mapping (e.g., map `input.steamdeck_01.gyro.x` to `target.movinghead01.pan`).
 * **Execution:** Matches incoming NATS messages against the routing table in memory. When a match is found, it republishes the *identical* payload (including the `type` tag) to the target NATS topic.
 
----
+> **Status: ❌ NOT DONE - Middleware currently has state and does intent resolution**
 
 ### Layer 3: The Fixture Layer (The State Engine)
 
@@ -90,12 +140,15 @@ Reads a local file defining the lighting rig. This is how the Core module knows 
     }
   }
 }
-
 ```
+
+> **Status: ⚠️ PARTIAL - patch.json exists but format doesn't match spec (uses array not object)**
 
 #### 2. Input Module
 
 Subscribes to all `target.>` topics defined in `patch.json` (e.g., `target.movinghead01.pan`). Validates incoming JSON and writes the newest payload to an inbox dictionary to be processed by the Core.
+
+> **Status: ✅ DONE - Implemented and working**
 
 #### 3. Core Module (State Engine & Math)
 
@@ -104,7 +157,7 @@ Runs a strict 60Hz loop. For every parameter of every patched fixture, it reads 
 **Mathematical Operations by Type:**
 Let $S_{old}$ be the current state, $V_{in}$ be the incoming value, and $L_{min}, L_{max}$ be the parameter's physical limits.
 
-* **If Type is `absolute`:** Overwrite state directly.
+* **If Type is `absolute_uni` or `absolute_bi`:** Overwrite state directly.
 
 $$S_{new} = V_{in}$$
 
@@ -118,8 +171,44 @@ $$S_{new} = \max(L_{min}, \min(L_{max}, S_{old} + V_{in}))$$
 
 $$S_{new} = \max(L_{min}, \min(L_{max}, S_{old} + (V_{in} \times \Delta t)))$$
 
-
+> **Status: ✅ DONE - Math engine is correctly implemented**
 
 #### 4. Output Module
 
 Reads the finalized **Internal Output Dict** at 60Hz. It translates the normalized state (e.g., `0.5`) into the specific protocol required by the physical light (e.g., converting 0.5 to DMX value 127). It then broadcasts this to the final output network (ArtNet, sACN, NATS out, etc.).
+
+> **Status: ✅ DONE - DMX output publishing works**
+
+---
+
+## Migration Checklist
+
+### High Priority (Fix Before Next Release)
+
+- [ ] Update `InputPublisher` to publish `{value, type, timestamp}` instead of `{source, value}`
+- [ ] Update `BaseInputAdapter` to support type in publish
+- [ ] Update `SteamDeckAdapter` to define type for each axis
+- [ ] Update `MouseAdapter` to define type for each axis
+- [ ] Update `FakeAdapter` to define type for each axis
+- [ ] Update `MiddlewareInputSubscriber` to parse new payload schema
+- [ ] Update `MappingMiddleware` to remove `current_raw_input` and `virtual_output_state`
+- [ ] Update `MappingMiddleware` to do pure passthrough (no intent resolution)
+- [ ] Update `MiddlewareOutputPublisher` to forward unchanged payload
+- [ ] Update `FixtureInputSubscriber` to expect `type` field instead of `intent`
+- [ ] Update mapping config files to remove `intent` and `sensitivity` fields
+
+### Medium Priority (Next Sprint)
+
+- [ ] Implement Input Layer capabilities manifest publishing
+- [ ] Implement Middleware capabilities buffer
+- [ ] Add hardware compensation to Input Layer (deadzones, inversion)
+- [ ] Update patch.json format to match spec
+- [ ] Rename mapping files to routing.json
+
+### Low Priority (Future)
+
+- [ ] Add sensitivity curves to Input Layer
+- [ ] Add jitter filtering to Input Layer
+- [ ] Add live configuration via NATS topics
+- [ ] Add dynamic manifest updates
+- [ ] Support distributed deployment across multiple machines

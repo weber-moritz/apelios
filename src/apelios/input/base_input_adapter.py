@@ -7,6 +7,7 @@ class BaseInputAdapter:
         self._publisher = None
         self._is_running = False
         self.snapshot: dict[str, float] = {}
+        self._axis_types: dict[str, str] = {}
 
     async def start(self, input_publisher) -> None:
         """Attach the shared publisher and mark the adapter as running."""
@@ -23,18 +24,30 @@ class BaseInputAdapter:
 
         self._publisher = None
         self._is_running = False
+
+    def set_axis_type(self, axis: str, type: str) -> None:
+        """Set the type for a specific axis."""
+        self._axis_types[axis] = type
+
+    def get_axis_type(self, axis: str) -> str:
+        """Get the type for a specific axis, defaulting to absolute_uni."""
+        return self._axis_types.get(axis, "absolute_uni")
     
-    async def publish(self, axis: str, value: float) -> None:
+    async def publish(self, axis: str, value: float, type: str | None = None) -> None:
         """Publish one normalized axis value through the injected publisher."""
         if not self._is_running or self._publisher is None:
             raise RuntimeError("The system cant publish if its not started")
         
-        await self._publisher.publish(device=self.device, axis=axis, value=value)
+        # Use provided type or look up from axis_types
+        publish_type = type if type is not None else self.get_axis_type(axis)
+        
+        await self._publisher.publish(device=self.device, axis=axis, value=value, type=publish_type)
 
     async def publish_snapshot(self, snapshot: dict[str, float]) -> None:
         """Publishes the current values of all axes in the snapshot."""
         for axis, value in snapshot.items():
-            await self.publish(axis, value)
+            axis_type = self.get_axis_type(axis)
+            await self.publish(axis, value, type=axis_type)
 
     async def poll_once(self, dt: float = 0.016) -> None:
         """Adapter hook: poll device state once and populate `self.snapshot`.

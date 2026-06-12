@@ -52,8 +52,23 @@ async def test_runtime_tick_publishes_adapter_snapshot_to_broker(mock_broker_cli
         subject, msg = call.args
         seen.append((subject, json.loads(msg.decode("utf-8"))))
 
-    assert ("input.fake_device", {"source": "fake_device.left_stick.x", "value": 0.5}) in seen
-    assert ("input.fake_device", {"source": "fake_device.fader_1", "value": 0.75}) in seen
+    # Check payloads include type and timestamp
+    for subject, payload in seen:
+        assert "source" in payload
+        assert "value" in payload
+        assert "type" in payload
+        assert "timestamp" in payload
+    
+    # Check specific values
+    left_stick_call = next((s, p) for s, p in seen if p["source"] == "fake_device.left_stick.x")
+    assert left_stick_call[0] == "input.fake_device"
+    assert left_stick_call[1]["value"] == 0.5
+    assert left_stick_call[1]["type"] == "absolute_bi"
+    
+    fader_call = next((s, p) for s, p in seen if p["source"] == "fake_device.fader_1")
+    assert fader_call[0] == "input.fake_device"
+    assert fader_call[1]["value"] == 0.75
+    assert fader_call[1]["type"] == "absolute_uni"
 
 
 @pytest.mark.asyncio

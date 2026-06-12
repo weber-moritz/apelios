@@ -107,6 +107,57 @@ class SteamDeckAdapter(BaseInputAdapter):
 		"right_trackpad_pressure": "right_trackpad.pressure",
 	}
 
+	_AXIS_TYPES = {
+		# Buttons: absolute_uni (0 or 1)
+		"button.a": "absolute_uni",
+		"button.b": "absolute_uni",
+		"button.x": "absolute_uni",
+		"button.y": "absolute_uni",
+		"button.l1": "absolute_uni",
+		"button.r1": "absolute_uni",
+		"button.l2_click": "absolute_uni",
+		"button.r2_click": "absolute_uni",
+		"button.dpad_up": "absolute_uni",
+		"button.dpad_down": "absolute_uni",
+		"button.dpad_left": "absolute_uni",
+		"button.dpad_right": "absolute_uni",
+		"button.select": "absolute_uni",
+		"button.start": "absolute_uni",
+		"button.steam": "absolute_uni",
+		"button.quick_access": "absolute_uni",
+		"button.l_lower_grip": "absolute_uni",
+		"button.r_lower_grip": "absolute_uni",
+		"button.l_upper_grip": "absolute_uni",
+		"button.r_upper_grip": "absolute_uni",
+		"button.l_stick_press": "absolute_uni",
+		"button.r_stick_press": "absolute_uni",
+		"button.l_stick_touch": "absolute_uni",
+		"button.r_stick_touch": "absolute_uni",
+		"button.l_trackpad_touch": "absolute_uni",
+		"button.l_trackpad_press": "absolute_uni",
+		"button.r_trackpad_touch": "absolute_uni",
+		"button.r_trackpad_press": "absolute_uni",
+		# Analog sticks: absolute_bi (-1 to 1)
+		"joy.x": "absolute_bi",
+		"joy.y": "absolute_bi",
+		"right_stick.x": "absolute_bi",
+		"right_stick.y": "absolute_bi",
+		# Triggers: absolute_uni (0 to 1)
+		"left_trigger": "absolute_uni",
+		"right_trigger": "absolute_uni",
+		# Trackpads: absolute_bi
+		"left_trackpad.x": "absolute_bi",
+		"left_trackpad.y": "absolute_bi",
+		"right_trackpad.x": "absolute_bi",
+		"right_trackpad.y": "absolute_bi",
+		"left_trackpad.pressure": "absolute_uni",
+		"right_trackpad.pressure": "absolute_uni",
+		# IMU: rate
+		"imu.pitch": "rate",
+		"imu.yaw": "rate",
+		"imu.roll": "rate",
+	}
+
 	def __init__(self, device: str = "steamdeck", deck: Any | None = None) -> None:
 		super().__init__(device=device)
 		if deck is not None:
@@ -116,6 +167,10 @@ class SteamDeckAdapter(BaseInputAdapter):
 		else:
 			self._deck = _NullSteamDeck()
 		self._is_deck_started = False
+		
+		# Set axis types for all known axes
+		for axis, axis_type in self._AXIS_TYPES.items():
+			self.set_axis_type(axis, axis_type)
 
 	async def start(self, input_publisher) -> None:
 		"""Attach the shared publisher and start the Steam Deck listener."""
