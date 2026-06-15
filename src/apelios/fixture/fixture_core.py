@@ -51,7 +51,9 @@ class FixtureCore:
             self.internal_state[target] = next_state
 
             universe = int(fixture_patch.get("universe", 0))
-            address = int(fixture_patch.get("address", 0))
+            fixture_base_address = int(fixture_patch.get("address", 0))
+            parameter_offset = self._get_parameter_offset(fixtures, fixture_name, parameter_name, parameters, parameter_patch)
+            address = fixture_base_address + parameter_offset
             width = int(parameter_patch.get("width", 8))
             self._write_dmx(universe, address, width, next_state)
 
@@ -83,6 +85,34 @@ class FixtureCore:
             except (TypeError, ValueError):
                 pass
         return 0.0, 1.0
+
+    def _get_parameter_offset(
+        self,
+        fixtures: dict[str, Any],
+        fixture_name: str,
+        parameter_name: str,
+        parameters: dict[str, Any],
+        parameter_patch: dict[str, Any],
+    ) -> int:
+        """Get parameter offset, either explicit or sequential.
+        
+        If parameter has explicit 'address' field, use it.
+        Otherwise, calculate sequential offset based on previous parameters' (offset + width).
+        """
+        # If parameter has explicit address, use it
+        if "address" in parameter_patch:
+            return int(parameter_patch["address"])
+        
+        # Otherwise, calculate sequential offset
+        offset = 0
+        for param_name, param_patch in parameters.items():
+            if param_name == parameter_name:
+                return offset
+            # Add this parameter's width to the offset
+            param_width = int(param_patch.get("width", 8))
+            offset += param_width
+        
+        return offset
 
     def _split_target(self, target: str) -> tuple[str | None, str | None]:
         parts = target.split(".")

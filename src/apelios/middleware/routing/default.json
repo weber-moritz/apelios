@@ -1,0 +1,7 @@
+{
+  "mappings": {
+    "midi.fader.1": "group1.pan",
+    "mouse.x": "group1.pan",
+    "mouse.y": "group1.tilt"
+  }
+}

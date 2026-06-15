@@ -294,10 +294,10 @@ _AXIS_TYPES = {
 
 | # | Task | File | Action | Test Command |
 |---|------|------|--------|--------------|
-| 4.1.1 | Create routing/default.json | `src/apelios/middleware/routing/default.json` | New file: `{"mappings": {"input.device.axis": "target.group.param"}}` | - |
-| 4.1.2 | Create routing/default_steamdeck.json | `src/apelios/middleware/routing/default_steamdeck.json` | Migrate from mapping/, remove intent/sensitivity | - |
-| 4.1.3 | Create routing/steamdeck.json | `src/apelios/middleware/routing/steamdeck.json` | Migrate from mapping/ | - |
-| 4.1.4 | Update runtime manager | `src/apelios/middleware/middleware_runtime_manager.py` | Change _MAPPING_DIR to _ROUTING_DIR | - |
+| [x] 4.1.1 | Create routing/default.json | `src/apelios/middleware/routing/default.json` | New file: `{"mappings": {"input.device.axis": "target.group.param"}}` | - |
+| [x] 4.1.2 | Create routing/default_steamdeck.json | `src/apelios/middleware/routing/default_steamdeck.json` | Migrate from mapping/, remove intent/sensitivity | - |
+| [x] 4.1.3 | Create routing/steamdeck.json | `src/apelios/middleware/routing/steamdeck.json` | Migrate from mapping/ | - |
+| [x] 4.1.4 | Update runtime manager | `src/apelios/middleware/middleware_runtime_manager.py` | Change _MAPPING_DIR to _ROUTING_DIR | - |
 | 4.1.5 | Remove old mapping/ | - | - | Delete after all tests pass |
 
 **Verification:** All middleware tests still pass
@@ -306,11 +306,37 @@ _AXIS_TYPES = {
 
 ### 📦 Patch Config
 
+**Patch Config Format (DMX Channel Mapping):**
+- Fixture has base `address` (DMX channel)
+- Parameters use `address` as **relative offset** from fixture base (1, 2, 3... not 11, 12, 13...)
+- If parameter `address` not set: auto-calculate sequential offset from previous parameter's (offset + width)
+- For 16-bit: writes to channel N and N+1 (coarse + fine)
+- Actual channel = `fixture.address + parameter.address`
+
+**Example:**
+```json
+{
+  "fixtures": {
+    "movinghead01": {
+      "type": "robe_robospot",
+      "universe": 2,
+      "address": 10,
+      "parameters": {
+        "pan": {"width": 16, "limits": [0.0, 1.0]},      // offset auto=0 → channels 10-11
+        "tilt": {"address": 2, "width": 8, "limits": [0.0, 1.0]}  // offset=2 → channel 12
+      }
+    }
+  }
+}
+```
+
 | # | Task | File | Action | Test Command |
 |---|------|------|--------|--------------|
-| 4.2.1 | Update patch format | `src/apelios/fixture/patch/default.json` | Change from array to object format per spec | - |
-| 4.2.2 | Verify loading | `src/apelios/fixture/fixture_runtime_manager.py` | Update _load_default_patch() if needed | - |
-| 4.2.3 | Run fixture integration | - | - | `pytest tests/fixture/test_integration_fixture.py -v` |
+| [x] 4.2.1 | Update patch format | `src/apelios/fixture/patch/default.json` | Change from array to object format with offset-based addressing | - |
+| [x] 4.2.2 | Update FixtureCore _write_dmx | `src/apelios/fixture/fixture_core.py` | Use fixture.address + parameter.address for channel calculation | - |
+| [x] 4.2.3 | Auto-calculate sequential offsets | `src/apelios/fixture/fixture_core.py` | If no parameter address: calculate from previous (offset + width) | - |
+| [x] 4.2.4 | Verify loading | `src/apelios/fixture/fixture_runtime_manager.py` | Update _load_default_patch() if needed | - |
+| [x] 4.2.5 | Run fixture integration | - | - | `pytest tests/fixture/test_integration_fixture.py -v` |
 
 **Verification:** Fixture layer tests pass
 
@@ -346,6 +372,101 @@ _AXIS_TYPES = {
 
 ---
 
+## 📋 PHASE 6: MANY-TO-ONE INPUT SUMMATION (20 tasks)
+
+### 🎯 Phase Goal: Enable Multiple Inputs to Contribute to One Output
+
+**Problem:** Current architecture has 1:1 input→output mapping. When multiple inputs map to the same target, the last input overwrites previous ones. This prevents:
+- Using absolute fader for coarse control + rate gyro for fine adjustments on same axis
+- Multiple devices contributing to one fixture parameter
+- Complex control schemes requiring input summation
+
+**Current State (after Phase 5):**
+```
+Input:   {value: 0.5, type: "absolute_uni", timestamp: ...} (topic: input.fader.1)
+         ↓
+Middleware: maps fader.1 → group1.pan, publishes {value: 0.5, type: "absolute_uni", timestamp: ...} (topic: target.group1.pan)
+         ↓
+Fixture: inbox["group1.pan"] = {target: "group1.pan", value: 0.5, type: "absolute_uni", timestamp: ...}
+         ↓
+Second input to same target: OVERWRITES the first
+```
+
+**Target Architecture:**
+```
+Input:   {value: 0.5, type: "absolute_uni", timestamp: ..., source: "fader.1"} (topic: input.fader.1)
+         ↓
+Middleware: maps source→target, publishes {value: 0.5, type: "absolute_uni", timestamp: ..., source: "fader.1"} (topic: target.group1.pan)
+         ↓
+Fixture: inbox["fader.1"] = {source: "fader.1", target: "group1.pan", value: 0.5, type: "absolute_uni", timestamp: ...}
+         ↓
+Fixture Core: tracks per-target state, computes deltas, sums contributions from all sources
+         ↓
+Output: group1.pan = sum of all deltas + initial absolute value
+```
+
+**Why:** Enable flexible control schemes where absolute inputs set base position and delta/rate inputs provide fine adjustments.
+
+**Note on Parameter Mapping:** The sequence of parameters in the patch config does NOT define DMX channel mapping. Channel mapping is explicit via `universe`, `address`, and `width` fields in each parameter definition. Multiple sources can map to the same target via the routing config (Phase 4.1), and their contributions are summed (this phase).
+
+### 📦 Module: middleware_output_publisher.py
+
+| # | Task | File | Action | Test Command |
+|---|------|------|--------|--------------|
+| 6.1.1 | Add source to payload | `src/apelios/middleware/middleware_output_publisher.py` | Include source field in published payload | - |
+| 6.1.2 | Test source in payload | `tests/middleware/test_middleware_output_publisher.py` | Add `test_publisher_includes_source` | `pytest tests/middleware/test_middleware_output_publisher.py::test_publisher_includes_source -v` |
+
+**Verification:** `pytest tests/middleware/test_middleware_output_publisher.py -v`
+
+---
+
+### 📦 Module: fixture_input_subscriber.py
+
+| # | Task | File | Action | Test Command |
+|---|------|------|--------|--------------|
+| 6.2.1 | Store source in inbox | `src/apelios/fixture/fixture_input_subscriber.py` | Key inbox by source, store target alongside | - |
+| 6.2.2 | Test source storage | `tests/fixture/test_fixture_input_subscriber.py` | Add `test_subscriber_stores_source` | `pytest tests/fixture/test_fixture_input_subscriber.py::test_subscriber_stores_source -v` |
+
+**Verification:** `pytest tests/fixture/test_fixture_input_subscriber.py -v`
+
+---
+
+### 📦 Module: fixture_core.py
+
+| # | Task | File | Action | Test Command |
+|---|------|------|--------|--------------|
+| 6.3.1 | Track per-target state | `src/apelios/fixture/fixture_core.py` | Add output_state dict with per-target {output_value, last_absolute, has_first_abs} | - |
+| 6.3.2 | Keep previous frame snapshot | `src/apelios/fixture/fixture_core.py` | Store copy of inbox at end of each frame | - |
+| 6.3.3 | Compute deltas per source | `src/apelios/fixture/fixture_core.py` | Calculate delta from previous frame for each source | - |
+| 6.3.4 | Sum deltas by target | `src/apelios/fixture/fixture_core.py` | Group sources by target, sum all deltas | - |
+| 6.3.5 | Handle absolute initialization | `src/apelios/fixture/fixture_core.py` | First absolute sets output_value, subsequent abs values contribute deltas | - |
+| 6.3.6 | Test delta summation | `tests/fixture/test_fixture_core.py` | Add `test_core_sums_deltas_from_multiple_sources` | `pytest tests/fixture/test_fixture_core.py::test_core_sums_deltas_from_multiple_sources -v` |
+| 6.3.7 | Test absolute initialization | `tests/fixture/test_fixture_core.py` | Add `test_core_initializes_with_first_absolute` | `pytest tests/fixture/test_fixture_core.py::test_core_initializes_with_first_absolute -v` |
+
+**Verification:** `pytest tests/fixture/test_fixture_core.py -v`
+
+---
+
+### 📦 Module: fixture_runtime_manager.py
+
+| # | Task | File | Action | Test Command |
+|---|------|------|--------|--------------|
+| 6.4.1 | Verify source flows through | `src/apelios/fixture/fixture_runtime_manager.py` | Confirm source is passed from broker to core | - |
+
+**Verification:** `pytest tests/fixture/test_fixture_runtime_manager.py -v`
+
+---
+
+**Acceptance Criteria:**
+- [ ] Multiple inputs can map to same target
+- [ ] First absolute input sets base output value
+- [ ] Subsequent absolute inputs contribute delta (new - previous)
+- [ ] Delta inputs add directly to output
+- [ ] Rate inputs add (value * dt) to output
+- [ ] All types can be mixed on same target
+
+---
+
 ## ✅ ACCEPTANCE CHECKLIST
 
 ### Phase 1: Input Layer Complete
@@ -369,9 +490,9 @@ _AXIS_TYPES = {
 - [x] Math engine works with all types: absolute_uni, absolute_bi, delta, rate
 
 ### Phase 4: Config Complete
-- [ ] All config files use new format
-- [ ] No `intent` or `sensitivity` in routing config
-- [ ] Patch file matches spec format
+- [x] All routing config files use new format
+- [x] No `intent` or `sensitivity` in routing config
+- [x] Patch file matches spec format with offset-based addressing
 
 ### Phase 5: Integration Complete
 - [ ] All 127+ tests pass
@@ -448,12 +569,12 @@ Co-Authored-By: Mistral Vibe <vibe@mistral.ai>"
 
 | Metric | Value |
 |--------|-------|
-| Total Tasks | 100 |
+| Total Tasks | 120 |
 | Code Files | 16 |
 | Test Files | 11 |
-| Config Files | 4 |
-| Estimated Duration | 2 weeks |
-| Critical Path Tasks | 33 |
+| Config Files | 7 |
+| Estimated Duration | 2-3 weeks |
+| Critical Path Tasks | 40 |
 | Test Files to Modify | 11 |
 
 ---
@@ -479,8 +600,14 @@ These tasks must be completed in order:
 10. 3.1.1 - 3.1.5 (FixtureInputSubscriber)
 11. 3.2.1 - 3.2.7 (FixtureCore)
 
+**Phase 6 (Many-to-One):**
+12. 6.1.1 - 6.1.2 (MiddlewareOutputPublisher)
+13. 6.2.1 - 6.2.2 (FixtureInputSubscriber)
+14. 6.3.1 - 6.3.7 (FixtureCore)
+15. 6.4.1 (FixtureRuntimeManager)
+
 **Phase 5 (Verify):**
-12. 5.1.1 - 5.2.5 (Integration Tests)
+16. 5.1.1 - 5.2.5 (Integration Tests)
 
 ---
 

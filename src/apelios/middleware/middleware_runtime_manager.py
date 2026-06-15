@@ -15,7 +15,7 @@ from apelios.middleware.middleware_core import MappingMiddleware
 from apelios.middleware.middleware_input_subscriber import MiddlewareInputSubscriber
 from apelios.middleware.middleware_output_publisher import MiddlewareOutputPublisher
 
-_MAPPING_DIR = Path(__file__).parent / "mapping"
+_ROUTING_DIR = Path(__file__).parent / "routing"
 
 
 def _load_default_profile() -> dict[str, str]:
@@ -48,14 +48,14 @@ def _load_default_profile() -> dict[str, str]:
 
         return result
 
-    if _MAPPING_DIR.exists():
-        base_profile = _MAPPING_DIR / "default.json"
+    if _ROUTING_DIR.exists():
+        base_profile = _ROUTING_DIR / "default.json"
         profile = _load_mappings(base_profile)
 
-        for path in sorted(_MAPPING_DIR.glob("default_*.json")):
+        for path in sorted(_ROUTING_DIR.glob("default_*.json")):
             profile.update(_load_mappings(path))
 
-        for path in sorted(_MAPPING_DIR.glob("*.json")):
+        for path in sorted(_ROUTING_DIR.glob("*.json")):
             if path.name == "default.json" or path.name.startswith("default_"):
                 continue
             profile.update(_load_mappings(path))
