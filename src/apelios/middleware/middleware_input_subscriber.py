@@ -18,15 +18,15 @@ logger = logging.getLogger(__name__)
 class MiddlewareInputSubscriber:
 	"""Parse broker payloads and forward source/value updates to the core."""
 
-	def __init__(self, middleware: MappingMiddleware) -> None:
+	def __init__(self, middleware: MappingMiddleware, runtime_manager: Any = None) -> None:
 		self.middleware = middleware
+		self.runtime_manager = runtime_manager
 
-	# this __call__ function is called, every time an instance of this class is created. the middleware runtime manager uses Dependency Inversion. The rtm creates an instance of the broker client and "maps" the on_message function of the broker client to the input hanlder
 	async def __call__(self, msg: Any) -> None:
 		"""Handle one broker message.
 
 		Expected payload contract (JSON bytes):
-		{"source": "device.axis", "value": 0.5}
+		{"source": "device.axis", "value": 0.5, "type": "absolute_uni", "timestamp": 1234567890.123}
 		"""
 		try:
 			payload = json.loads(msg.data)
@@ -34,17 +34,35 @@ class MiddlewareInputSubscriber:
 			logger.warning("Ignoring malformed middleware input payload", exc_info=True)
 			return
 
-		source = payload.get("source") if isinstance(payload, dict) else None
-		value = payload.get("value") if isinstance(payload, dict) else None
+		if not isinstance(payload, dict):
+			logger.warning("Ignoring middleware input payload that is not a JSON object")
+			return
+
+		source = payload.get("source")
+		value = payload.get("value")
+		type_ = payload.get("type")
+		timestamp = payload.get("timestamp")
 
 		if not isinstance(source, str) or not source:
 			logger.warning("Ignoring middleware input without valid 'source'")
 			return
 
-		try:
-			numeric_value = float(value)
-		except (TypeError, ValueError):
-			logger.warning("Ignoring middleware input with non-numeric 'value'")
+		if not isinstance(value, (int, float)):
+			try:
+				numeric_value = float(value)
+			except (TypeError, ValueError):
+				logger.warning("Ignoring middleware input with non-numeric 'value'")
+				return
+		else:
+			numeric_value = value
+
+		if not isinstance(type_, str) or not type_:
+			logger.warning("Ignoring middleware input without valid 'type'")
 			return
 
-		self.middleware.handle_input(source=source, value=numeric_value)
+		# Call middleware which returns outputs dict
+		outputs = self.middleware.handle_input(source=source, value=numeric_value, type=type_, timestamp=timestamp)
+		
+		# Forward outputs to runtime manager for publishing on next tick
+		if self.runtime_manager and outputs:
+			self.runtime_manager.collect_outputs(outputs)

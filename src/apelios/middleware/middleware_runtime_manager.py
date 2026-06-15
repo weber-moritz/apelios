@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Any
 
 from apelios.broker.broker_client import BrokerClient
 from apelios.middleware.middleware_core import MappingMiddleware
@@ -17,22 +18,35 @@ from apelios.middleware.middleware_output_publisher import MiddlewareOutputPubli
 _MAPPING_DIR = Path(__file__).parent / "mapping"
 
 
-def _load_default_profile() -> dict:
-    """Load the base middleware profile and overlay adapter-specific maps."""
+def _load_default_profile() -> dict[str, str]:
+    """Load the base middleware profile mapping sources to targets.
+    
+    Returns simple source->target mapping dict (no nested intent/sensitivity).
+    """
 
-    def _load_mappings(path: Path) -> dict[str, dict]:
+    def _load_mappings(path: Path) -> dict[str, str]:
         if not path.exists():
             return {}
 
         with path.open() as f:
             data = json.load(f)
 
+        # New format: simple source->target mapping
         mappings = data.get("mappings", {})
         if not isinstance(mappings, dict):
             return {}
 
-        return mappings
+        # Convert old format (nested dicts) to new format if needed
+        result = {}
+        for source, mapping in mappings.items():
+            if isinstance(mapping, dict):
+                # Old format: {"source": {"target": "target.group1.param", "intent": "..."}}
+                result[source] = mapping.get("target", mapping)
+            else:
+                # New format: {"source": "target.group1.param"}
+                result[source] = mapping
 
+        return result
 
     if _MAPPING_DIR.exists():
         base_profile = _MAPPING_DIR / "default.json"
@@ -63,9 +77,10 @@ class MiddlewareRuntimeManager:
         self.middleware = middleware or MappingMiddleware(profile=_load_default_profile())
         self.broker_client = broker_client or BrokerClient(provider="nats")
         self.input_subject = input_subject
-        self.input_subscriber = MiddlewareInputSubscriber(self.middleware)
+        self.input_subscriber = MiddlewareInputSubscriber(self.middleware, self)
         self.output_publisher = MiddlewareOutputPublisher(broker=self.broker_client)
         self._running = False
+        self._outputs_to_publish: dict[str, dict[str, Any]] = {}
 
     async def start(self) -> None:
         """Start middleware runtime by subscribing to broker input events."""
@@ -88,11 +103,16 @@ class MiddlewareRuntimeManager:
         """Return whether this runtime manager is marked as running."""
         return self._running
 
-    async def tick(self, dt: float = 0.016) -> None:
-        """Process one single frame of middleware logic and publish enriched outputs."""
-        self.middleware.process_frame(dt=dt)
-        
-        # Publish enriched payloads (with target, value, intent, timestamp)
-        if self.middleware.enriched_outputs:
-            await self.output_publisher.publish_enriched(self.middleware.enriched_outputs)
+    def collect_outputs(self, outputs: dict[str, dict[str, Any]]) -> None:
+        """Collect outputs from middleware to be published on next tick."""
+        self._outputs_to_publish.update(outputs)
 
+    async def tick(self, dt: float = 0.016) -> None:
+        """Publish collected outputs to broker.
+        
+        In the new stateless architecture, middleware processes inputs immediately
+        and returns outputs. This method publishes any collected outputs and clears the buffer.
+        """
+        if self._outputs_to_publish:
+            await self.output_publisher.publish(self._outputs_to_publish)
+            self._outputs_to_publish = {}

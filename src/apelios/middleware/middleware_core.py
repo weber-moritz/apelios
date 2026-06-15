@@ -2,61 +2,59 @@
 
 from __future__ import annotations
 
-import time
 from typing import Any
 
 
 class MappingMiddleware:
-	"""Pure passthrough mapping engine that enriches payloads with intent and target.
+	"""Pure passthrough mapping engine that routes inputs to targets.
 
-	The middleware accepts raw input events asynchronously through
-	:meth:`handle_input` and creates enriched payloads on :meth:`process_frame`.
+	The middleware accepts raw input events through :meth:`handle_input`
+	and immediately returns the mapped output payloads.
 	No math, state, or compensation is applied here (reserved for fixture layer).
 	"""
 
-	def __init__(self, profile: dict[str, dict[str, Any]] | None = None) -> None:
-		self.profile: dict[str, dict[str, Any]] = profile or {}
-		self.current_raw_input: dict[str, float] = {}
-		self.virtual_output_state: dict[str, float] = {}  # backward compat: just values
-		self.enriched_outputs: dict[str, dict[str, Any]] = {}  # {target: {target, value, intent, timestamp}}
-
-	def handle_input(self, source: str, value: float) -> None:
-		"""Store the latest raw value for a source until the next frame."""
-		self.current_raw_input[source] = float(value)
-
-	def process_frame(self, dt: float) -> None:
-		"""Create enriched payloads by mapping sources to targets and attaching intent.
+	def __init__(self, profile: dict[str, str] | None = None) -> None:
+		"""Initialize with a routing profile mapping source to target.
 		
-		No math is applied; this is a pure passthrough router.
+		Args:
+		    profile: Dict mapping input source (e.g., "input.device.axis") to output target (e.g., "target.group1.param")
 		"""
-		snapshot = self.current_raw_input.copy()
-		self.enriched_outputs = {}
+		self.profile: dict[str, str] = profile or {}
 
-		for source, value in snapshot.items():
-			mapping = self.profile.get(source)
-			if not mapping:
-				continue
-
-			target = mapping.get("target")
-			if not isinstance(target, str):
-				continue
-
-			# Get intent from mapping (previously named "type")
-			intent = mapping.get("intent")
-			if not isinstance(intent, str):
-				continue
-
-			# Create enriched payload with target, value, intent, and timestamp
-			enriched_payload = {
-				"target": target,
-				"value": float(value),
-				"intent": intent,
-				"timestamp": time.time(),
-			}
-
-			self.enriched_outputs[target] = enriched_payload
-			# Backward compat: also update virtual_output_state with just the value
-			self.virtual_output_state[target] = float(value)
-
-		# Clear transient input buffer after processing
-		self.current_raw_input = {}
+	def handle_input(self, source: str, value: float, type: str | None = None, timestamp: float | None = None) -> dict[str, dict[str, Any]]:
+		"""Map an input source to its target and return the output payload immediately.
+		
+		This is a pure passthrough - no state is stored, no math is applied.
+		The type and timestamp from the input layer flow through unchanged.
+		
+		Args:
+		    source: The input source identifier (e.g., "input.device.axis")
+		    value: The raw input value
+		    type: The type from the input layer (absolute_uni, absolute_bi, delta, rate)
+		    timestamp: The timestamp from the input layer
+		
+		Returns:
+		    Dict mapping target names to their payload dicts.
+		    Example: {"target.group1.param": {"value": 0.5, "type": "absolute_uni", "timestamp": 123.0}}
+		    Returns empty dict {} if source is not mapped.
+		"""
+		outputs: dict[str, dict[str, Any]] = {}
+		
+		# Look up the target for this source
+		target = self.profile.get(source)
+		if not target:
+			# Source not mapped, return empty dict
+			return outputs
+		
+		# Create the output payload with the input's type and timestamp
+		# No modification - pure passthrough
+		payload = {
+			"value": float(value),
+			"type": type,
+			"timestamp": timestamp,
+		}
+		
+		# Map source to target
+		outputs[target] = payload
+		
+		return outputs

@@ -16,7 +16,7 @@ def patch_config():
                 "address": 10,
                 "parameters": {
                     "pan": {
-                        "intent": "absolute",
+                        "type": "absolute_uni",
                         "width": 16,
                         "limits": [0.0, 1.0],
                     }

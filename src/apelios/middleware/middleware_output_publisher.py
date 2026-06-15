@@ -1,6 +1,6 @@
 """Middleware output publisher for broker events.
 
-This module publishes enriched middleware payloads to both target.* and outputs.* subjects.
+This module publishes middleware outputs to target.* subjects.
 """
 
 from __future__ import annotations
@@ -16,23 +16,23 @@ logger = logging.getLogger(__name__)
 
 
 class MiddlewareOutputPublisher:
-    """Publish enriched middleware payloads to broker."""
+    """Publish middleware outputs to broker."""
 
     def __init__(self, broker: BrokerClient) -> None:
         self.broker = broker
 
-    async def publish_enriched(self, enriched_outputs: dict[str, dict[str, Any]]) -> None:
-        """Publish enriched payloads to target.* subjects.
+    async def publish(self, outputs: dict[str, dict[str, Any]]) -> None:
+        """Publish output payloads to target.* subjects.
 
         Args:
-            enriched_outputs: dict mapping target name to enriched payload
-                e.g., {"movinghead01.pan": {"target": "movinghead01.pan", "value": 0.5, "intent": "absolute", "timestamp": 1234567890.123}}
+            outputs: dict mapping target name to payload
+                e.g., {"group1.pan": {"value": 0.5, "type": "delta", "timestamp": 123.0}}
         """
-        for target, enriched_payload in enriched_outputs.items():
+        for target, payload in outputs.items():
             try:
-                payload_json = json.dumps(enriched_payload).encode("utf-8")
+                payload_json = json.dumps(payload).encode("utf-8")
             except Exception as e:
-                logger.warning(f"Failed to serialize enriched payload for {target}: {e}")
+                logger.warning(f"Failed to serialize payload for {target}: {e}")
                 continue
 
             # Publish to target.* subject
@@ -41,3 +41,7 @@ class MiddlewareOutputPublisher:
                 await self.broker.publish(target_subject, payload_json)
             except Exception as e:
                 logger.error(f"Failed to publish {target_subject} to broker: {e}")
+
+    async def publish_enriched(self, enriched_outputs: dict[str, dict[str, Any]]) -> None:
+        """Backward compat: wrapper for publish with old naming."""
+        await self.publish(enriched_outputs)

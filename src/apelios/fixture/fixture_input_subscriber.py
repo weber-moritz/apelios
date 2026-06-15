@@ -15,7 +15,6 @@ class FixtureInputSubscriber:
     def __init__(self, inbox: dict[str, dict[str, Any]]) -> None:
         self.inbox = inbox
 
-    # ADD 'async' HERE
     async def __call__(self, msg: Any) -> None:
         try:
             payload = json.loads(msg.data)
@@ -27,16 +26,21 @@ class FixtureInputSubscriber:
             logger.warning("Ignoring fixture input payload that is not a JSON object")
             return
 
-        target = payload.get("target")
-        intent = payload.get("intent")
-        value = payload.get("value")
-
-        if not isinstance(target, str) or not target:
-            logger.warning("Ignoring fixture input without valid 'target'")
+        # Extract target from message subject (e.g., "target.movinghead01.pan")
+        subject = getattr(msg, "subject", "")
+        if not subject.startswith("target."):
+            logger.warning("Ignoring fixture input without valid 'target' subject")
+            return
+        target = subject[7:]  # Strip "target." prefix
+        if not target:
+            logger.warning("Ignoring fixture input without valid 'target' subject")
             return
 
-        if not isinstance(intent, str) or not intent:
-            logger.warning("Ignoring fixture input without valid 'intent'")
+        value = payload.get("value")
+        type_ = payload.get("type")
+
+        if not isinstance(type_, str) or not type_:
+            logger.warning("Ignoring fixture input without valid 'type'")
             return
 
         try:
@@ -47,6 +51,6 @@ class FixtureInputSubscriber:
 
         self.inbox[target] = {
             "target": target,
-            "intent": intent,
+            "type": type_,
             "value": numeric_value,
         }

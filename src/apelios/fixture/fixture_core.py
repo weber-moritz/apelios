@@ -6,7 +6,7 @@ from typing import Any
 
 
 class FixtureCore:
-    """Resolve fixture intents into normalized state and DMX output."""
+    """Resolve fixture types into normalized state and DMX output."""
 
     def __init__(self, patch: dict[str, Any] | None = None) -> None:
         self.patch = patch or {}
@@ -40,9 +40,9 @@ class FixtureCore:
                 continue
 
             current_state = self.internal_state.get(target, 0.0)
-            intent = str(payload.get("intent", parameter_patch.get("intent", "absolute")))
+            type_ = str(payload.get("type", parameter_patch.get("type", "absolute_uni")))
             input_value = float(payload.get("value", 0.0))
-            next_state = self._apply_intent(current_state, input_value, intent, dt)
+            next_state = self._apply_type(current_state, input_value, type_, dt)
 
             limits = parameter_patch.get("limits", [0.0, 1.0])
             minimum, maximum = self._extract_limits(limits)
@@ -57,10 +57,10 @@ class FixtureCore:
 
         self.inbox.clear
 
-    def _apply_intent(self, current_state: float, input_value: float, intent: str, dt: float) -> float:
-        if intent == "delta":
+    def _apply_type(self, current_state: float, input_value: float, type_: str, dt: float) -> float:
+        if type_ == "delta":
             return current_state + input_value
-        if intent == "rate":
+        if type_ == "rate":
             return current_state + (input_value * dt)
         return input_value
 

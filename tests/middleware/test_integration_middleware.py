@@ -10,15 +10,8 @@ from apelios.middleware.middleware_runtime_manager import MiddlewareRuntimeManag
 def mock_profile():
     """A profile with one absolute fader and one delta mouse (passthrough in MVP)."""
     return {
-        "fader.1": {
-            "target": "group1.dimmer", 
-            "intent": "absolute"
-        },
-        "mouse.x": {
-            "target": "group1.pan", 
-            "intent": "delta",
-            "sensitivity": 1.0  # Ignored in passthrough MVP
-        }
+        "fader.1": "group1.dimmer",
+        "mouse.x": "group1.pan",
     }
 
 
@@ -65,7 +58,7 @@ async def test_full_middleware_signal_flow(mock_profile, mock_broker):
 
     # Simulate network packet arriving
     msg_1 = MagicMock()
-    msg_1.data = json.dumps({"source": "fader.1", "value": 0.8}).encode("utf-8")
+    msg_1.data = json.dumps({"source": "fader.1", "value": 0.8, "type": "absolute_uni", "timestamp": 1234567890.0}).encode("utf-8")
     
     # FIX: Await the callback because it is now an async function
     await captured_subscriber_callback(msg_1)
@@ -89,7 +82,7 @@ async def test_full_middleware_signal_flow(mock_profile, mock_broker):
     
     # Send a delta value (middleware will just pass it through unchanged)
     msg_2 = MagicMock()
-    msg_2.data = json.dumps({"source": "mouse.x", "value": 0.5}).encode("utf-8")
+    msg_2.data = json.dumps({"source": "mouse.x", "value": 0.5, "type": "delta", "timestamp": 1234567890.0}).encode("utf-8")
     await captured_subscriber_callback(msg_2)
     
     # Process the frame

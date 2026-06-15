@@ -1,3 +1,4 @@
+import json
 import pytest
 from unittest.mock import AsyncMock, MagicMock
 
@@ -131,3 +132,104 @@ def test_runtime_manager_default_profile_includes_steamdeck_axes():
     assert "steamdeck.imu.pitch" in profile
     assert "steamdeck.imu.yaw" in profile
     assert "steamdeck.imu.roll" in profile
+
+
+@pytest.mark.asyncio
+async def test_runtime_manager_tick_publishes_outputs(mock_broker_client):
+    """Test that tick() processes inputs and publishes outputs immediately."""
+    from apelios.middleware.middleware_input_subscriber import MiddlewareInputSubscriber
+    
+    # Create middleware with simple profile - maps source string to target
+    profile = {
+        "test.device.axis": "group1.pan"
+    }
+    core = MappingMiddleware(profile=profile)
+    
+    runtime = MiddlewareRuntimeManager(
+        middleware=core,
+        broker_client=mock_broker_client
+    )
+    
+    await runtime.start()
+    
+    # Simulate an input message arriving
+    mock_msg = MagicMock()
+    mock_msg.data = json.dumps({
+        "source": "test.device.axis",
+        "value": 0.5,
+        "type": "delta",
+        "timestamp": 123.0
+    }).encode("utf-8")
+    
+    # Get the subscriber callback
+    sub_callback = mock_broker_client.subscribe.call_args.args[1]
+    await sub_callback(mock_msg)
+    
+    # Tick should process and publish
+    await runtime.tick(dt=0.016)
+    
+    # Verify output was published
+    assert mock_broker_client.publish.call_count >= 1
+    
+    # Check that type was forwarded
+    calls = mock_broker_client.publish.call_args_list
+    for call in calls:
+        subject = call[0][0]
+        payload_bytes = call[0][1]
+        payload = json.loads(payload_bytes.decode("utf-8"))
+        if subject == "target.group1.pan":
+            assert payload["value"] == 0.5
+            assert payload["type"] == "delta"
+            assert payload["timestamp"] == 123.0
+            break
+
+
+@pytest.mark.asyncio
+async def test_runtime_manager_stateless(mock_broker_client):
+    """Test that runtime manager doesn't maintain state between ticks."""
+    profile = {
+        "test.axis": "group1.param"
+    }
+    core = MappingMiddleware(profile=profile)
+    runtime = MiddlewareRuntimeManager(
+        middleware=core,
+        broker_client=mock_broker_client
+    )
+    
+    await runtime.start()
+    
+    # Process first input
+    mock_msg1 = MagicMock()
+    mock_msg1.data = json.dumps({
+        "source": "test.axis",
+        "value": 0.5,
+        "type": "absolute_uni",
+        "timestamp": 100.0
+    }).encode("utf-8")
+    
+    sub_callback = mock_broker_client.subscribe.call_args.args[1]
+    await sub_callback(mock_msg1)
+    await runtime.tick(dt=0.016)
+    
+    # Reset mock
+    mock_broker_client.publish.reset_mock()
+    
+    # Process second input - should not depend on first
+    mock_msg2 = MagicMock()
+    mock_msg2.data = json.dumps({
+        "source": "test.axis",
+        "value": 0.8,
+        "type": "absolute_uni",
+        "timestamp": 200.0
+    }).encode("utf-8")
+    
+    await sub_callback(mock_msg2)
+    await runtime.tick(dt=0.016)
+    
+    # Verify second value was published, not first
+    assert mock_broker_client.publish.call_count >= 1
+    calls = mock_broker_client.publish.call_args_list
+    for call in calls:
+        payload = json.loads(call[0][1].decode("utf-8"))
+        assert payload["value"] == 0.8
+        assert payload["timestamp"] == 200.0

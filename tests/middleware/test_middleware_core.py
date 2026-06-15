@@ -4,125 +4,97 @@ from apelios.middleware.middleware_core import MappingMiddleware
 
 @pytest.fixture
 def middleware():
-    """Fixture with passthrough mapping (no math applied)."""
+    """Fixture with pure passthrough routing (stateless, no intent in config)."""
     mock_profile = {
-        "fader.1": {
-            "target": "group1.dimmer",
-            "intent": "absolute",
-        },
-        "mouse.x": {
-            "target": "group1.pan",
-            "intent": "delta",
-            "sensitivity": 0.01,  # Ignored in MVP
-        },
-        "joystick.1": {
-            "target": "group1.tilt",
-            "intent": "rate",
-            "sensitivity": 0.4,  # Ignored in MVP
-            "deadzone": 0.05,  # Ignored in MVP
-        },
+        "fader.1": "group1.dimmer",
+        "mouse.x": "group1.pan",
+        "joystick.1": "group1.tilt",
     }
     return MappingMiddleware(profile=mock_profile)
 
 
-def test_core_absolute_passthrough(middleware):
-    """Test that absolute intent values are passed through unchanged."""
-    middleware.handle_input(source="fader.1", value=0.75)
-    assert "group1.dimmer" not in middleware.enriched_outputs
+def test_core_passes_type_unchanged(middleware):
+    """Test that type from input layer flows through unchanged."""
+    outputs = middleware.handle_input(source="fader.1", value=0.75, type="absolute_uni", timestamp=123.0)
+    assert outputs == {"group1.dimmer": {"value": 0.75, "type": "absolute_uni", "timestamp": 123.0}}
 
-    middleware.process_frame(dt=0.016)
-    
-    # Check that enriched payload is created
-    assert "group1.dimmer" in middleware.enriched_outputs
-    enriched = middleware.enriched_outputs["group1.dimmer"]
-    
-    # Verify payload structure
-    assert enriched["target"] == "group1.dimmer"
-    assert enriched["value"] == 0.75  # Raw value, no processing
-    assert enriched["intent"] == "absolute"
-    assert "timestamp" in enriched
+
+def test_core_has_no_state_dicts(middleware):
+    """Test that middleware has NO state dictionaries."""
+    assert not hasattr(middleware, 'current_raw_input')
+    assert not hasattr(middleware, 'virtual_output_state')
+    assert not hasattr(middleware, 'enriched_outputs')
+
+
+def test_core_processes_immediately(middleware):
+    """Test that inputs are processed immediately, not batched in process_frame."""
+    outputs = middleware.handle_input(source="fader.1", value=0.5, type="absolute_uni", timestamp=100.0)
+    assert "group1.dimmer" in outputs
+    assert outputs["group1.dimmer"]["value"] == 0.5
+
+
+def test_core_absolute_passthrough(middleware):
+    """Test that absolute type values are passed through unchanged."""
+    outputs = middleware.handle_input(source="fader.1", value=0.75, type="absolute_uni", timestamp=123.0)
+    assert "group1.dimmer" in outputs
+    assert outputs["group1.dimmer"]["value"] == 0.75
+    assert outputs["group1.dimmer"]["type"] == "absolute_uni"
 
 
 def test_core_delta_passthrough_no_math(middleware):
-    """Test that delta intent values are passed through without delta math."""
-    # Middleware should NOT apply delta math. That's the fixture layer's job.
-    middleware.handle_input(source="mouse.x", value=0.5)
-    middleware.process_frame(dt=0.016)
-    
-    enriched = middleware.enriched_outputs.get("group1.pan")
-    assert enriched is not None
-    assert enriched["target"] == "group1.pan"
-    assert enriched["value"] == 0.5  # Raw passthrough, no delta calculation
-    assert enriched["intent"] == "delta"
+    """Test that delta type values are passed through without delta math."""
+    outputs = middleware.handle_input(source="mouse.x", value=0.5, type="delta", timestamp=124.0)
+    assert "group1.pan" in outputs
+    assert outputs["group1.pan"]["value"] == 0.5
+    assert outputs["group1.pan"]["type"] == "delta"
 
 
 def test_core_rate_passthrough_no_integration(middleware):
-    """Test that rate intent values are passed through without time integration."""
-    # Middleware should NOT apply rate/time math. That's the fixture layer's job.
-    middleware.handle_input(source="joystick.1", value=0.8)
-    middleware.process_frame(dt=0.016)
-    
-    enriched = middleware.enriched_outputs.get("group1.tilt")
-    assert enriched is not None
-    assert enriched["target"] == "group1.tilt"
-    assert enriched["value"] == 0.8  # Raw passthrough, no time integration
-    assert enriched["intent"] == "rate"
+    """Test that rate type values are passed through without time integration."""
+    outputs = middleware.handle_input(source="joystick.1", value=0.8, type="rate", timestamp=125.0)
+    assert "group1.tilt" in outputs
+    assert outputs["group1.tilt"]["value"] == 0.8
+    assert outputs["group1.tilt"]["type"] == "rate"
 
 
-def test_core_multiple_sources_in_one_frame(middleware):
-    """Test that multiple sources are all mapped in one frame."""
-    middleware.handle_input(source="fader.1", value=0.5)
-    middleware.handle_input(source="mouse.x", value=0.3)
-    middleware.handle_input(source="joystick.1", value=-0.2)
+def test_core_multiple_sources_in_one_call(middleware):
+    """Test that multiple sources can be handled independently."""
+    out1 = middleware.handle_input(source="fader.1", value=0.5, type="absolute_uni", timestamp=100.0)
+    out2 = middleware.handle_input(source="mouse.x", value=0.3, type="delta", timestamp=101.0)
+    out3 = middleware.handle_input(source="joystick.1", value=-0.2, type="rate", timestamp=102.0)
     
-    middleware.process_frame(dt=0.016)
-    
-    # All three should be enriched
-    assert len(middleware.enriched_outputs) == 3
-    assert middleware.enriched_outputs["group1.dimmer"]["value"] == 0.5
-    assert middleware.enriched_outputs["group1.pan"]["value"] == 0.3
-    assert middleware.enriched_outputs["group1.tilt"]["value"] == -0.2
-
-
-def test_core_backward_compat_virtual_output_state(middleware):
-    """Test that virtual_output_state still receives raw values for backward compatibility."""
-    middleware.handle_input(source="fader.1", value=0.75)
-    middleware.process_frame(dt=0.016)
-    
-    # Old code may still rely on virtual_output_state containing raw values
-    assert middleware.virtual_output_state["group1.dimmer"] == 0.75
-
-
-def test_core_transient_input_buffer_cleared_each_frame(middleware):
-    """Test that the input buffer is cleared after each frame."""
-    middleware.handle_input(source="fader.1", value=0.5)
-    middleware.process_frame(dt=0.016)
-    
-    # Buffer should be empty after process_frame
-    assert len(middleware.current_raw_input) == 0
-    
-    # Next frame with no new input should produce no enriched outputs
-    middleware.process_frame(dt=0.016)
-    assert len(middleware.enriched_outputs) == 0
+    assert "group1.dimmer" in out1
+    assert "group1.pan" in out2
+    assert "group1.tilt" in out3
 
 
 def test_core_no_clamping_in_middleware(middleware):
     """Test that middleware does NOT clamp values."""
-    # Middleware passes raw values through unchanged, even if out of 0-1 range
-    middleware.handle_input(source="mouse.x", value=5.0)  # Way outside [0, 1]
-    middleware.process_frame(dt=0.016)
-    
-    enriched = middleware.enriched_outputs["group1.pan"]
-    assert enriched["value"] == 5.0  # No clamping in middleware
+    outputs = middleware.handle_input(source="mouse.x", value=5.0, type="delta", timestamp=100.0)
+    assert outputs["group1.pan"]["value"] == 5.0
 
 
 def test_core_unmapped_sources_ignored(middleware):
     """Test that sources without a mapping are ignored."""
-    middleware.handle_input(source="fader.1", value=0.5)
-    middleware.handle_input(source="unmapped.source", value=0.9)  # Not in profile
-    middleware.process_frame(dt=0.016)
-    
-    # Only the mapped source should be in enriched_outputs
-    assert len(middleware.enriched_outputs) == 1
-    assert "group1.dimmer" in middleware.enriched_outputs
-    # unmapped source should not create output
+    outputs = middleware.handle_input(source="unmapped.source", value=0.9, type="absolute_uni", timestamp=100.0)
+    assert outputs == {}
+
+
+def test_core_profile_only_has_source_to_target(middleware):
+    """Test that profile only contains source->target mapping, no intent/sensitivity."""
+    assert middleware.profile == {
+        "fader.1": "group1.dimmer",
+        "mouse.x": "group1.pan",
+        "joystick.1": "group1.tilt",
+    }
+
+
+def test_core_returns_outputs_dict(middleware):
+    """Test that handle_input returns a dict of outputs."""
+    outputs = middleware.handle_input(source="fader.1", value=0.5, type="absolute_uni", timestamp=100.0)
+    assert isinstance(outputs, dict)
+
+
+def test_core_no_process_frame_method(middleware):
+    """Test that there is no process_frame method."""
+    assert not hasattr(middleware, 'process_frame')

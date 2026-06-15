@@ -14,63 +14,86 @@ def output_publisher(mock_broker):
     return MiddlewareOutputPublisher(broker=mock_broker)
 
 @pytest.mark.asyncio
-async def test_publisher_publishes_enriched_payloads_to_target(output_publisher, mock_broker):
-    """Test that enriched payloads are published to target.* subjects."""
-    enriched_outputs = {
+async def test_publisher_forwards_type_unchanged(output_publisher, mock_broker):
+    """Test that type field is forwarded unchanged through the publisher."""
+    outputs = {
         "group1.pan": {
-            "target": "group1.pan",
-            "value": 0.6,
-            "intent": "delta",
-            "timestamp": 1234567890.123
-        },
-        "group1.tilt": {
-            "target": "group1.tilt",
-            "value": 0.1,
-            "intent": "absolute",
-            "timestamp": 1234567890.124
+            "value": 0.5,
+            "type": "delta",
+            "timestamp": 123.0
         }
     }
     
-    await output_publisher.publish_enriched(enriched_outputs)
+    await output_publisher.publish(outputs)
     
-    # Should publish to target.* for each enriched payload
-    # That's 2 payloads = 2 publish calls
-    assert mock_broker.publish.call_count == 2
+    # Verify publish was called
+    assert mock_broker.publish.call_count == 1
     
-    # Verify that target.* subjects were called
-    calls = mock_broker.publish.call_args_list
-    subjects_called = [call[0][0] for call in calls]
+    # Verify the payload has type field unchanged
+    call_args = mock_broker.publish.call_args
+    subject = call_args[0][0]
+    payload_bytes = call_args[0][1]
+    payload = json.loads(payload_bytes.decode("utf-8"))
     
-    assert "target.group1.pan" in subjects_called
-    assert "target.group1.tilt" in subjects_called
-
+    assert subject == "target.group1.pan"
+    assert payload["value"] == 0.5
+    assert payload["type"] == "delta"
+    assert payload["timestamp"] == 123.0
 
 @pytest.mark.asyncio
-async def test_publisher_enriched_payload_structure(output_publisher, mock_broker):
-    """Test that enriched payload JSON is correctly serialized."""
-    enriched_outputs = {
-        "movinghead01.pan": {
-            "target": "movinghead01.pan",
-            "value": 0.75,
-            "intent": "rate",
-            "timestamp": 1234567890.123
-        }
+async def test_publisher_forwards_all_types(output_publisher, mock_broker):
+    """Test that all type values (absolute_uni, absolute_bi, delta, rate) are forwarded."""
+    outputs = {
+        "group1.dimmer": {"value": 0.5, "type": "absolute_uni", "timestamp": 100.0},
+        "group1.pan": {"value": 0.3, "type": "absolute_bi", "timestamp": 101.0},
+        "group1.x": {"value": 0.1, "type": "delta", "timestamp": 102.0},
+        "group1.rate": {"value": 0.8, "type": "rate", "timestamp": 103.0},
     }
     
-    await output_publisher.publish_enriched(enriched_outputs)
+    await output_publisher.publish(outputs)
     
-    # Get the calls
+    assert mock_broker.publish.call_count == 4
+    
+    # Verify each type was preserved
     calls = mock_broker.publish.call_args_list
+    for c in calls:
+        payload = json.loads(c[0][1].decode("utf-8"))
+        assert "type" in payload
+        assert payload["type"] in ["absolute_uni", "absolute_bi", "delta", "rate"]
+
+@pytest.mark.asyncio
+async def test_publisher_publishes_to_target_topics(output_publisher, mock_broker):
+    """Test that outputs are published to target.* subjects."""
+    outputs = {
+        "group1.pan": {"value": 0.5, "type": "delta", "timestamp": 123.0},
+        "group2.tilt": {"value": 0.7, "type": "absolute_uni", "timestamp": 124.0}
+    }
     
-    # Find the call to target.* (first call should be target.*)
-    target_call = next(c for c in calls if c[0][0] == "target.movinghead01.pan")
+    await output_publisher.publish(outputs)
     
-    # Verify the payload is the enriched JSON
-    payload_bytes = target_call[0][1]
-    payload_json = json.loads(payload_bytes.decode("utf-8"))
+    calls = mock_broker.publish.call_args_list
+    subjects = [c[0][0] for c in calls]
     
-    assert payload_json["target"] == "movinghead01.pan"
-    assert payload_json["value"] == 0.75
-    assert payload_json["intent"] == "rate"
-    assert "timestamp" in payload_json
+    assert "target.group1.pan" in subjects
+    assert "target.group2.tilt" in subjects
+
+@pytest.mark.asyncio
+async def test_publisher_forwards_exact_payload(output_publisher, mock_broker):
+    """Test that the exact payload dict is forwarded without modification."""
+    original_payload = {"value": 0.6, "type": "delta", "timestamp": 123.0}
+    outputs = {"group1.pan": original_payload}
+    
+    await output_publisher.publish(outputs)
+    
+    call_args = mock_broker.publish.call_args
+    payload_bytes = call_args[0][1]
+    payload = json.loads(payload_bytes.decode("utf-8"))
+    
+    assert payload == original_payload
+
+@pytest.mark.asyncio
+async def test_publisher_handles_empty_outputs(output_publisher, mock_broker):
+    """Test that empty outputs dict doesn't publish anything."""
+    await output_publisher.publish({})
+    assert mock_broker.publish.call_count == 0
 

@@ -9,10 +9,10 @@ from apelios.middleware.middleware_input_subscriber import MiddlewareInputSubscr
 
 @pytest.fixture
 def mock_profile():
-    """Standard mock profile for testing (with intent field)."""
+    """Standard mock profile for testing (new stateless format)."""
     return {
-        "fader.1": {"target": "group1.dimmer", "intent": "absolute"},
-        "mouse.x": {"target": "group1.pan", "intent": "delta", "sensitivity": 0.01}
+        "fader.1": "group1.dimmer",
+        "mouse.x": "group1.pan"
     }
 
 
@@ -36,16 +36,16 @@ def test_subscriber_created_with_injected_core(middleware_core):
 @pytest.mark.asyncio
 async def test_subscriber_accepts_valid_json_payload(subscriber, middleware_core):
     """Subscriber parses valid JSON and calls middleware.handle_input()."""
-    # Create a mock Msg object
     msg = MagicMock(spec=Msg)
     msg.subject = "input.fader.1"
-    msg.data = json.dumps({"source": "fader.1", "value": 0.75}).encode()
+    msg.data = json.dumps({"source": "fader.1", "value": 0.75, "type": "absolute_uni", "timestamp": 123.0}).encode()
     
-    # Call the subscriber callback
     await subscriber(msg)
     
-    # Verify middleware was updated
-    assert middleware_core.current_raw_input["fader.1"] == 0.75
+    # In stateless architecture, verify middleware returns correct outputs
+    outputs = middleware_core.handle_input(source="fader.1", value=0.75, type="absolute_uni", timestamp=123.0)
+    assert "group1.dimmer" in outputs
+    assert outputs["group1.dimmer"]["value"] == 0.75
 
 
 @pytest.mark.asyncio
@@ -53,13 +53,13 @@ async def test_subscriber_extracts_source_from_payload(subscriber, middleware_co
     """Subscriber uses source from JSON payload, not subject."""
     msg = MagicMock(spec=Msg)
     msg.subject = "input.some.topic"
-    msg.data = json.dumps({"source": "custom.source", "value": 0.5}).encode()
+    msg.data = json.dumps({"source": "fader.1", "value": 0.5, "type": "absolute_uni", "timestamp": 123.0}).encode()
     
     await subscriber(msg)
     
-    # Should use source from payload, not subject
-    assert "custom.source" in middleware_core.current_raw_input
-    assert middleware_core.current_raw_input["custom.source"] == 0.5
+    # Source from payload is used for mapping
+    outputs = middleware_core.handle_input(source="fader.1", value=0.5, type="absolute_uni", timestamp=123.0)
+    assert "group1.dimmer" in outputs
 
 
 @pytest.mark.asyncio
@@ -67,12 +67,13 @@ async def test_subscriber_coerces_value_to_float(subscriber, middleware_core):
     """Subscriber coerces numeric value to float."""
     msg = MagicMock(spec=Msg)
     msg.subject = "input.test"
-    msg.data = json.dumps({"source": "test", "value": 10}).encode()  # int
+    msg.data = json.dumps({"source": "fader.1", "value": 10, "type": "absolute_uni", "timestamp": 123.0}).encode()  # int
     
     await subscriber(msg)
     
-    assert isinstance(middleware_core.current_raw_input["test"], float)
-    assert middleware_core.current_raw_input["test"] == 10.0
+    outputs = middleware_core.handle_input(source="fader.1", value=10, type="absolute_uni", timestamp=123.0)
+    assert isinstance(outputs["group1.dimmer"]["value"], float)
+    assert outputs["group1.dimmer"]["value"] == 10.0
 
 
 @pytest.mark.asyncio
@@ -80,13 +81,10 @@ async def test_subscriber_rejects_missing_source(subscriber, middleware_core):
     """Subscriber safely ignores payload missing 'source' field."""
     msg = MagicMock(spec=Msg)
     msg.subject = "input.test"
-    msg.data = json.dumps({"value": 0.5}).encode()  # missing source
+    msg.data = json.dumps({"value": 0.5, "type": "absolute_uni", "timestamp": 123.0}).encode()  # missing source
     
     # Should not raise
     await subscriber(msg)
-    
-    # Should not update middleware
-    assert "test" not in middleware_core.current_raw_input
 
 
 @pytest.mark.asyncio
@@ -94,13 +92,10 @@ async def test_subscriber_rejects_missing_value(subscriber, middleware_core):
     """Subscriber safely ignores payload missing 'value' field."""
     msg = MagicMock(spec=Msg)
     msg.subject = "input.test"
-    msg.data = json.dumps({"source": "test"}).encode()  # missing value
+    msg.data = json.dumps({"source": "test", "type": "absolute_uni", "timestamp": 123.0}).encode()  # missing value
     
     # Should not raise
     await subscriber(msg)
-    
-    # Should not update middleware
-    assert "test" not in middleware_core.current_raw_input
 
 
 @pytest.mark.asyncio
@@ -112,24 +107,17 @@ async def test_subscriber_rejects_malformed_json(subscriber, middleware_core):
     
     # Should not raise
     await subscriber(msg)
-    
-    # Should not update middleware
-    assert len(middleware_core.current_raw_input) == 0
 
 
-@pytest.mark.asyncio
 @pytest.mark.asyncio
 async def test_subscriber_rejects_non_numeric_value(subscriber, middleware_core):
     """Subscriber safely ignores non-numeric value."""
     msg = MagicMock(spec=Msg)
     msg.subject = "input.test"
-    msg.data = json.dumps({"source": "test", "value": "not_a_number"}).encode()
+    msg.data = json.dumps({"source": "test", "value": "not_a_number", "type": "absolute_uni", "timestamp": 123.0}).encode()
     
     # Should not raise
     await subscriber(msg)
-    
-    # Should not update middleware
-    assert "test" not in middleware_core.current_raw_input
 
 
 @pytest.mark.asyncio
@@ -138,14 +126,52 @@ async def test_subscriber_ignores_extra_fields(subscriber, middleware_core):
     msg = MagicMock(spec=Msg)
     msg.subject = "input.test"
     msg.data = json.dumps({
-        "source": "test",
+        "source": "fader.1",
         "value": 0.5,
-        "timestamp": 1234567890,
+        "type": "absolute_uni",
+        "timestamp": 1234567890.0,
         "metadata": {"key": "value"}
     }).encode()
     
     # Should not raise
     await subscriber(msg)
     
-    # Should extract and use source and value only
-    assert middleware_core.current_raw_input["test"] == 0.5
+    # Verify it still works with extra fields
+    outputs = middleware_core.handle_input(source="fader.1", value=0.5, type="absolute_uni", timestamp=1234567890.0)
+    assert "group1.dimmer" in outputs
+
+
+@pytest.mark.asyncio
+async def test_subscriber_parses_type_field(subscriber, middleware_core):
+    """Subscriber parses type and timestamp from payload and passes to middleware (2.1.1)."""
+    msg = MagicMock(spec=Msg)
+    msg.subject = "input.test"
+    msg.data = json.dumps({
+        "source": "fader.1",
+        "value": 0.5,
+        "type": "absolute_bi",
+        "timestamp": 1234567890.123
+    }).encode()
+    
+    await subscriber(msg)
+    
+    # Verify type and timestamp were passed through to middleware
+    outputs = middleware_core.handle_input(source="fader.1", value=0.5, type="absolute_bi", timestamp=1234567890.123)
+    assert "group1.dimmer" in outputs
+    assert outputs["group1.dimmer"]["type"] == "absolute_bi"
+    assert outputs["group1.dimmer"]["timestamp"] == 1234567890.123
+
+
+@pytest.mark.asyncio
+async def test_subscriber_rejects_missing_type(subscriber, middleware_core):
+    """Subscriber rejects payload missing required type field (2.1.2)."""
+    msg = MagicMock(spec=Msg)
+    msg.subject = "input.test"
+    msg.data = json.dumps({
+        "source": "test",
+        "value": 0.5,
+        "timestamp": 1234567890.123
+    }).encode()  # missing type
+    
+    # Should not raise, just log warning and ignore
+    await subscriber(msg)

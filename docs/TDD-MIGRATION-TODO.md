@@ -182,12 +182,12 @@ _AXIS_TYPES = {
 
 | # | Task | File | Action | Test Command |
 |---|------|------|--------|--------------|
-| 2.1.1 | Test type parsing | `tests/middleware/test_middleware_input_subscriber.py` | Add `test_subscriber_parses_type_field` | `pytest tests/middleware/test_middleware_input_subscriber.py::test_subscriber_parses_type_field -v` |
-| 2.1.2 | Test missing type | `tests/middleware/test_middleware_input_subscriber.py` | Add `test_subscriber_rejects_missing_type` | `pytest tests/middleware/test_middleware_input_subscriber.py::test_subscriber_rejects_missing_type -v` |
-| 2.1.3 | Test missing value | `tests/middleware/test_middleware_input_subscriber.py` | Add `test_subscriber_rejects_missing_value` | `pytest tests/middleware/test_middleware_input_subscriber.py::test_subscriber_rejects_missing_value -v` |
-| 2.1.4 | Parse new schema | `src/apelios/middleware/middleware_input_subscriber.py` | Extract value, type, timestamp from payload | - |
-| 2.1.5 | Forward type | `src/apelios/middleware/middleware_input_subscriber.py` | Pass type to middleware: `handle_input(source, value, type, timestamp)` | - |
-| 2.1.6 | Run all tests | - | - | `pytest tests/middleware/test_middleware_input_subscriber.py -v` |
+| [x] 2.1.1 | Test type parsing | `tests/middleware/test_middleware_input_subscriber.py` | Add `test_subscriber_parses_type_field` | `pytest tests/middleware/test_middleware_input_subscriber.py::test_subscriber_parses_type_field -v` |
+| [x] 2.1.2 | Test missing type | `tests/middleware/test_middleware_input_subscriber.py` | Add `test_subscriber_rejects_missing_type` | `pytest tests/middleware/test_middleware_input_subscriber.py::test_subscriber_rejects_missing_type -v` |
+| [x] 2.1.3 | Test missing value | `tests/middleware/test_middleware_input_subscriber.py` | Add `test_subscriber_rejects_missing_value` | `pytest tests/middleware/test_middleware_input_subscriber.py::test_subscriber_rejects_missing_value -v` |
+| [x] 2.1.4 | Parse new schema | `src/apelios/middleware/middleware_input_subscriber.py` | Extract value, type, timestamp from payload | - |
+| [x] 2.1.5 | Forward type | `src/apelios/middleware/middleware_input_subscriber.py` | Pass type to middleware: `handle_input(source, value, type, timestamp)` | - |
+| [x] 2.1.6 | Run all tests | - | - | `pytest tests/middleware/test_middleware_input_subscriber.py -v` |
 
 **Verification:** `pytest tests/middleware/test_middleware_input_subscriber.py -v`
 
@@ -197,18 +197,18 @@ _AXIS_TYPES = {
 
 | # | Task | File | Action | Test Command |
 |---|------|------|--------|--------------|
-| 2.2.1 | Test type unchanged | `tests/middleware/test_middleware_core.py` | Add `test_core_passes_type_unchanged` | `pytest tests/middleware/test_middleware_core.py::test_core_passes_type_unchanged -v` |
-| 2.2.2 | Test no state | `tests/middleware/test_middleware_core.py` | Add `test_core_has_no_state_dicts` | `pytest tests/middleware/test_middleware_core.py::test_core_has_no_state_dicts -v` |
-| 2.2.3 | Test immediate processing | `tests/middleware/test_middleware_core.py` | Add `test_core_processes_immediately` | `pytest tests/middleware/test_middleware_core.py::test_core_processes_immediately -v` |
-| 2.2.4 | Remove state dicts | `src/apelios/middleware/middleware_core.py` | Delete current_raw_input, virtual_output_state, enriched_outputs from __init__ | - |
-| 2.2.5 | Update handle_input signature | `src/apelios/middleware/middleware_core.py` | Add type, timestamp params: `handle_input(self, source, value, type, timestamp)` | - |
-| 2.2.6 | Immediate map+forward | `src/apelios/middleware/middleware_core.py` | In handle_input: lookup source→target, create output payload, store for tick | - |
-| 2.2.7 | Remove process_frame | `src/apelios/middleware/middleware_core.py` | Delete entire process_frame(dt) method | - |
-| 2.2.8 | Update profile format | `src/apelios/middleware/middleware_core.py` | Only expect source→target in profile, remove intent/sensitivity | - |
-| 2.2.9 | Update profile loading | `src/apelios/middleware/middleware_core.py` | Handle new format in _load_default_profile | - |
-| 2.2.10 | Remove intent logic | `src/apelios/middleware/middleware_core.py` | Delete all intent resolution code | - |
-| 2.2.11 | Add current_outputs | `src/apelios/middleware/middleware_core.py` | Add dict to store outputs for tick() | - |
-| 2.2.12 | Run all tests | - | - | `pytest tests/middleware/test_middleware_core.py -v` |
+| [x] 2.2.1 | Test type unchanged | `tests/middleware/test_middleware_core.py` | Add `test_core_passes_type_unchanged` | `pytest tests/middleware/test_middleware_core.py::test_core_passes_type_unchanged -v` |
+| [x] 2.2.2 | Test no state | `tests/middleware/test_middleware_core.py` | Add `test_core_has_no_state_dicts` | `pytest tests/middleware/test_middleware_core.py::test_core_has_no_state_dicts -v` |
+| [x] 2.2.3 | Test immediate processing | `tests/middleware/test_middleware_core.py` | Add `test_core_processes_immediately` | `pytest tests/middleware/test_middleware_core.py::test_core_processes_immediately -v` |
+| [x] 2.2.4 | Remove state dicts | `src/apelios/middleware/middleware_core.py` | Delete current_raw_input, virtual_output_state, enriched_outputs from __init__ | - |
+| [x] 2.2.5 | Update handle_input signature | `src/apelios/middleware/middleware_core.py` | Add type, timestamp params: `handle_input(self, source, value, type, timestamp)` | - |
+| [x] 2.2.6 | Immediate map+forward | `src/apelios/middleware/middleware_core.py` | In handle_input: lookup source→target, create output payload, store for tick | - |
+| [x] 2.2.7 | Remove process_frame | `src/apelios/middleware/middleware_core.py` | Delete entire process_frame(dt) method | - |
+| [x] 2.2.8 | Update profile format | `src/apelios/middleware/middleware_core.py` | Only expect source→target in profile, remove intent/sensitivity | - |
+| [x] 2.2.9 | Update profile loading | `src/apelios/middleware/middleware_core.py` | Handle new format in _load_default_profile | - |
+| [x] 2.2.10 | Remove intent logic | `src/apelios/middleware/middleware_core.py` | Delete all intent resolution code | - |
+| [x] 2.2.11 | Add current_outputs | `src/apelios/middleware/middleware_core.py` | Add dict to store outputs for tick() | - |
+| [x] 2.2.12 | Run all tests | - | - | `pytest tests/middleware/test_middleware_core.py -v` |
 
 **Verification:** `pytest tests/middleware/test_middleware_core.py -v`
 
@@ -218,11 +218,11 @@ _AXIS_TYPES = {
 
 | # | Task | File | Action | Test Command |
 |---|------|------|--------|--------------|
-| 2.3.1 | Test unchanged forwarding | `tests/middleware/test_middleware_output_publisher.py` | Add `test_publisher_forwards_type_unchanged` | `pytest tests/middleware/test_middleware_output_publisher.py::test_publisher_forwards_type_unchanged -v` |
-| 2.3.2 | Forward exact payload | `src/apelios/middleware/middleware_output_publisher.py` | Remove payload modification, forward as-is | - |
-| 2.3.3 | Simplify input | `src/apelios/middleware/middleware_output_publisher.py` | Accept dict[str, dict] not enriched_outputs | - |
-| 2.3.4 | Remove backward compat | `src/apelios/middleware/middleware_output_publisher.py` | Delete virtual_output_state updates | - |
-| 2.3.5 | Run all tests | - | - | `pytest tests/middleware/test_middleware_output_publisher.py -v` |
+| [x] 2.3.1 | Test unchanged forwarding | `tests/middleware/test_middleware_output_publisher.py` | Add `test_publisher_forwards_type_unchanged` | `pytest tests/middleware/test_middleware_output_publisher.py::test_publisher_forwards_type_unchanged -v` |
+| [x] 2.3.2 | Forward exact payload | `src/apelios/middleware/middleware_output_publisher.py` | Remove payload modification, forward as-is | - |
+| [x] 2.3.3 | Simplify input | `src/apelios/middleware/middleware_output_publisher.py` | Accept dict[str, dict] not enriched_outputs | - |
+| [x] 2.3.4 | Remove backward compat | `src/apelios/middleware/middleware_output_publisher.py` | Delete virtual_output_state updates | - |
+| [x] 2.3.5 | Run all tests | - | - | `pytest tests/middleware/test_middleware_output_publisher.py -v` |
 
 **Verification:** `pytest tests/middleware/test_middleware_output_publisher.py -v`
 
@@ -232,13 +232,13 @@ _AXIS_TYPES = {
 
 | # | Task | File | Action | Test Command |
 |---|------|------|--------|--------------|
-| 2.4.1 | Test tick publishes | `tests/middleware/test_middleware_runtime_manager.py` | Add `test_runtime_manager_tick_publishes_outputs` | `pytest tests/middleware/test_middleware_runtime_manager.py::test_runtime_manager_tick_publishes_outputs -v` |
-| 2.4.2 | Update tick to publish | `src/apelios/middleware/middleware_runtime_manager.py` | Get outputs from middleware, publish via output_publisher | - |
-| 2.4.3 | Clear after publish | `src/apelios/middleware/middleware_runtime_manager.py` | Clear middleware outputs after tick | - |
-| 2.4.4 | Verify subscription | `src/apelios/middleware/middleware_runtime_manager.py` | Confirm subscribes to input.> | - |
-| 2.4.5 | Update profile loading | `src/apelios/middleware/middleware_runtime_manager.py` | Use new format | - |
-| 2.4.6 | Remove process_frame call | `src/apelios/middleware/middleware_runtime_manager.py` | Delete process_frame(dt) call from tick() | - |
-| 2.4.7 | Run all tests | - | - | `pytest tests/middleware/test_middleware_runtime_manager.py -v` |
+| [x] 2.4.1 | Test tick publishes | `tests/middleware/test_middleware_runtime_manager.py` | Add `test_runtime_manager_tick_publishes_outputs` | `pytest tests/middleware/test_middleware_runtime_manager.py::test_runtime_manager_tick_publishes_outputs -v` |
+| [x] 2.4.2 | Update tick to publish | `src/apelios/middleware/middleware_runtime_manager.py` | Get outputs from middleware, publish via output_publisher | - |
+| [x] 2.4.3 | Clear after publish | `src/apelios/middleware/middleware_runtime_manager.py` | Clear middleware outputs after tick | - |
+| [x] 2.4.4 | Verify subscription | `src/apelios/middleware/middleware_runtime_manager.py` | Confirm subscribes to input.> | - |
+| [x] 2.4.5 | Update profile loading | `src/apelios/middleware/middleware_runtime_manager.py` | Use new format | - |
+| [x] 2.4.6 | Remove process_frame call | `src/apelios/middleware/middleware_runtime_manager.py` | Delete process_frame(dt) call from tick() | - |
+| [x] 2.4.7 | Run all tests | - | - | `pytest tests/middleware/test_middleware_runtime_manager.py -v` |
 
 **Verification:** `pytest tests/middleware/ -v` (all middleware tests pass)
 
@@ -250,11 +250,11 @@ _AXIS_TYPES = {
 
 | # | Task | File | Action | Test Command |
 |---|------|------|--------|--------------|
-| 3.1.1 | Test type parsing | `tests/fixture/test_fixture_input_subscriber.py` | Add `test_subscriber_parses_type_not_intent` | `pytest tests/fixture/test_fixture_input_subscriber.py::test_subscriber_parses_type_not_intent -v` |
-| 3.1.2 | Test missing type | `tests/fixture/test_fixture_input_subscriber.py` | Add `test_subscriber_handles_missing_type` | `pytest tests/fixture/test_fixture_input_subscriber.py::test_subscriber_handles_missing_type -v` |
-| 3.1.3 | Parse type field | `src/apelios/fixture/fixture_input_subscriber.py` | Extract type instead of intent | - |
-| 3.1.4 | Store type in inbox | `src/apelios/fixture/fixture_input_subscriber.py` | Store as type in inbox dict | - |
-| 3.1.5 | Run all tests | - | - | `pytest tests/fixture/test_fixture_input_subscriber.py -v` |
+| [x] 3.1.1 | Test type parsing | `tests/fixture/test_fixture_input_subscriber.py` | Add `test_subscriber_parses_type_not_intent` | `pytest tests/fixture/test_fixture_input_subscriber.py::test_subscriber_parses_type_not_intent -v` |
+| [x] 3.1.2 | Test missing type | `tests/fixture/test_fixture_input_subscriber.py` | Add `test_subscriber_handles_missing_type` | `pytest tests/fixture/test_fixture_input_subscriber.py::test_subscriber_handles_missing_type -v` |
+| [x] 3.1.3 | Parse type field | `src/apelios/fixture/fixture_input_subscriber.py` | Extract type instead of intent | - |
+| [x] 3.1.4 | Store type in inbox | `src/apelios/fixture/fixture_input_subscriber.py` | Store as type in inbox dict | - |
+| [x] 3.1.5 | Run all tests | - | - | `pytest tests/fixture/test_fixture_input_subscriber.py -v` |
 
 **Verification:** `pytest tests/fixture/test_fixture_input_subscriber.py -v`
 
@@ -264,13 +264,13 @@ _AXIS_TYPES = {
 
 | # | Task | File | Action | Test Command |
 |---|------|------|--------|--------------|
-| 3.2.1 | Test type field usage | `tests/fixture/test_fixture_core.py` | Add `test_core_uses_type_field` | `pytest tests/fixture/test_fixture_core.py::test_core_uses_type_field -v` |
-| 3.2.2 | Read type from payload | `src/apelios/fixture/fixture_core.py` | Change to read type instead of intent | - |
-| 3.2.3 | Rename method (optional) | `src/apelios/fixture/fixture_core.py` | _apply_type() instead of _apply_intent() | - |
-| 3.2.4 | Update all references | `src/apelios/fixture/fixture_core.py` | intent → type throughout | - |
-| 3.2.5 | Add type validation | `src/apelios/fixture/fixture_core.py` | Verify type is valid value | - |
-| 3.2.6 | Run all tests | - | - | `pytest tests/fixture/test_fixture_core.py -v` |
-| 3.2.7 | Verify math works | - | - | Manual check: absolute_uni, absolute_bi, delta, rate |
+| [x] 3.2.1 | Test type field usage | `tests/fixture/test_fixture_core.py` | Add `test_core_uses_type_field` | `pytest tests/fixture/test_fixture_core.py::test_core_uses_type_field -v` |
+| [x] 3.2.2 | Read type from payload | `src/apelios/fixture/fixture_core.py` | Change to read type instead of intent | - |
+| [x] 3.2.3 | Rename method (optional) | `src/apelios/fixture/fixture_core.py` | _apply_type() instead of _apply_intent() | - |
+| [x] 3.2.4 | Update all references | `src/apelios/fixture/fixture_core.py` | intent → type throughout | - |
+| [x] 3.2.5 | Add type validation | `src/apelios/fixture/fixture_core.py` | Verify type is valid value | - |
+| [x] 3.2.6 | Run all tests | - | - | `pytest tests/fixture/test_fixture_core.py -v` |
+| [x] 3.2.7 | Verify math works | - | - | Manual check: absolute_uni, absolute_bi, delta, rate |
 
 **Verification:** `pytest tests/fixture/test_fixture_core.py -v`
 
@@ -280,9 +280,9 @@ _AXIS_TYPES = {
 
 | # | Task | File | Action | Test Command |
 |---|------|------|--------|--------------|
-| 3.3.1 | Verify no changes | `src/apelios/fixture/fixture_runtime_manager.py` | Review, confirm no changes needed | - |
-| 3.3.2 | Run runtime tests | - | - | `pytest tests/fixture/test_fixture_runtime_manager.py -v` |
-| 3.3.3 | Run output tests | - | - | `pytest tests/fixture/test_fixture_output_module.py -v` |
+| [x] 3.3.1 | Verify no changes | `src/apelios/fixture/fixture_runtime_manager.py` | Review, confirm no changes needed | - |
+| [x] 3.3.2 | Run runtime tests | - | - | `pytest tests/fixture/test_fixture_runtime_manager.py -v` |
+| [x] 3.3.3 | Run output tests | - | - | `pytest tests/fixture/test_fixture_output_module.py -v` |
 
 **Verification:** `pytest tests/fixture/ -v` (all fixture tests pass)
 
