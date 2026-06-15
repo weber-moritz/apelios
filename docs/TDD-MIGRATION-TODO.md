@@ -349,24 +349,24 @@ _AXIS_TYPES = {
 ## ✅ ACCEPTANCE CHECKLIST
 
 ### Phase 1: Input Layer Complete
-- [ ] All Input Layer tests pass
-- [ ] Input Layer publishes `{value: float, type: str, timestamp: float}` for all adapters
-- [ ] No `source` field in any input payload
-- [ ] All adapters define types for all axes
-- [ ] Topic format is `input.<device>.<axis>`
+- [x] All Input Layer tests pass
+- [x] Input Layer publishes `{value: float, type: str, timestamp: float}` for all adapters
+- [x] No `source` field in any input payload
+- [x] All adapters define types for all axes
+- [x] Topic format is `input.<device>.<axis>`
 
 ### Phase 2: Middleware Complete
-- [ ] All Middleware tests pass
-- [ ] Middleware has ZERO state (no `current_raw_input`, no `virtual_output_state`)
-- [ ] Middleware does ZERO math (no delta/rate calculation)
-- [ ] Type flows through Middleware unchanged
-- [ ] No batch processing in Middleware (no `process_frame()`)
-- [ ] Routing config has no `intent` or `sensitivity` fields
+- [x] All Middleware tests pass
+- [x] Middleware has ZERO state (no `current_raw_input`, no `virtual_output_state`)
+- [x] Middleware does ZERO math (no delta/rate calculation)
+- [x] Type flows through Middleware unchanged
+- [x] No batch processing in Middleware (no `process_frame()`)
+- [x] Routing config has no `intent` or `sensitivity` fields
 
 ### Phase 3: Fixture Layer Complete
-- [ ] All Fixture Layer tests pass
-- [ ] Fixture receives and uses `type` field (not `intent`)
-- [ ] Math engine works with all types: absolute_uni, absolute_bi, delta, rate
+- [x] All Fixture Layer tests pass
+- [x] Fixture receives and uses `type` field (not `intent`)
+- [x] Math engine works with all types: absolute_uni, absolute_bi, delta, rate
 
 ### Phase 4: Config Complete
 - [ ] All config files use new format

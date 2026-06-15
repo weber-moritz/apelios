@@ -1,5 +1,6 @@
 import json
 from unittest.mock import AsyncMock, MagicMock
+from nats.aio.msg import Msg
 
 import pytest
 
@@ -22,20 +23,24 @@ async def test_fixture_runtime_manager_processes_input_to_dmx_output(mock_broker
     mock_patch = {
         "fixtures": {
             "movinghead01": {
+                "type": "robe_robospot",
                 "universe": 2,
                 "address": 10,
                 "parameters": {
                     "pan": {
+                        "type": "absolute_uni",
                         "width": 16,
                         "limits": [0.0, 1.0]
                     }
                 }
             },
             "movinghead02": {
+                "type": "robe_robospot",
                 "universe": 3,
                 "address": 20,
                 "parameters": {
                     "dim": {
+                        "type": "absolute_uni",
                         "width": 8,
                         "limits": [0.0, 1.0]
                     }
@@ -50,24 +55,25 @@ async def test_fixture_runtime_manager_processes_input_to_dmx_output(mock_broker
     await runtime.start()
     subscriber = mock_broker.subscribe.await_args.args[1]
     
-    pan_msg = MagicMock()
+    pan_msg = MagicMock(spec=Msg)
+    pan_msg.subject = "target.movinghead01.pan"
     pan_msg.data = json.dumps(
         {
-            "target": "movinghead01.pan",
-            "intent": "absolute",
             "value": 0.5,
+            "type": "absolute_uni",
+            "timestamp": 123.0,
         }
     ).encode("utf-8")
     
-    # ADD AWAIT HERE
     await subscriber(pan_msg)
 
-    dim_msg = MagicMock()
+    dim_msg = MagicMock(spec=Msg)
+    dim_msg.subject = "target.movinghead02.dim"
     dim_msg.data = json.dumps(
         {
-            "target": "movinghead02.dim",
-            "intent": "absolute",
             "value": 0.25,
+            "type": "absolute_uni",
+            "timestamp": 123.0,
         }
     ).encode("utf-8")
     
