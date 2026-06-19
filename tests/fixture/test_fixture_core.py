@@ -56,7 +56,9 @@ def patch_config_with_types():
 
 def test_absolute_math_updates_state_without_hidden_math(patch_config):
     core = FixtureCore(patch=patch_config)
-    core.inbox["movinghead01.pan"] = {
+    # Inbox keyed by source (Phase 6)
+    core.inbox["fader.1"] = {
+        "source": "fader.1",
         "target": "movinghead01.pan",
         "type": "absolute_uni",
         "value": 0.5312,
@@ -64,7 +66,8 @@ def test_absolute_math_updates_state_without_hidden_math(patch_config):
 
     core.process_frame(dt=0.016)
 
-    assert core.internal_state["movinghead01.pan"] == pytest.approx(0.5312)
+    # internal_state now stores dict with value, has_first_abs, first_abs_value
+    assert core.internal_state["movinghead01.pan"]["value"] == pytest.approx(0.5312)
 
 
 def test_16bit_output_is_split_into_coarse_and_fine_channels(patch_config):
@@ -248,3 +251,84 @@ def test_patch_object_format(patch_config_offset_based):
     assert isinstance(params, dict)
     assert "pan" in params
     assert "tilt" in params
+
+
+@pytest.fixture
+def patch_config_simple():
+    """Simple patch config for Phase 6 many-to-one tests."""
+    return {
+        "fixtures": {
+            "group1": {
+                "type": "generic",
+                "universe": 1,
+                "address": 1,
+                "parameters": {
+                    "dimmer": {
+                        "width": 8,
+                        "limits": [0.0, 1.0],
+                    },
+                },
+            }
+        }
+    }
+
+
+def test_core_initializes_with_first_absolute(patch_config_simple):
+    """Test that first absolute input sets base output value (Phase 6.3.7).
+    
+    When multiple sources map to the same target, the first absolute input
+    should set the base output value, and subsequent inputs contribute deltas.
+    """
+    core = FixtureCore(patch=patch_config_simple)
+    
+    # Inbox keyed by source (Phase 6 format)
+    core.inbox = {
+        "fader.1": {
+            "source": "fader.1",
+            "target": "group1.dimmer",
+            "value": 0.5,
+            "type": "absolute_uni",
+            "timestamp": 100.0,
+        }
+    }
+    
+    core.process_frame(dt=0.016)
+    
+    # Check that dimmer DMX output was written
+    assert (1, 1) in core.dmx_output
+    # 0.5 normalized * 255 = 127.5 ≈ 128
+    assert core.dmx_output[(1, 1)] == pytest.approx(128, abs=1)
+
+
+def test_core_sums_deltas_from_multiple_sources(patch_config_simple):
+    """Test that deltas from multiple sources are summed for same target (Phase 6.3.6).
+    
+    Multiple sources can map to the same target via routing config.
+    Delta inputs should be summed together.
+    """
+    core = FixtureCore(patch=patch_config_simple)
+    
+    # Two sources contributing to the same target
+    core.inbox = {
+        "fader.1": {
+            "source": "fader.1",
+            "target": "group1.dimmer",
+            "value": 0.2,
+            "type": "delta",
+            "timestamp": 100.0,
+        },
+        "gyro.1": {
+            "source": "gyro.1",
+            "target": "group1.dimmer",
+            "value": 0.3,
+            "type": "delta",
+            "timestamp": 100.0,
+        },
+    }
+    
+    core.process_frame(dt=0.016)
+    
+    # Check that dimmer DMX output was written
+    assert (1, 1) in core.dmx_output
+    # 0.2 + 0.3 = 0.5, normalized * 255 = 127.5 ≈ 128
+    assert core.dmx_output[(1, 1)] == pytest.approx(128, abs=1)

@@ -38,9 +38,15 @@ class FixtureInputSubscriber:
 
         value = payload.get("value")
         type_ = payload.get("type")
+        source = payload.get("source")
+        timestamp = payload.get("timestamp")
 
         if not isinstance(type_, str) or not type_:
             logger.warning("Ignoring fixture input without valid 'type'")
+            return
+
+        if not isinstance(source, str) or not source:
+            logger.warning("Ignoring fixture input without valid 'source'")
             return
 
         try:
@@ -49,8 +55,11 @@ class FixtureInputSubscriber:
             logger.warning("Ignoring fixture input with non-numeric 'value'")
             return
 
-        self.inbox[target] = {
+        # Store by source (Phase 6), include both source and target
+        self.inbox[source] = {
+            "source": source,
             "target": target,
             "type": type_,
             "value": numeric_value,
+            "timestamp": timestamp,
         }

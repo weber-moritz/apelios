@@ -15,14 +15,32 @@ class FixtureCore:
         self.dmx_output: dict[tuple[int, int], int] = {}
 
     def process_frame(self, dt: float) -> None:
-        """Process all pending payloads for one frame."""
+        """Process all pending payloads for one frame.
+        
+        For Phase 6: Multiple inputs can map to the same target.
+        - Group inbox entries by target
+        - For each target, sum contributions from all sources
+        - Track per-target state for absolute value initialization
+        """
         self.dmx_output = {}
 
         fixtures = self.patch.get("fixtures", {})
         if not isinstance(fixtures, dict):
             return
 
-        for target, payload in list(self.inbox.items()):
+        # Group inbox entries by target
+        # inbox is now keyed by source: {source: {source, target, type, value}}
+        targets: dict[str, list[dict[str, Any]]] = {}
+        for source, payload in list(self.inbox.items()):
+            target = payload.get("target")
+            if not isinstance(target, str):
+                continue
+            if target not in targets:
+                targets[target] = []
+            targets[target].append(payload)
+
+        # Process each target
+        for target, payloads in targets.items():
             fixture_name, parameter_name = self._split_target(target)
             if fixture_name is None or parameter_name is None:
                 continue
@@ -39,25 +57,61 @@ class FixtureCore:
             if not isinstance(parameter_patch, dict):
                 continue
 
-            current_state = self.internal_state.get(target, 0.0)
-            type_ = str(payload.get("type", parameter_patch.get("type", "absolute_uni")))
-            input_value = float(payload.get("value", 0.0))
-            next_state = self._apply_type(current_state, input_value, type_, dt)
-
+            # Get per-target state
+            target_state = self.internal_state.get(target, {"value": 0.0, "has_first_abs": False, "first_abs_value": 0.0})
+            
+            # Calculate total contribution for this frame
+            total_delta = 0.0
+            
+            for payload in payloads:
+                type_ = str(payload.get("type") or "absolute_uni")
+                input_value = float(payload.get("value", 0.0))
+                
+                if type_ == "absolute_uni":
+                    # First absolute sets the base value
+                    if not target_state["has_first_abs"]:
+                        target_state["has_first_abs"] = True
+                        target_state["first_abs_value"] = input_value
+                        target_state["value"] = input_value
+                    else:
+                        # Subsequent absolutes contribute delta
+                        delta = input_value - target_state["value"]
+                        total_delta += delta
+                        target_state["value"] = input_value
+                elif type_ == "absolute_bi":
+                    # Treat absolute_bi as absolute for now
+                    if not target_state["has_first_abs"]:
+                        target_state["has_first_abs"] = True
+                        target_state["first_abs_value"] = input_value
+                        target_state["value"] = input_value
+                    else:
+                        delta = input_value - target_state["value"]
+                        total_delta += delta
+                        target_state["value"] = input_value
+                elif type_ == "delta":
+                    total_delta += input_value
+                elif type_ == "rate":
+                    total_delta += input_value * dt
+            
+            # Apply total delta to current value
+            new_value = target_state["value"] + total_delta
+            
+            # Apply limits
             limits = parameter_patch.get("limits", [0.0, 1.0])
             minimum, maximum = self._extract_limits(limits)
-            next_state = max(minimum, min(maximum, next_state))
+            new_value = max(minimum, min(maximum, new_value))
+            target_state["value"] = new_value
+            self.internal_state[target] = target_state
 
-            self.internal_state[target] = next_state
-
+            # Write DMX output
             universe = int(fixture_patch.get("universe", 0))
             fixture_base_address = int(fixture_patch.get("address", 0))
             parameter_offset = self._get_parameter_offset(fixtures, fixture_name, parameter_name, parameters, parameter_patch)
             address = fixture_base_address + parameter_offset
             width = int(parameter_patch.get("width", 8))
-            self._write_dmx(universe, address, width, next_state)
+            self._write_dmx(universe, address, width, new_value)
 
-        self.inbox.clear
+        self.inbox.clear()
 
     def _apply_type(self, current_state: float, input_value: float, type_: str, dt: float) -> float:
         if type_ == "delta":

@@ -14,9 +14,9 @@ def middleware():
 
 
 def test_core_passes_type_unchanged(middleware):
-    """Test that type from input layer flows through unchanged."""
+    """Test that type from input layer flows through unchanged (Phase 5/6)."""
     outputs = middleware.handle_input(source="fader.1", value=0.75, type="absolute_uni", timestamp=123.0)
-    assert outputs == {"group1.dimmer": {"value": 0.75, "type": "absolute_uni", "timestamp": 123.0}}
+    assert outputs == {"group1.dimmer": {"value": 0.75, "type": "absolute_uni", "timestamp": 123.0, "source": "fader.1"}}
 
 
 def test_core_has_no_state_dicts(middleware):
@@ -98,3 +98,22 @@ def test_core_returns_outputs_dict(middleware):
 def test_core_no_process_frame_method(middleware):
     """Test that there is no process_frame method."""
     assert not hasattr(middleware, 'process_frame')
+
+
+def test_core_includes_source_in_output(middleware):
+    """Test that source field is included in output payload (Phase 6.1.1).
+    
+    For many-to-one input summation, the fixture layer needs to track which source
+    contributed to which target. The middleware must include the source in the output.
+    """
+    outputs = middleware.handle_input(source="fader.1", value=0.75, type="absolute_uni", timestamp=123.0)
+    
+    assert "group1.dimmer" in outputs
+    payload = outputs["group1.dimmer"]
+    
+    # Verify all expected fields are present
+    assert payload["value"] == 0.75
+    assert payload["type"] == "absolute_uni"
+    assert payload["timestamp"] == 123.0
+    # Phase 6: source must be included
+    assert payload["source"] == "fader.1"

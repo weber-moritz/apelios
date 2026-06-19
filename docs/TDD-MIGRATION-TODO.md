@@ -362,13 +362,13 @@ _AXIS_TYPES = {
 
 | # | Task | File | Action | Test Command |
 |---|------|------|--------|--------------|
-| 5.2.1 | Run input tests | - | - | `pytest tests/input/ -v` |
-| 5.2.2 | Run middleware tests | - | - | `pytest tests/middleware/ -v` |
-| 5.2.3 | Run fixture tests | - | - | `pytest tests/fixture/ -v` |
-| 5.2.4 | Run broker tests | - | - | `pytest tests/broker/ -v` |
-| 5.2.5 | Run ALL tests | - | - | `pytest tests/ -v` |
+| [x] 5.2.1 | Run input tests | - | - | `pytest tests/input/ -v` |
+| [x] 5.2.2 | Run middleware tests | - | - | `pytest tests/middleware/ -v` |
+| [x] 5.2.3 | Run fixture tests | - | - | `pytest tests/fixture/ -v` |
+| [x] 5.2.4 | Run broker tests | - | - | `pytest tests/broker/ -v` |
+| [x] 5.2.5 | Run ALL tests | - | - | `pytest tests/ -v` |
 
-**Success Criteria:** 127+ tests passing
+**Success Criteria:** 148+ tests passing
 
 ---
 
@@ -495,10 +495,10 @@ Output: group1.pan = sum of all deltas + initial absolute value
 - [x] Patch file matches spec format with offset-based addressing
 
 ### Phase 5: Integration Complete
-- [ ] All 127+ tests pass
-- [ ] End-to-end flow verified: Input → Middleware → Fixture
-- [ ] Architecture matches target design from `architecture-changes.md`
-- [ ] No violations of the 4 architectural principles
+- [x] All 148+ tests pass
+- [x] End-to-end flow verified: Input → Middleware → Fixture
+- [x] Architecture matches target design from `architecture-changes.md`
+- [x] No violations of the 4 architectural principles
 
 ---
 
@@ -569,12 +569,12 @@ Co-Authored-By: Mistral Vibe <vibe@mistral.ai>"
 
 | Metric | Value |
 |--------|-------|
-| Total Tasks | 120 |
+| Total Tasks | 150 |
 | Code Files | 16 |
 | Test Files | 11 |
 | Config Files | 7 |
-| Estimated Duration | 2-3 weeks |
-| Critical Path Tasks | 40 |
+| Estimated Duration | 3-4 weeks |
+| Critical Path Tasks | 50 |
 | Test Files to Modify | 11 |
 
 ---

@@ -44,12 +44,9 @@ async def test_orchestrator_starts_and_manages_broker_and_fixture(tmp_path, patc
     test_config = NatsConfig(host="127.0.0.1", port=4222)
     broker_manager = BrokerRuntimeManager(provider="nats", config=test_config)
 
-    # Middleware profile: route fader.1 to group1.dimmer with correct intent
+    # Middleware profile: route fader.1 to group1.dimmer (Phase 5 format: source -> target)
     middleware_profile = {
-        "fader.1": {
-            "target": "group1.dimmer", 
-            "intent": "absolute"
-        }
+        "fader.1": "group1.dimmer"
     }
     middleware_client = BrokerClient(provider="nats", config=test_config)
     middleware = MappingMiddleware(profile=middleware_profile)
@@ -109,7 +106,8 @@ async def test_orchestrator_starts_and_manages_broker_and_fixture(tmp_path, patc
 
     payload = json.dumps({
         "source": "fader.1",
-        "value": 0.8
+        "value": 0.8,
+        "type": "absolute_uni"
     }).encode("utf-8")
     
     await asyncio.sleep(0.2)

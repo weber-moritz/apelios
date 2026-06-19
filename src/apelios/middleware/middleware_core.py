@@ -46,12 +46,13 @@ class MappingMiddleware:
 			# Source not mapped, return empty dict
 			return outputs
 		
-		# Create the output payload with the input's type and timestamp
+		# Create the output payload with the input's type, timestamp, and source
 		# No modification - pure passthrough
 		payload = {
 			"value": float(value),
 			"type": type,
 			"timestamp": timestamp,
+			"source": source,  # Include source for Phase 6 many-to-one summation
 		}
 		
 		# Map source to target
