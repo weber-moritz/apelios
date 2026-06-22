@@ -413,10 +413,10 @@ Output: group1.pan = sum of all deltas + initial absolute value
 
 | # | Task | File | Action | Test Command |
 |---|------|------|--------|--------------|
-| 6.1.1 | Add source to payload | `src/apelios/middleware/middleware_output_publisher.py` | Include source field in published payload | - |
-| 6.1.2 | Test source in payload | `tests/middleware/test_middleware_output_publisher.py` | Add `test_publisher_includes_source` | `pytest tests/middleware/test_middleware_output_publisher.py::test_publisher_includes_source -v` |
+| [x] 6.1.1 | Add source to payload | `src/apelios/middleware/middleware_core.py` | Include source field in output payload | - |
+| [x] 6.1.2 | Test source in payload | `tests/middleware/test_middleware_core.py` | Add `test_core_includes_source_in_output` | `pytest tests/middleware/test_middleware_core.py::test_core_includes_source_in_output -v` |
 
-**Verification:** `pytest tests/middleware/test_middleware_output_publisher.py -v`
+**Verification:** `pytest tests/middleware/test_middleware_core.py -v`
 
 ---
 
@@ -424,8 +424,8 @@ Output: group1.pan = sum of all deltas + initial absolute value
 
 | # | Task | File | Action | Test Command |
 |---|------|------|--------|--------------|
-| 6.2.1 | Store source in inbox | `src/apelios/fixture/fixture_input_subscriber.py` | Key inbox by source, store target alongside | - |
-| 6.2.2 | Test source storage | `tests/fixture/test_fixture_input_subscriber.py` | Add `test_subscriber_stores_source` | `pytest tests/fixture/test_fixture_input_subscriber.py::test_subscriber_stores_source -v` |
+| [x] 6.2.1 | Store source in inbox | `src/apelios/fixture/fixture_input_subscriber.py` | Key inbox by source, store target alongside | - |
+| [x] 6.2.2 | Test source storage | `tests/fixture/test_fixture_input_subscriber.py` | Add `test_subscriber_stores_source` | `pytest tests/fixture/test_fixture_input_subscriber.py::test_subscriber_stores_source -v` |
 
 **Verification:** `pytest tests/fixture/test_fixture_input_subscriber.py -v`
 
@@ -435,13 +435,13 @@ Output: group1.pan = sum of all deltas + initial absolute value
 
 | # | Task | File | Action | Test Command |
 |---|------|------|--------|--------------|
-| 6.3.1 | Track per-target state | `src/apelios/fixture/fixture_core.py` | Add output_state dict with per-target {output_value, last_absolute, has_first_abs} | - |
-| 6.3.2 | Keep previous frame snapshot | `src/apelios/fixture/fixture_core.py` | Store copy of inbox at end of each frame | - |
-| 6.3.3 | Compute deltas per source | `src/apelios/fixture/fixture_core.py` | Calculate delta from previous frame for each source | - |
-| 6.3.4 | Sum deltas by target | `src/apelios/fixture/fixture_core.py` | Group sources by target, sum all deltas | - |
-| 6.3.5 | Handle absolute initialization | `src/apelios/fixture/fixture_core.py` | First absolute sets output_value, subsequent abs values contribute deltas | - |
-| 6.3.6 | Test delta summation | `tests/fixture/test_fixture_core.py` | Add `test_core_sums_deltas_from_multiple_sources` | `pytest tests/fixture/test_fixture_core.py::test_core_sums_deltas_from_multiple_sources -v` |
-| 6.3.7 | Test absolute initialization | `tests/fixture/test_fixture_core.py` | Add `test_core_initializes_with_first_absolute` | `pytest tests/fixture/test_fixture_core.py::test_core_initializes_with_first_absolute -v` |
+| [x] 6.3.1 | Track per-target state | `src/apelios/fixture/fixture_core.py` | Add output_state dict with per-target {output_value, last_absolute, has_first_abs} | - |
+| [x] 6.3.2 | Keep previous frame snapshot | `src/apelios/fixture/fixture_core.py` | Store copy of inbox at end of each frame | - |
+| [x] 6.3.3 | Compute deltas per source | `src/apelios/fixture/fixture_core.py` | Calculate delta from previous frame for each source | - |
+| [x] 6.3.4 | Sum deltas by target | `src/apelios/fixture/fixture_core.py` | Group sources by target, sum all deltas | - |
+| [x] 6.3.5 | Handle absolute initialization | `src/apelios/fixture/fixture_core.py` | First absolute sets output_value, subsequent abs values contribute deltas | - |
+| [x] 6.3.6 | Test delta summation | `tests/fixture/test_fixture_core.py` | Add `test_core_sums_deltas_from_multiple_sources` | `pytest tests/fixture/test_fixture_core.py::test_core_sums_deltas_from_multiple_sources -v` |
+| [x] 6.3.7 | Test absolute initialization | `tests/fixture/test_fixture_core.py` | Add `test_core_initializes_with_first_absolute` | `pytest tests/fixture/test_fixture_core.py::test_core_initializes_with_first_absolute -v` |
 
 **Verification:** `pytest tests/fixture/test_fixture_core.py -v`
 
@@ -451,19 +451,19 @@ Output: group1.pan = sum of all deltas + initial absolute value
 
 | # | Task | File | Action | Test Command |
 |---|------|------|--------|--------------|
-| 6.4.1 | Verify source flows through | `src/apelios/fixture/fixture_runtime_manager.py` | Confirm source is passed from broker to core | - |
+| [x] 6.4.1 | Verify source flows through | `src/apelios/fixture/fixture_runtime_manager.py` | Source flows through middleware → subscriber → core | - |
 
 **Verification:** `pytest tests/fixture/test_fixture_runtime_manager.py -v`
 
 ---
 
 **Acceptance Criteria:**
-- [ ] Multiple inputs can map to same target
-- [ ] First absolute input sets base output value
-- [ ] Subsequent absolute inputs contribute delta (new - previous)
-- [ ] Delta inputs add directly to output
-- [ ] Rate inputs add (value * dt) to output
-- [ ] All types can be mixed on same target
+- [x] Multiple inputs can map to same target
+- [x] First absolute input sets base output value
+- [x] Subsequent absolute inputs contribute delta (new - previous)
+- [x] Delta inputs add directly to output
+- [x] Rate inputs add (value * dt) to output
+- [x] All types can be mixed on same target
 
 ---
 
@@ -495,10 +495,18 @@ Output: group1.pan = sum of all deltas + initial absolute value
 - [x] Patch file matches spec format with offset-based addressing
 
 ### Phase 5: Integration Complete
-- [x] All 148+ tests pass
+- [x] All 152+ tests pass
 - [x] End-to-end flow verified: Input → Middleware → Fixture
 - [x] Architecture matches target design from `architecture-changes.md`
 - [x] No violations of the 4 architectural principles
+
+### Phase 6: Many-to-One Input Summation Complete
+- [x] Multiple inputs can map to same target
+- [x] First absolute input sets base output value
+- [x] Subsequent absolute inputs contribute delta (new - previous)
+- [x] Delta inputs add directly to output
+- [x] Rate inputs add (value * dt) to output
+- [x] All types can be mixed on same target
 
 ---
 

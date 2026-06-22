@@ -62,6 +62,7 @@ async def test_fixture_runtime_manager_processes_input_to_dmx_output(mock_broker
             "value": 0.5,
             "type": "absolute_uni",
             "timestamp": 123.0,
+            "source": "fader.1",
         }
     ).encode("utf-8")
     
@@ -74,6 +75,7 @@ async def test_fixture_runtime_manager_processes_input_to_dmx_output(mock_broker
             "value": 0.25,
             "type": "absolute_uni",
             "timestamp": 123.0,
+            "source": "fader.2",
         }
     ).encode("utf-8")
     
