@@ -47,16 +47,16 @@ class MainOrchestrator:
         await self.broker_manager.start_server()
         logger.info("Broker runtime started")
 
-        # 2. Start the Subsystems SECOND (Middleware connects to the server)
+        # 2. Layers: starting in reverse dataflow sequence
+        await self.fixture_manager.start()
+        logger.info("Fixture runtime started")
+
         await self.middleware_manager.start()
         logger.info("Middleware runtime started")
 
         await self.input_manager.start()
         await self.input_manager.start_registered_adapters()
         logger.info("Input runtime started")
-
-        await self.fixture_manager.start()
-        logger.info("Fixture runtime started")
 
         self._running = True
 

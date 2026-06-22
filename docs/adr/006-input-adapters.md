@@ -1,5 +1,14 @@
-the adapter is a stateless interface between the os and the apelios system. each adapter is linux first but can be expanded to run on other os as well.
+# ADR 006: Input Adapters
 
-the adapter uses a base input adapter class, that implements the basics to avoid code repetition.
+**Date:** 2026-06-XX  
+**Status:** Accepted
 
-the input runtime manager calls the adapter tick function on each tick, the runtime manager tick is called by the main orchestrator.
+## Context
+
+Input adapters provide a stateless interface between the operating system and the Apelios system. Each adapter is Linux-first but can be expanded to run on other operating systems as well.
+
+## Decision
+
+The adapter uses a base `BaseInputAdapter` class that implements common functionality to avoid code repetition.
+
+The input runtime manager calls each adapter's tick function on every 60Hz tick. The runtime manager's tick is called by the main orchestrator.

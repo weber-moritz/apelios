@@ -467,6 +467,148 @@ Output: group1.pan = sum of all deltas + initial absolute value
 
 ---
 
+## 📋 PHASE 7: SOURCE FIELD IN INPUT LAYER (17 tasks)
+
+### 🎯 Phase Goal: Move source field from middleware to input layer for proper separation of concerns
+
+**Architectural Issue:** Currently, middleware extracts source from topic and adds it to payload. This violates separation of concerns - the input layer should be self-contained with all data it produces.
+
+**Current (Incorrect):**
+```
+Input:   {value: 0.5, type: "absolute_uni", timestamp: ...} (topic: input.fader.1)
+         ↓
+Middleware: extracts source from topic, publishes {value: 0.5, type: "absolute_uni", timestamp: ..., source: "input.fader.1"}
+```
+
+**Target (Correct):**
+```
+Input:   {value: 0.5, type: "absolute_uni", timestamp: ..., source: "input.fader.1"} (topic: input.fader.1)
+         ↓
+Middleware: pure passthrough → {value: 0.5, type: "absolute_uni", timestamp: ..., source: "input.fader.1"}
+```
+
+**Why:** Input layer produces the data and knows its identity. Middleware should only route, not transform. This enables true statelessness and better separation of concerns.
+
+### 📦 Module: input_publisher.py
+
+| # | Task | File | Action | Test Command |
+|---|------|------|--------|--------------|
+| [ ] 7.1.1 | Test source in payload | `tests/input/test_input_publisher.py` | Add `test_publisher_includes_source_in_payload` | `pytest tests/input/test_input_publisher.py::test_publisher_includes_source_in_payload -v` |
+| [ ] 7.1.2 | Add source to signature | `src/apelios/input/input_publisher.py` | Add `source` param to `publish(device, axis, value, type, source)` | - |
+| [ ] 7.1.3 | Include source in payload | `src/apelios/input/input_publisher.py` | Add `"source": source` to payload dict | - |
+
+**Verification:** `pytest tests/input/test_input_publisher.py -v`
+
+---
+
+### 📦 Module: base_input_adapter.py
+
+| # | Task | File | Action | Test Command |
+|---|------|------|--------|--------------|
+| [ ] 7.1.4 | Test adapter includes source | `tests/input/test_base_input_adapter.py` | Add `test_adapter_publishes_with_source` | `pytest tests/input/test_base_input_adapter.py::test_adapter_publishes_with_source -v` |
+| [ ] 7.1.5 | Add source to publish | `src/apelios/input/base_input_adapter.py` | Add `source` param, pass to publisher | - |
+| [ ] 7.1.6 | Add source to publish_snapshot | `src/apelios/input/base_input_adapter.py` | Pass source for each axis when publishing | - |
+
+**Verification:** `pytest tests/input/test_base_input_adapter.py -v`
+
+---
+
+### 📦 Module: All Input Adapters
+
+| # | Task | File | Action | Test Command |
+|---|------|------|--------|--------------|
+| [ ] 7.1.7 | Test SteamDeck source | `tests/input/adapters/test_steamdeck_adapter.py` | Add `test_steamdeck_publishes_source` | `pytest tests/input/adapters/test_steamdeck_adapter.py::test_steamdeck_publishes_source -v` |
+| [ ] 7.1.8 | Add source to SteamDeck | `src/apelios/input/adapters/steamdeck_adapter.py` | Publish with source="input.steamdeck.<axis>" | - |
+| [ ] 7.1.9 | Test Mouse source | `tests/input/adapters/test_mouse_adapter.py` | Add `test_mouse_publishes_source` | `pytest tests/input/adapters/test_mouse_adapter.py::test_mouse_publishes_source -v` |
+| [ ] 7.1.10 | Add source to Mouse | `src/apelios/input/adapters/mouse_adapter.py` | Publish with source="input.mouse.x", "input.mouse.y" | - |
+| [ ] 7.1.11 | Test Fake source | `tests/input/adapters/test_fake_adapter.py` | Add `test_fake_adapter_publishes_source` | `pytest tests/input/adapters/test_fake_adapter.py::test_fake_adapter_publishes_source -v` |
+| [ ] 7.1.12 | Add source to Fake | `src/apelios/input/adapters/fake_adapter.py` | Publish with source from axis config | - |
+
+**Verification:** `pytest tests/input/adapters/ -v`
+
+---
+
+### 📦 Module: middleware_input_subscriber.py
+
+| # | Task | File | Action | Test Command |
+|---|------|------|--------|--------------|
+| [ ] 7.1.13 | Test source from payload | `tests/middleware/test_middleware_input_subscriber.py` | Add `test_subscriber_reads_source_from_payload` | `pytest tests/middleware/test_middleware_input_subscriber.py::test_subscriber_reads_source_from_payload -v` |
+| [ ] 7.1.14 | Read source from payload | `src/apelios/middleware/middleware_input_subscriber.py` | Extract source from payload, not topic | - |
+| [ ] 7.1.15 | Remove topic extraction | `src/apelios/middleware/middleware_input_subscriber.py` | Remove code that extracts source from msg.subject | - |
+
+**Verification:** `pytest tests/middleware/test_middleware_input_subscriber.py -v`
+
+---
+
+### 📦 Module: middleware_core.py
+
+| # | Task | File | Action | Test Command |
+|---|------|------|--------|--------------|
+| [ ] 7.1.16 | Remove source addition | `src/apelios/middleware/middleware_core.py` | Remove line that adds `"source": source` to payload | - |
+| [ ] 7.1.17 | Source passes through | `src/apelios/middleware/middleware_core.py` | Source from input flows through unchanged | - |
+
+**Verification:** `pytest tests/middleware/test_middleware_core.py -v`
+
+---
+
+**Acceptance Criteria:**
+- [ ] Input layer publishes source in payload
+- [ ] Middleware does NOT modify payload (pure passthrough)
+- [ ] Source flows from input → middleware → fixture unchanged
+- [ ] All input adapters include source field
+
+---
+
+## 📋 PHASE 8: FINAL VALIDATION (10 tasks)
+
+### 🎯 Phase Goal: Validate entire system works correctly with all phases complete
+
+This phase ensures all previous phases are working together correctly and the architecture matches the ADR documentation.
+
+### 📦 Documentation Correction
+
+| # | Task | File | Action | Test Command |
+|---|------|------|--------|--------------|
+| [ ] 8.1.1 | Update ADR-004 | `docs/adr/004-stateless-input-adapter.md` | Fix: source now in input layer, not added by middleware. Update payload contracts | - |
+| [ ] 8.1.2 | Update ADR-008 | `docs/adr/008-state-management.md` | Add Phase 7 and Phase 6 details about source field and many-to-one | - |
+| [ ] 8.1.3 | Update ADR-002 | `docs/adr/002-architecture.md` | Update to reflect source in input layer, middleware pure passthrough | - |
+| [ ] 8.1.4 | Update ADR-005 | `docs/adr/005-contract.md` | Update event contract to include source in input layer payload | - |
+| [ ] 8.1.5 | Update ADR-003 | `docs/adr/003-60hz-tick.md` | Clarify Fixture Core (not middleware) runs at 60Hz | - |
+
+**Verification:** All ADRs accurately reflect Phase 7 and Phase 6 implementation
+
+---
+
+### 📦 Full System Tests
+
+| # | Task | File | Action | Test Command |
+|---|------|------|--------|--------------|
+| [ ] 8.2.1 | Validate all tests pass | - | - | `pytest tests/ -v` |
+| [ ] 8.2.2 | Validate source flows correctly | - | - | Manual check: verify source in input → middleware → fixture |
+| [ ] 8.2.3 | Validate many-to-one works | - | - | Manual check: multiple inputs to same target |
+| [ ] 8.2.4 | Validate stateless middleware | - | - | Verify no state dicts in middleware_core.py |
+| [ ] 8.2.5 | Run integration tests | - | - | `pytest tests/ -k integration -v` |
+
+**Verification:** All 170+ tests pass, architecture matches all ADRs
+
+---
+
+## 📋 PHASE 9: IMPROVEMENT ANALYSIS (5 tasks)
+
+### 🎯 Phase Goal: Document lessons learned and plan future improvements
+
+| # | Task | File | Action | Test Command |
+|---|------|------|--------|--------------|
+| [ ] 9.1.1 | Analyze each layer | `docs/architectural-principles.md` | Document what worked, what didn't, trade-offs | - |
+| [ ] 9.1.2 | Create improvement roadmap | `docs/ROADMAP.md` | Prioritize architectural improvements | - |
+| [ ] 9.1.3 | Document performance metrics | `docs/performance.md` | Measure end-to-end latency, throughput | - |
+| [ ] 9.1.4 | Review test coverage | - | - | `pytest --cov=src --cov-report=term tests/ -v` |
+| [ ] 9.1.5 | Create thesis outline | `docs/THESIS.md` | Map ADRs to thesis chapters | - |
+
+**Verification:** Documentation complete and accurate
+
+---
+
 ## ✅ ACCEPTANCE CHECKLIST
 
 ### Phase 1: Input Layer Complete
@@ -507,6 +649,22 @@ Output: group1.pan = sum of all deltas + initial absolute value
 - [x] Delta inputs add directly to output
 - [x] Rate inputs add (value * dt) to output
 - [x] All types can be mixed on same target
+
+### Phase 7: Source Field in Input Layer Complete
+- [ ] Input layer publishes source in payload
+- [ ] Middleware does NOT modify payload (pure passthrough)
+- [ ] Source flows from input → middleware → fixture unchanged
+- [ ] All input adapters include source field
+
+### Phase 8: Final Validation Complete
+- [ ] All ADRs accurately reflect current implementation
+- [ ] All 170+ tests pass
+- [ ] Architecture matches all ADRs
+
+### Phase 9: Improvement Analysis Complete
+- [ ] Documentation complete
+- [ ] Performance metrics documented
+- [ ] Thesis outline created
 
 ---
 
@@ -577,7 +735,7 @@ Co-Authored-By: Mistral Vibe <vibe@mistral.ai>"
 
 | Metric | Value |
 |--------|-------|
-| Total Tasks | 150 |
+| Total Tasks | 172 |
 | Code Files | 16 |
 | Test Files | 11 |
 | Config Files | 7 |
@@ -608,14 +766,26 @@ These tasks must be completed in order:
 10. 3.1.1 - 3.1.5 (FixtureInputSubscriber)
 11. 3.2.1 - 3.2.7 (FixtureCore)
 
-**Phase 6 (Many-to-One):**
-12. 6.1.1 - 6.1.2 (MiddlewareOutputPublisher)
-13. 6.2.1 - 6.2.2 (FixtureInputSubscriber)
-14. 6.3.1 - 6.3.7 (FixtureCore)
-15. 6.4.1 (FixtureRuntimeManager)
+**Phase 4 (Config):**
+12. 4.1.1 - 4.2.5 (Routing & Patch Config)
 
-**Phase 5 (Verify):**
-16. 5.1.1 - 5.2.5 (Integration Tests)
+**Phase 5 (Integration):**
+13. 5.1.1 - 5.2.5 (End-to-End & Full Test Suite)
+
+**Phase 6 (Many-to-One):**
+14. 6.1.1 - 6.1.2 (MiddlewareOutputPublisher)
+15. 6.2.1 - 6.2.2 (FixtureInputSubscriber)
+16. 6.3.1 - 6.3.7 (FixtureCore)
+17. 6.4.1 (FixtureRuntimeManager)
+
+**Phase 7 (Source in Input):**
+18. 7.1.1 - 7.1.17 (Source field correction)
+
+**Phase 8 (Final Validation):**
+19. 8.1.1 - 8.2.5 (ADR corrections + system validation)
+
+**Phase 9 (Improvement Analysis):**
+20. 9.1.1 - 9.1.5 (Documentation and analysis)
 
 ---
 

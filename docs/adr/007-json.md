@@ -1,4 +1,12 @@
-throughout apelios i used json to configure the software.
-it is mostly used at places where the user needs to change settings, routings and things like that.
+# ADR 007: JSON Configuration
 
-the reason is, that json is a very known format that is well supported and easy to understand and parse.
+**Date:** 2026-06-XX  
+**Status:** Accepted
+
+## Context
+
+Throughout Apelios, JSON is used to configure the software. It is used primarily where users need to change settings, routings, and similar configurations.
+
+## Decision
+
+JSON was chosen because it is a well-known format that is widely supported and easy to understand and parse.
