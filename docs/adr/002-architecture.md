@@ -25,10 +25,13 @@ This architecture fulfills the non-technical requirements (NTR):
 
 ### Fixture and Middleware Separation
 
-Separation of concerns between the middleware and fixture layer is achieved by having the input layer send type information with each value. The type can be: `absolute_uni`, `absolute_bi`, `rate`, or `delta` so that the fixture layer knows how to process it.
+Separation of concerns between the middleware and fixture layer is achieved by having **input adapters** include type information (`absolute_uni`, `absolute_bi`, `rate`, `delta`) with each value. The fixture layer reads this type directly and applies the appropriate math, while middleware acts as a pure passthrough—eliminating the state desync and packet loss issues that occurred when middleware performed transformations.
 
-This was needed because:
-- If an absolute input like a fader is transformed into a rate value by the middleware, then it gets sent to the fixture layer which would need to convert it back to absolute, causing state desync
-- If there is packet loss between the middleware and the fixture layer, the values get out of sync
+## References
 
-The fix is to send the type with the value so the fixture layer can apply the appropriate math directly.
+- [ADR-004: Stateless Input Adapters](004-stateless-input-adapter.md) - Stateless principle applied to input layer
+- [ADR-005: Event Contract](005-contract.md) - Payload formats and topic structure
+- [ADR-008: State Management](008-state-management.md) - Centralized state in Fixture Core
+- [Software Architecture Patterns](https://www.geeksforgeeks.org/software-engineering/types-of-software-architecture-patterns/)
+- [Design Patterns in System Architecture](https://www.geeksforgeeks.org/system-design/design-patterns-architecture/)
+- [Microsoft Azure Architecture Styles](https://learn.microsoft.com/en-us/azure/architecture/guide/architecture-styles/)

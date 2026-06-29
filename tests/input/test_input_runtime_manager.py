@@ -59,14 +59,14 @@ async def test_runtime_tick_publishes_adapter_snapshot_to_broker(mock_broker_cli
         assert "type" in payload
         assert "timestamp" in payload
     
-    # Check specific values
-    left_stick_call = next((s, p) for s, p in seen if p["source"] == "fake_device.left_stick.x")
-    assert left_stick_call[0] == "input.fake_device"
+    # Check specific values with Phase 7 topic and source format
+    left_stick_call = next((s, p) for s, p in seen if p["source"] == "input.fake_device.left_stick.x")
+    assert left_stick_call[0] == "input.fake_device.left_stick.x"
     assert left_stick_call[1]["value"] == 0.5
     assert left_stick_call[1]["type"] == "absolute_bi"
     
-    fader_call = next((s, p) for s, p in seen if p["source"] == "fake_device.fader_1")
-    assert fader_call[0] == "input.fake_device"
+    fader_call = next((s, p) for s, p in seen if p["source"] == "input.fake_device.fader_1")
+    assert fader_call[0] == "input.fake_device.fader_1"
     assert fader_call[1]["value"] == 0.75
     assert fader_call[1]["type"] == "absolute_uni"
 

@@ -28,12 +28,14 @@ async def test_fake_adapter_publishes_two_values(mock_publisher):
 		axis="left_stick.x",
 		value=0.5,
 		type="absolute_bi",
+		source=None,
 	)
 	mock_publisher.publish.assert_any_await(
 		device="fake_device",
 		axis="fader_1",
 		value=0.75,
 		type="absolute_uni",
+		source=None,
 	)
 
 

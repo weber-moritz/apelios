@@ -117,3 +117,32 @@ def test_core_includes_source_in_output(middleware):
     assert payload["timestamp"] == 123.0
     # Phase 6: source must be included
     assert payload["source"] == "fader.1"
+
+
+def test_core_passes_source_unchanged():
+    """Middleware passes source from input layer unchanged (7.4.2).
+    
+    For Phase 7, when payload is passed directly, middleware forwards it unchanged.
+    """
+    middleware = MappingMiddleware(profile={"input.fader.1": "group1.pan"})
+    
+    # Full payload from input layer with source
+    payload = {
+        "value": 0.5,
+        "type": "absolute_uni",
+        "timestamp": 100.0,
+        "source": "input.fader.1"
+    }
+    
+    outputs = middleware.handle_input(
+        source="input.fader.1",
+        value=0.5,
+        type="absolute_uni",
+        timestamp=100.0,
+        payload=payload  # Full payload for pure passthrough
+    )
+    
+    assert "group1.pan" in outputs
+    # Verify the full payload was passed through unchanged
+    assert outputs["group1.pan"] == payload
+    assert outputs["group1.pan"]["source"] == "input.fader.1"

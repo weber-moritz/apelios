@@ -62,22 +62,23 @@ async def test_input_layer_multiple_adapters_multiple_ticks(mock_broker_client):
 		messages.append((subject, json.loads(msg.decode("utf-8"))))
 
 	# Check that we have messages from both devices
-	fake_gamepad_msgs = [m for m in messages if m[0] == "input.fake_gamepad"]
-	counting_sensor_msgs = [m for m in messages if m[0] == "input.counting_sensor"]
+	# With Phase 7, topics include the axis name
+	fake_gamepad_msgs = [m for m in messages if m[0].startswith("input.fake_gamepad.")]
+	counting_sensor_msgs = [m for m in messages if m[0].startswith("input.counting_sensor.")]
 
 	assert len(fake_gamepad_msgs) == 6  # 2 values × 3 ticks
 	assert len(counting_sensor_msgs) == 6  # 2 values × 3 ticks
 
 	# Verify fake adapter messages (should be the same each tick)
 	for msg in fake_gamepad_msgs[:2]:
-		assert msg[1]["source"] in ["fake_gamepad.left_stick.x", "fake_gamepad.fader_1"]
-		if msg[1]["source"] == "fake_gamepad.left_stick.x":
+		assert msg[1]["source"] in ["input.fake_gamepad.left_stick.x", "input.fake_gamepad.fader_1"]
+		if msg[1]["source"] == "input.fake_gamepad.left_stick.x":
 			assert msg[1]["value"] == 0.5
 		else:
 			assert msg[1]["value"] == 0.75
 
 	# Verify counting sensor messages (should increment each tick)
-	count_msgs = [m for m in counting_sensor_msgs if m[1]["source"] == "counting_sensor.count"]
+	count_msgs = [m for m in counting_sensor_msgs if m[1]["source"] == "input.counting_sensor.count"]
 	assert len(count_msgs) == 3
 	assert count_msgs[0][1]["value"] == 1.0
 	assert count_msgs[1][1]["value"] == 2.0

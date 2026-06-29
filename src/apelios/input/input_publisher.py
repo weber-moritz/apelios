@@ -9,11 +9,11 @@ class InputPublisher:
         self.broker_client = broker_client
         self.input_publish_prefix = input_publish_prefix
 
-    async def publish(self, device: str = "", axis: str = "", value: float = 0.0, type: str = "absolute_uni") -> None:
+    async def publish(self, device: str = "", axis: str = "", value: float = 0.0, type: str = "absolute_uni", source: str | None = None) -> None:
         """Publish one normalized adapter event through the broker.
         
-        Payload format: {"value": float, "type": str, "timestamp": float}
-        Topic format: <input_publish_prefix>.<device>
+        Payload format: {"value": float, "type": str, "timestamp": float, "source": str}
+        Topic format: <input_publish_prefix>.<device>.<axis>
         """
         if device is None or axis is None or value is None:
             raise ValueError("device, axis or value are empty")
@@ -27,7 +27,11 @@ class InputPublisher:
         ):
             raise TypeError("device, axis or value have the wrong type")
 
-        subject = self.input_publish_prefix + "." + device
-        msg = json.dumps({"source": f"{device}.{axis}", "value": value, "type": type, "timestamp": time.time()}).encode("utf-8")
+        subject = self.input_publish_prefix + "." + device + "." + axis
+        
+        # Use provided source or construct from input_publish_prefix.device.axis
+        payload_source = source if source is not None else f"{self.input_publish_prefix}.{device}.{axis}"
+        
+        msg = json.dumps({"source": payload_source, "value": value, "type": type, "timestamp": time.time()}).encode("utf-8")
 
         await self.broker_client.publish(subject, msg)

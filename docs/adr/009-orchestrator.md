@@ -47,3 +47,8 @@ The sequence of tick calls follows the data flow direction to ensure all data is
 
 Each layer exposes a health check function that the orchestrator uses on every tick to verify all layers are running and to catch errors early.
 
+## References
+- [ADR-002: Architecture](002-architecture.md) - Overall system architecture
+- [ADR-003: 60Hz Tick](003-60hz-tick.md) - Tick rate coordination
+- [ADR-004: Stateless Input Adapters](004-stateless-input-adapter.md) - Stateless principle enabled by orchestrator
+

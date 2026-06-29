@@ -142,6 +142,29 @@ async def test_subscriber_ignores_extra_fields(subscriber, middleware_core):
 
 
 @pytest.mark.asyncio
+async def test_subscriber_reads_source_from_payload(subscriber, middleware_core):
+    """Subscriber reads source from payload, not from msg.subject (7.3.1).
+    
+    Even if msg.subject differs from payload source, subscriber uses payload source.
+    """
+    msg = MagicMock(spec=Msg)
+    msg.subject = "input.ignored.topic"  # This should NOT be used
+    msg.data = json.dumps({
+        "source": "mouse.x",  # This SHOULD be used
+        "value": 0.5,
+        "type": "absolute_uni",
+        "timestamp": 1234567890.123
+    }).encode()
+    
+    await subscriber(msg)
+    
+    # Verify middleware was called with source from payload ("mouse.x"), not from subject ("input.ignored.topic")
+    outputs = middleware_core.handle_input(source="mouse.x", value=0.5, type="absolute_uni", timestamp=1234567890.123)
+    assert "group1.pan" in outputs  # "mouse.x" maps to "group1.pan" in mock_profile
+    assert outputs["group1.pan"]["source"] == "mouse.x"
+
+
+@pytest.mark.asyncio
 async def test_subscriber_parses_type_field(subscriber, middleware_core):
     """Subscriber parses type and timestamp from payload and passes to middleware (2.1.1)."""
     msg = MagicMock(spec=Msg)

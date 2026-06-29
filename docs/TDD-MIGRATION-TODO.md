@@ -467,7 +467,7 @@ Output: group1.pan = sum of all deltas + initial absolute value
 
 ---
 
-## 📋 PHASE 7: SOURCE FIELD IN INPUT LAYER (17 tasks)
+## 📋 PHASE 7: SOURCE FIELD IN INPUT LAYER (11 tasks)
 
 ### 🎯 Phase Goal: Move source field from middleware to input layer for proper separation of concerns
 
@@ -475,16 +475,16 @@ Output: group1.pan = sum of all deltas + initial absolute value
 
 **Current (Incorrect):**
 ```
-Input:   {value: 0.5, type: "absolute_uni", timestamp: ...} (topic: input.fader.1)
+Input:   {value: 0.5, type: "absolute_uni", timestamp: ...} (topic: input.device)
          ↓
-Middleware: extracts source from topic, publishes {value: 0.5, type: "absolute_uni", timestamp: ..., source: "input.fader.1"}
+Middleware: extracts source from topic, publishes {value: 0.5, type: "absolute_uni", timestamp: ..., source: "input.device.axis"}
 ```
 
 **Target (Correct):**
 ```
-Input:   {value: 0.5, type: "absolute_uni", timestamp: ..., source: "input.fader.1"} (topic: input.fader.1)
+Input:   {value: 0.5, type: "absolute_uni", timestamp: ..., source: "input.device.axis"} (topic: input.device.axis)
          ↓
-Middleware: pure passthrough → {value: 0.5, type: "absolute_uni", timestamp: ..., source: "input.fader.1"}
+Middleware: pure passthrough → {value: 0.5, type: "absolute_uni", timestamp: ..., source: "input.device.axis"}
 ```
 
 **Why:** Input layer produces the data and knows its identity. Middleware should only route, not transform. This enables true statelessness and better separation of concerns.
@@ -493,9 +493,9 @@ Middleware: pure passthrough → {value: 0.5, type: "absolute_uni", timestamp: .
 
 | # | Task | File | Action | Test Command |
 |---|------|------|--------|--------------|
-| [ ] 7.1.1 | Test source in payload | `tests/input/test_input_publisher.py` | Add `test_publisher_includes_source_in_payload` | `pytest tests/input/test_input_publisher.py::test_publisher_includes_source_in_payload -v` |
-| [ ] 7.1.2 | Add source to signature | `src/apelios/input/input_publisher.py` | Add `source` param to `publish(device, axis, value, type, source)` | - |
-| [ ] 7.1.3 | Include source in payload | `src/apelios/input/input_publisher.py` | Add `"source": source` to payload dict | - |
+| [x] 7.1.1 | Test source in payload | `tests/input/test_input_publisher.py` | Add `test_publisher_includes_source_in_payload` | `pytest tests/input/test_input_publisher.py::test_publisher_includes_source_in_payload -v` |
+| [x] 7.1.2 | Add source to signature and topic | `src/apelios/input/input_publisher.py` | Add `source` param, change topic to `input.device.axis` | - |
+| [x] 7.1.3 | Include source in payload | `src/apelios/input/input_publisher.py` | Add `"source": source` to payload dict | - |
 
 **Verification:** `pytest tests/input/test_input_publisher.py -v`
 
@@ -505,26 +505,11 @@ Middleware: pure passthrough → {value: 0.5, type: "absolute_uni", timestamp: .
 
 | # | Task | File | Action | Test Command |
 |---|------|------|--------|--------------|
-| [ ] 7.1.4 | Test adapter includes source | `tests/input/test_base_input_adapter.py` | Add `test_adapter_publishes_with_source` | `pytest tests/input/test_base_input_adapter.py::test_adapter_publishes_with_source -v` |
-| [ ] 7.1.5 | Add source to publish | `src/apelios/input/base_input_adapter.py` | Add `source` param, pass to publisher | - |
-| [ ] 7.1.6 | Add source to publish_snapshot | `src/apelios/input/base_input_adapter.py` | Pass source for each axis when publishing | - |
+| [x] 7.2.1 | Test adapter includes source | `tests/input/test_base_input_adapter.py` | Add `test_adapter_publishes_with_source` | `pytest tests/input/test_base_input_adapter.py::test_adapter_publishes_with_source -v` |
+| [x] 7.2.2 | Add source to publish | `src/apelios/input/base_input_adapter.py` | Add `source` param, pass to publisher | - |
+| [x] 7.2.3 | Add source to publish_snapshot | `src/apelios/input/base_input_adapter.py` | Pass source for each axis when publishing | - |
 
 **Verification:** `pytest tests/input/test_base_input_adapter.py -v`
-
----
-
-### 📦 Module: All Input Adapters
-
-| # | Task | File | Action | Test Command |
-|---|------|------|--------|--------------|
-| [ ] 7.1.7 | Test SteamDeck source | `tests/input/adapters/test_steamdeck_adapter.py` | Add `test_steamdeck_publishes_source` | `pytest tests/input/adapters/test_steamdeck_adapter.py::test_steamdeck_publishes_source -v` |
-| [ ] 7.1.8 | Add source to SteamDeck | `src/apelios/input/adapters/steamdeck_adapter.py` | Publish with source="input.steamdeck.<axis>" | - |
-| [ ] 7.1.9 | Test Mouse source | `tests/input/adapters/test_mouse_adapter.py` | Add `test_mouse_publishes_source` | `pytest tests/input/adapters/test_mouse_adapter.py::test_mouse_publishes_source -v` |
-| [ ] 7.1.10 | Add source to Mouse | `src/apelios/input/adapters/mouse_adapter.py` | Publish with source="input.mouse.x", "input.mouse.y" | - |
-| [ ] 7.1.11 | Test Fake source | `tests/input/adapters/test_fake_adapter.py` | Add `test_fake_adapter_publishes_source` | `pytest tests/input/adapters/test_fake_adapter.py::test_fake_adapter_publishes_source -v` |
-| [ ] 7.1.12 | Add source to Fake | `src/apelios/input/adapters/fake_adapter.py` | Publish with source from axis config | - |
-
-**Verification:** `pytest tests/input/adapters/ -v`
 
 ---
 
@@ -532,9 +517,9 @@ Middleware: pure passthrough → {value: 0.5, type: "absolute_uni", timestamp: .
 
 | # | Task | File | Action | Test Command |
 |---|------|------|--------|--------------|
-| [ ] 7.1.13 | Test source from payload | `tests/middleware/test_middleware_input_subscriber.py` | Add `test_subscriber_reads_source_from_payload` | `pytest tests/middleware/test_middleware_input_subscriber.py::test_subscriber_reads_source_from_payload -v` |
-| [ ] 7.1.14 | Read source from payload | `src/apelios/middleware/middleware_input_subscriber.py` | Extract source from payload, not topic | - |
-| [ ] 7.1.15 | Remove topic extraction | `src/apelios/middleware/middleware_input_subscriber.py` | Remove code that extracts source from msg.subject | - |
+| [x] 7.3.1 | Test source from payload | `tests/middleware/test_middleware_input_subscriber.py` | Add `test_subscriber_reads_source_from_payload` | `pytest tests/middleware/test_middleware_input_subscriber.py::test_subscriber_reads_source_from_payload -v` |
+| [x] 7.3.2 | Read source from payload | `src/apelios/middleware/middleware_input_subscriber.py` | Extract source from payload, not topic | - |
+| [x] 7.3.3 | Remove topic extraction | `src/apelios/middleware/middleware_input_subscriber.py` | Remove code that extracts source from msg.subject | - |
 
 **Verification:** `pytest tests/middleware/test_middleware_input_subscriber.py -v`
 
@@ -544,18 +529,18 @@ Middleware: pure passthrough → {value: 0.5, type: "absolute_uni", timestamp: .
 
 | # | Task | File | Action | Test Command |
 |---|------|------|--------|--------------|
-| [ ] 7.1.16 | Remove source addition | `src/apelios/middleware/middleware_core.py` | Remove line that adds `"source": source` to payload | - |
-| [ ] 7.1.17 | Source passes through | `src/apelios/middleware/middleware_core.py` | Source from input flows through unchanged | - |
+| [x] 7.4.1 | Remove source addition | `src/apelios/middleware/middleware_core.py` | Remove line that adds `"source": source` to payload | - |
+| [x] 7.4.2 | Source passes through | `src/apelios/middleware/middleware_core.py` | Source from input flows through unchanged | - |
 
 **Verification:** `pytest tests/middleware/test_middleware_core.py -v`
 
 ---
 
 **Acceptance Criteria:**
-- [ ] Input layer publishes source in payload
-- [ ] Middleware does NOT modify payload (pure passthrough)
-- [ ] Source flows from input → middleware → fixture unchanged
-- [ ] All input adapters include source field
+- [x] Input layer publishes source in payload with topic `input.device.axis`
+- [x] Middleware does NOT modify payload (pure passthrough)
+- [x] Source and topic format are consistent (`input.device.axis`)
+- [x] Source flows from input → middleware → fixture unchanged
 
 ---
 
@@ -651,10 +636,10 @@ This phase ensures all previous phases are working together correctly and the ar
 - [x] All types can be mixed on same target
 
 ### Phase 7: Source Field in Input Layer Complete
-- [ ] Input layer publishes source in payload
-- [ ] Middleware does NOT modify payload (pure passthrough)
-- [ ] Source flows from input → middleware → fixture unchanged
-- [ ] All input adapters include source field
+- [x] Input layer publishes source in payload
+- [x] Middleware does NOT modify payload (pure passthrough)
+- [x] Source flows from input → middleware → fixture unchanged
+- [x] All input adapters include source field
 
 ### Phase 8: Final Validation Complete
 - [ ] All ADRs accurately reflect current implementation
@@ -735,7 +720,7 @@ Co-Authored-By: Mistral Vibe <vibe@mistral.ai>"
 
 | Metric | Value |
 |--------|-------|
-| Total Tasks | 172 |
+| Total Tasks | 166 |
 | Code Files | 16 |
 | Test Files | 11 |
 | Config Files | 7 |

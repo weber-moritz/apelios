@@ -28,12 +28,17 @@ The Input Module is "dumb". It holds no memory. It reads hardware, normalizes th
 We will proceed with **Option 2 (Core State / Stateless Adapters)**. 
 
 The Input Adapters will be restricted to translating hardware-specific SDK/HID data into a single broker payload shape:
-`{"value": X, "type": "absolute_uni", "timestamp": T}`
+`{"value": X, "type": "absolute_uni", "timestamp": T, "source": "input.device.axis"}`
 
-The Middleware adds the `source` field and forwards to the target topic. The `FixtureCore` will act as the central Accumulator. 
+The Middleware is a pure passthrough, forwarding the input payload unchanged to the target topic. The `FixtureCore` will act as the central Accumulator. 
 
 ## 4. Consequences
 * **Separation of Concerns:** The boundary is firmly established. Edge adapters handle *Hardware Normalization*. The Fixture Core handles *Time, Memory, and Integration*.
 * **Implementation Requirement:** The Fixture Core's `process_frame()` method must resolve input behavior and calculate $\Delta t$ for `rate`-based inputs. The Middleware is stateless and does not have a `process_frame()` method.
-* **Payload Contract:** Input adapters publish normalized `value`, `type`, and `timestamp`. The `type` and `source` fields flow through the entire pipeline unchanged.
+* **Payload Contract:** Input adapters publish normalized `value`, `type`, `timestamp`, and `source`. The `value`, `type`, `timestamp`, and `source` fields flow through the entire pipeline unchanged.
 * **Future Proofing:** This explicitly separates the Input Accumulation problem from the Output Priority problem. Because the Fixture Core centralizes all state, downstream priority policies (Additive/Stacking vs. LTP) can be applied reliably in memory.
+
+## References:
+- [ADR-002: Architecture](002-architecture.md) - Overall system architecture
+- [ADR-005: Event Contract](005-contract.md) - Payload formats and topic structure
+- [ADR-008: State Management](008-state-management.md) - Centralized state in Fixture Core

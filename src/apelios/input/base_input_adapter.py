@@ -33,7 +33,7 @@ class BaseInputAdapter:
         """Get the type for a specific axis, defaulting to absolute_uni."""
         return self._axis_types.get(axis, "absolute_uni")
     
-    async def publish(self, axis: str, value: float, type: str | None = None) -> None:
+    async def publish(self, axis: str, value: float, type: str | None = None, source: str | None = None) -> None:
         """Publish one normalized axis value through the injected publisher."""
         if not self._is_running or self._publisher is None:
             raise RuntimeError("The system cant publish if its not started")
@@ -41,7 +41,7 @@ class BaseInputAdapter:
         # Use provided type or look up from axis_types
         publish_type = type if type is not None else self.get_axis_type(axis)
         
-        await self._publisher.publish(device=self.device, axis=axis, value=value, type=publish_type)
+        await self._publisher.publish(device=self.device, axis=axis, value=value, type=publish_type, source=source)
 
     async def publish_snapshot(self, snapshot: dict[str, float]) -> None:
         """Publishes the current values of all axes in the snapshot."""

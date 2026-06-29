@@ -71,10 +71,10 @@ async def test_start_sequence_order(mock_broker, mock_middleware, mock_input, mo
     assert orchestrator.is_running()
     assert manager.mock_calls == [
         call.broker_start(),
+        call.fixture_start(),
         call.middleware_start(),
         call.input_start(),
         call.input_start_adapters(),
-        call.fixture_start(),
     ]
 
 

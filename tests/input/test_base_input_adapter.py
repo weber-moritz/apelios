@@ -71,7 +71,7 @@ async def test_stop_is_idempotent(mock_publisher):
 
 @pytest.mark.asyncio
 async def test_publish_forwards_to_publisher(mock_publisher):
-    """Publish should forward device, axis, value, and type to the publisher."""
+    """Publish should forward device, axis, value, type, and source to the publisher."""
     adapter = ConcreteTestAdapter(device="dev1")
     await adapter.start(input_publisher=mock_publisher)
 
@@ -82,6 +82,7 @@ async def test_publish_forwards_to_publisher(mock_publisher):
         axis="axis_x",
         value=0.5,
         type="absolute_uni",  # default type
+        source=None,
     )
 
 
@@ -119,12 +120,14 @@ async def test_publish_snapshot_forwards_all_values(mock_publisher):
         axis="left_stick.x",
         value=0.5,
         type="absolute_uni",
+        source=None,
     )
     mock_publisher.publish.assert_any_await(
         device="test_device",
         axis="fader_1",
         value=0.75,
         type="absolute_uni",
+        source=None,
     )
 
 
@@ -145,8 +148,8 @@ async def test_tick_calls_poll_once_and_publishes(mock_publisher):
     await adapter.tick(dt=0.016)
 
     assert mock_publisher.publish.await_count == 2
-    mock_publisher.publish.assert_any_await(device="poll_device", axis="x", value=0.1, type="absolute_uni")
-    mock_publisher.publish.assert_any_await(device="poll_device", axis="y", value=0.2, type="absolute_uni")
+    mock_publisher.publish.assert_any_await(device="poll_device", axis="x", value=0.1, type="absolute_uni", source=None)
+    mock_publisher.publish.assert_any_await(device="poll_device", axis="y", value=0.2, type="absolute_uni", source=None)
 
 
 @pytest.mark.asyncio
@@ -204,3 +207,43 @@ async def test_adapter_publish_snapshot_includes_types(mock_publisher):
     
     rate_call = next(c for c in calls if c["axis"] == "z")
     assert rate_call["type"] == "rate"
+
+
+@pytest.mark.asyncio
+async def test_adapter_publishes_with_source(mock_publisher):
+    """Adapter publishes with source parameter passed to publisher."""
+    adapter = ConcreteTestAdapter(device="test_device")
+    await adapter.start(input_publisher=mock_publisher)
+    
+    await adapter.publish("axis_x", 0.5)
+    
+    # Verify publisher was called with source parameter (may be None for auto-generation)
+    call_args = mock_publisher.publish.await_args
+    assert call_args[1]["device"] == "test_device"
+    assert call_args[1]["axis"] == "axis_x"
+    assert call_args[1]["value"] == 0.5
+    assert call_args[1]["type"] == "absolute_uni"
+    assert "source" in call_args[1]  # Source parameter is passed (may be None)
+
+
+@pytest.mark.asyncio
+async def test_adapter_publish_snapshot_includes_source(mock_publisher):
+    """Adapter publish_snapshot passes all parameters including source to publisher."""
+    adapter = ConcreteTestAdapter(device="test_device")
+    await adapter.start(input_publisher=mock_publisher)
+    
+    snapshot = {"x": 0.1, "y": 0.5}
+    await adapter.publish_snapshot(snapshot)
+    
+    # Verify publisher was called twice (once per axis)
+    assert mock_publisher.publish.await_count == 2
+    
+    # Verify both calls include required parameters (source flows through via default)
+    for call in mock_publisher.publish.await_args_list:
+        kwargs = call[1]
+        assert "device" in kwargs
+        assert "axis" in kwargs
+        assert "value" in kwargs
+        assert "type" in kwargs
+        # Source parameter exists (may be None, which triggers auto-generation)
+        assert "source" in kwargs

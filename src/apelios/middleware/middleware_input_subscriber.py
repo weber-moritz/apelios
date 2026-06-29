@@ -60,8 +60,15 @@ class MiddlewareInputSubscriber:
 			logger.warning("Ignoring middleware input without valid 'type'")
 			return
 
+		# For Phase 7: pass full payload for pure passthrough
 		# Call middleware which returns outputs dict
-		outputs = self.middleware.handle_input(source=source, value=numeric_value, type=type_, timestamp=timestamp)
+		outputs = self.middleware.handle_input(
+			source=source, 
+			value=numeric_value, 
+			type=type_, 
+			timestamp=timestamp,
+			payload=payload
+		)
 		
 		# Forward outputs to runtime manager for publishing on next tick
 		if self.runtime_manager and outputs:
