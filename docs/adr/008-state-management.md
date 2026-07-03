@@ -5,13 +5,13 @@
 
 ## Context
 
-The functional requirements require the system to be modular, which also means information-independence and separation of concerns. The layers only follow the defined contract and just pass the data through to the next layer without knowing about the previous or next layer.
+The system must track accumulated fixture state (e.g., pan/tilt positions) to support features like many-to-one input summation, where multiple inputs (fader + gyro) contribute to the same fixture parameter. We needed to determine where this stateful tracking should occur: distributed across input adapters and middleware, or centralized in a single layer.
 
 ## Decision
 
-To achieve this, the stateless requirement was developed. The reason is that assuming information about how the next layer works would violate the modular and information independence requirements.
+We centralize all stateful tracking in the **Fixture Core**. All other layers (Input, Middleware) remain **stateless** - they normalize, route, and pass through data without retaining any frame-to-frame memory.
 
-All layers pass all required information along to the next layer, so that each layer can be refactored or changed without touching the information that the previous layer sends. The Middleware is a pure passthrough and does not add or modify fields like `source` or `target`.
+The Middleware is a pure passthrough and does not add or modify fields like `source` or `target`.
 
 Only the Fixture layer is **stateful**, which means it is the only layer that stores input data for more than 1 tick cycle. The Fixture Core tracks per-target state including `value`, `has_first_abs`, and `first_abs_value` to support many-to-one input summation.
 

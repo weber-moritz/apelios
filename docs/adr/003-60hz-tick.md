@@ -25,9 +25,9 @@ The 60Hz tick rate ensures that time-dependent calculations (especially for `rat
 ## References
 - [ADR-002: Architecture](002-architecture.md) - Overall system architecture
 - [ADR-008: State Management](008-state-management.md) - Fixture Core statefulness at 60Hz
-- https://docs.unity3d.com/6000.4/Documentation/Manual/managing-time-and-frame-rate.html
-- https://dl.acm.org/doi/10.1145/3355088.3365170
-- https://dev.to/pubnub/how-fast-is-real-time-human-perception-and-technology-1308
-- https://dmx-guide.com/
-- https://art-net.org.uk/downloads/art-net.pdf
-- https://entertainment.sundrax.com/blog/ultimate-guide-sacn-control-lighting-over-network
+- [Unity: Managing Time and Frame Rate](https://docs.unity3d.com/6000.4/Documentation/Manual/managing-time-and-frame-rate.html) - Frame-based timing in game engines
+- [ACM: Real-Time Human Perception](https://dl.acm.org/doi/10.1145/3355088.3365170) - Human perception of latency
+- [PubNub: How Fast is Real-Time?](https://dev.to/pubnub/how-fast-is-real-time-human-perception-and-technology-1308) - Real-time system constraints
+- [DMX Guide](https://dmx-guide.com/) - DMX512 protocol timing standards
+- [Art-Net Specification](https://art-net.org.uk/downloads/art-net.pdf) - Art-Net protocol timing requirements
+- [sACN Guide](https://entertainment.sundrax.com/blog/ultimate-guide-sacn-control-lighting-over-network) - Streaming ACN protocol timing

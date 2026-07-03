@@ -32,6 +32,6 @@ Separation of concerns between the middleware and fixture layer is achieved by h
 - [ADR-004: Stateless Input Adapters](004-stateless-input-adapter.md) - Stateless principle applied to input layer
 - [ADR-005: Event Contract](005-contract.md) - Payload formats and topic structure
 - [ADR-008: State Management](008-state-management.md) - Centralized state in Fixture Core
-- [Software Architecture Patterns](https://www.geeksforgeeks.org/software-engineering/types-of-software-architecture-patterns/)
-- [Design Patterns in System Architecture](https://www.geeksforgeeks.org/system-design/design-patterns-architecture/)
-- [Microsoft Azure Architecture Styles](https://learn.microsoft.com/en-us/azure/architecture/guide/architecture-styles/)
+- [GeeksforGeeks: Software Architecture Patterns](https://www.geeksforgeeks.org/software-engineering/types-of-software-architecture-patterns/) - Microkernel and hexagonal architecture overview
+- [GeeksforGeeks: Design Patterns in System Architecture](https://www.geeksforgeeks.org/system-design/design-patterns-architecture/) - System design patterns
+- [Microsoft: Architecture Styles](https://learn.microsoft.com/en-us/azure/architecture/guide/architecture-styles/) - Cloud architecture patterns

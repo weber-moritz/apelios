@@ -247,3 +247,116 @@ async def test_adapter_publish_snapshot_includes_source(mock_publisher):
         assert "type" in kwargs
         # Source parameter exists (may be None, which triggers auto-generation)
         assert "source" in kwargs
+
+
+# =============================================================================
+# AXIS SCALING TESTS (TDD - RED PHASE)
+# =============================================================================
+
+
+@pytest.mark.asyncio
+async def test_get_axis_scale_returns_one_by_default(mock_publisher):
+    """get_axis_scale should return 1.0 for axes with no scale defined."""
+    adapter = ConcreteTestAdapter(device="test_device")
+    await adapter.start(input_publisher=mock_publisher)
+    
+    # No scales have been set, should default to 1.0
+    assert adapter.get_axis_scale("any_axis") == 1.0
+    assert adapter.get_axis_scale("imu.pitch") == 1.0
+    assert adapter.get_axis_scale("joy.x") == 1.0
+
+
+@pytest.mark.asyncio
+async def test_set_axis_scale_stores_exact_match(mock_publisher):
+    """set_axis_scale should store and get_axis_scale should retrieve exact matches."""
+    adapter = ConcreteTestAdapter(device="test_device")
+    await adapter.start(input_publisher=mock_publisher)
+    
+    adapter.set_axis_scale("imu.pitch", 0.1)
+    adapter.set_axis_scale("joy.x", 0.5)
+    
+    assert adapter.get_axis_scale("imu.pitch") == 0.1
+    assert adapter.get_axis_scale("joy.x") == 0.5
+    # Other axes should still default to 1.0
+    assert adapter.get_axis_scale("imu.yaw") == 1.0
+
+
+@pytest.mark.asyncio
+async def test_get_axis_scale_wildcard_match(mock_publisher):
+    """get_axis_scale should match wildcard patterns like 'imu.*'."""
+    adapter = ConcreteTestAdapter(device="test_device")
+    await adapter.start(input_publisher=mock_publisher)
+    
+    adapter.set_axis_scale("imu.*", 0.1)
+    
+    # All imu.* axes should match
+    assert adapter.get_axis_scale("imu.pitch") == 0.1
+    assert adapter.get_axis_scale("imu.yaw") == 0.1
+    assert adapter.get_axis_scale("imu.roll") == 0.1
+
+
+@pytest.mark.asyncio
+async def test_get_axis_scale_wildcard_no_match(mock_publisher):
+    """get_axis_scale should return 1.0 for axes not matching any wildcard."""
+    adapter = ConcreteTestAdapter(device="test_device")
+    await adapter.start(input_publisher=mock_publisher)
+    
+    adapter.set_axis_scale("imu.*", 0.1)
+    
+    # Non-imu axes should not match and return default
+    assert adapter.get_axis_scale("joy.x") == 1.0
+    assert adapter.get_axis_scale("button.a") == 1.0
+
+
+@pytest.mark.asyncio
+async def test_get_axis_scale_exact_takes_precedence_over_wildcard(mock_publisher):
+    """Exact axis match should take precedence over wildcard match."""
+    adapter = ConcreteTestAdapter(device="test_device")
+    await adapter.start(input_publisher=mock_publisher)
+    
+    adapter.set_axis_scale("imu.*", 0.1)
+    adapter.set_axis_scale("imu.pitch", 0.5)  # Override for pitch specifically
+    
+    assert adapter.get_axis_scale("imu.pitch") == 0.5  # Exact match wins
+    assert adapter.get_axis_scale("imu.yaw") == 0.1   # Wildcard still applies
+
+
+@pytest.mark.asyncio
+async def test_publish_applies_scaling(mock_publisher):
+    """publish should multiply value by the axis scale."""
+    adapter = ConcreteTestAdapter(device="test_device")
+    await adapter.start(input_publisher=mock_publisher)
+    
+    adapter.set_axis_scale("joy.x", 0.5)
+    
+    await adapter.publish("joy.x", 1.0)
+    
+    # Verify the published value was scaled down
+    call_args = mock_publisher.publish.await_args
+    assert call_args[1]["value"] == 0.5  # 1.0 * 0.5
+
+
+@pytest.mark.asyncio
+async def test_publish_snapshot_applies_scaling(mock_publisher):
+    """publish_snapshot should apply scaling to all axes."""
+    adapter = ConcreteTestAdapter(device="test_device")
+    await adapter.start(input_publisher=mock_publisher)
+    
+    adapter.set_axis_scale("joy.x", 0.5)
+    adapter.set_axis_scale("joy.y", 2.0)
+    # imu.pitch has no scale, should default to 1.0
+    
+    snapshot = {"joy.x": 1.0, "joy.y": 0.5, "imu.pitch": 1.0}
+    await adapter.publish_snapshot(snapshot)
+    
+    # Get all published calls
+    calls = [call[1] for call in mock_publisher.publish.await_args_list]
+    
+    # Find each axis call
+    joy_x_call = next(c for c in calls if c["axis"] == "joy.x")
+    joy_y_call = next(c for c in calls if c["axis"] == "joy.y")
+    imu_pitch_call = next(c for c in calls if c["axis"] == "imu.pitch")
+    
+    assert joy_x_call["value"] == 0.5   # 1.0 * 0.5
+    assert joy_y_call["value"] == 1.0   # 0.5 * 2.0
+    assert imu_pitch_call["value"] == 1.0  # 1.0 * 1.0 (default)

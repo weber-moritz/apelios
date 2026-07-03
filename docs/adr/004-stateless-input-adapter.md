@@ -5,10 +5,10 @@
 
 ## 1. Context
 Apelios must process hardware inputs from diverse sources with fundamentally different electrical/software behaviors:
-* **Absolute (No Wrap):** Faders (e.g., 0.0 to 1.0)
-* **Absolute (Wrap):** Gyros, Jogwheels (e.g., 0 to 360 degrees)
-* **Continuous / Rate:** Joysticks, Triggers (Deflection from a center deadzone)
-* **Relative / Speed:** Mouse, Trackpad (Raw delta values)
+* **Absolute Unipolar:** Faders, Buttons (e.g., 0.0 to 1.0)
+* **Absolute Bipolar:** Joysticks, Analog Sticks (e.g., -1.0 to 1.0)
+* **Rate:** Gyros, IMU (Angular velocity / deflection rate)
+* **Delta:** Mouse, Trackpad (Raw relative movement)
 
 These inputs ultimately need to be mapped to a unified output (e.g., the Pan/Tilt of a moving head). We needed to determine where the "Source of Truth" (the Virtual Canvas or Accumulator) for the lighting rig's position should live: in the Input Adapter at the edge, in the Middleware Core, or in the Fixture Core?
 

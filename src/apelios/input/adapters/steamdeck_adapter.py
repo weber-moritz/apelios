@@ -46,65 +46,56 @@ class _NullSteamDeck:
 class SteamDeckAdapter(BaseInputAdapter):
 	"""Publish Steam Deck axes through the shared input runtime."""
 
-	_BUTTON_NAMES = [
-		"a",
-		"b",
-		"x",
-		"y",
-		"l1",
-		"r1",
-		"l2_click",
-		"r2_click",
-		"dpad_up",
-		"dpad_down",
-		"dpad_left",
-		"dpad_right",
-		"select",
-		"start",
-		"steam",
-		"quick_access",
-		"l_lower_grip",
-		"r_lower_grip",
-		"l_upper_grip",
-		"r_upper_grip",
-		"l_stick_press",
-		"r_stick_press",
-		"l_stick_touch",
-		"r_stick_touch",
-		"l_trackpad_touch",
-		"l_trackpad_press",
-		"r_trackpad_touch",
-		"r_trackpad_press",
-	]
-
-	_ANALOG_NAMES = [
-		"left_trigger",
-		"right_trigger",
-		"left_stick_x",
-		"left_stick_y",
-		"right_stick_x",
-		"right_stick_y",
-		"left_trackpad_x",
-		"left_trackpad_y",
-		"right_trackpad_x",
-		"right_trackpad_y",
-		"left_trackpad_pressure",
-		"right_trackpad_pressure",
-	]
-
-	_ANALOG_AXIS_MAP = {
-		"left_trigger": "left_trigger",
-		"right_trigger": "right_trigger",
+	# Single unified mapping: bitsteam raw axis names -> Apelios internal names
+	_BITSTEAM_AXIS_MAP = {
+		# Buttons (map to button.* namespace)
+		"a": "button.a",
+		"b": "button.b",
+		"x": "button.x",
+		"y": "button.y",
+		"l1": "button.l1",
+		"r1": "button.r1",
+		"l2_click": "button.l2_click",
+		"r2_click": "button.r2_click",
+		"dpad_up": "button.dpad_up",
+		"dpad_down": "button.dpad_down",
+		"dpad_left": "button.dpad_left",
+		"dpad_right": "button.dpad_right",
+		"select": "button.select",
+		"start": "button.start",
+		"steam": "button.steam",
+		"quick_access": "button.quick_access",
+		"l_lower_grip": "button.l_lower_grip",
+		"r_lower_grip": "button.r_lower_grip",
+		"l_upper_grip": "button.l_upper_grip",
+		"r_upper_grip": "button.r_upper_grip",
+		"l_stick_press": "button.l_stick_press",
+		"r_stick_press": "button.r_stick_press",
+		"l_stick_touch": "button.l_stick_touch",
+		"r_stick_touch": "button.r_stick_touch",
+		"l_trackpad_touch": "button.l_trackpad_touch",
+		"l_trackpad_press": "button.l_trackpad_press",
+		"r_trackpad_touch": "button.r_trackpad_touch",
+		"r_trackpad_press": "button.r_trackpad_press",
+		# Analog sticks (remap to simpler names)
 		"left_stick_x": "joy.x",
 		"left_stick_y": "joy.y",
 		"right_stick_x": "right_stick.x",
 		"right_stick_y": "right_stick.y",
+		# Triggers
+		"left_trigger": "left_trigger",
+		"right_trigger": "right_trigger",
+		# Trackpads
 		"left_trackpad_x": "left_trackpad.x",
 		"left_trackpad_y": "left_trackpad.y",
 		"right_trackpad_x": "right_trackpad.x",
 		"right_trackpad_y": "right_trackpad.y",
 		"left_trackpad_pressure": "left_trackpad.pressure",
 		"right_trackpad_pressure": "right_trackpad.pressure",
+		# IMU (map bitsteam's pitch/yaw/roll to imu.* namespace)
+		"pitch": "imu.pitch",
+		"yaw": "imu.yaw",
+		"roll": "imu.roll",
 	}
 
 	_AXIS_TYPES = {
@@ -158,6 +149,12 @@ class SteamDeckAdapter(BaseInputAdapter):
 		"imu.roll": "rate",
 	}
 
+	# Per-axis sensitivity scaling factors (default = 1.0)
+	# IMU needs 0.1x to convert 10 real revolutions -> 1 output revolution
+	_AXIS_SCALES = {
+		"imu.*": 0.1,  # Wildcard matches imu.pitch, imu.yaw, imu.roll
+	}
+
 	def __init__(self, device: str = "steamdeck", deck: Any | None = None) -> None:
 		super().__init__(device=device)
 		if deck is not None:
@@ -171,6 +168,10 @@ class SteamDeckAdapter(BaseInputAdapter):
 		# Set axis types for all known axes
 		for axis, axis_type in self._AXIS_TYPES.items():
 			self.set_axis_type(axis, axis_type)
+		
+		# Set axis scales for all known axes
+		for axis, scale in self._AXIS_SCALES.items():
+			self.set_axis_scale(axis, scale)
 
 	async def start(self, input_publisher) -> None:
 		"""Attach the shared publisher and start the Steam Deck listener."""
@@ -206,26 +207,21 @@ class SteamDeckAdapter(BaseInputAdapter):
 		imu_rates = await self._call_backend(self._deck.get_imu_rates) or {}
 
 		snapshot: dict[str, float] = {}
-		for button_name in self._BUTTON_NAMES:
-			pressed = await self._call_backend(self._deck.get_button_state, button_name)
-			snapshot[f"button.{button_name}"] = float(bool(pressed))
-
-		if isinstance(analogs, Mapping):
-			for raw_axis in self._ANALOG_NAMES:
-				axis = self._normalize_analog_axis(raw_axis)
-				raw_value = analogs.get(raw_axis, 0.0)
-				snapshot[axis] = float(raw_value)
-
-		if isinstance(imu_rates, Mapping):
-			snapshot["imu.pitch"] = float(imu_rates.get("pitch", 0.0))
-			snapshot["imu.yaw"] = float(imu_rates.get("yaw", 0.0))
-			snapshot["imu.roll"] = float(imu_rates.get("roll", 0.0))
+		
+		# Poll all axes from the unified map
+		for raw_name,apelios_name in self._BITSTEAM_AXIS_MAP.items():
+			if apelios_name.startswith("button."):
+				# Buttons: use get_button_state
+				pressed = await self._call_backend(self._deck.get_button_state, raw_name)
+				snapshot[apelios_name] = float(bool(pressed))
+			elif apelios_name.startswith("imu."):
+				# IMU: use get_imu_rates
+				snapshot[apelios_name] = float(imu_rates.get(raw_name, 0.0))
+			else:
+				# Analog: use get_analog_values
+				snapshot[apelios_name] = float(analogs.get(raw_name, 0.0))
 
 		self.snapshot = snapshot
-
-	@classmethod
-	def _normalize_analog_axis(cls, raw_axis: str) -> str:
-		return cls._ANALOG_AXIS_MAP.get(raw_axis, raw_axis)
 
 	@staticmethod
 	async def _call_backend(method, *args, **kwargs):
