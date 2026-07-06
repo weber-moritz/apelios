@@ -7,7 +7,7 @@ from typing import Optional
 from apelios.broker.broker_runtime_manager import BrokerRuntimeManager
 from apelios.broker.broker_client import BrokerClient
 from apelios.input.input_runtime_manager import InputRuntimeManager
-from apelios.middleware.middleware_runtime_manager import MiddlewareRuntimeManager
+from apelios.router.router_runtime_manager import RouterRuntimeManager
 
 logger = logging.getLogger(__name__)
 
@@ -18,14 +18,14 @@ class MainOrchestrator:
         self, 
         broker_provider: str = "nats", 
         broker_manager: Optional[BrokerRuntimeManager] = None,
-        middleware_manager: Optional[MiddlewareRuntimeManager] = None,
+        router_manager: Optional[RouterRuntimeManager] = None,
         input_manager: Optional[InputRuntimeManager] = None,
         fixture_manager: Optional[FixtureRuntimeManager] = None,
     ):
         # Dependency injection for testability
         self.broker_manager = broker_manager or BrokerRuntimeManager(provider=broker_provider)
 
-        self.middleware_manager = middleware_manager or MiddlewareRuntimeManager(
+        self.router_manager = router_manager or RouterRuntimeManager(
             broker_client=BrokerClient(provider=broker_provider),
         )
         self.input_manager = input_manager or InputRuntimeManager(
@@ -51,8 +51,8 @@ class MainOrchestrator:
         await self.fixture_manager.start()
         logger.info("Fixture runtime started")
 
-        await self.middleware_manager.start()
-        logger.info("Middleware runtime started")
+        await self.router_manager.start()
+        logger.info("Router runtime started")
 
         await self.input_manager.start()
         await self.input_manager.start_registered_adapters()
@@ -75,8 +75,8 @@ class MainOrchestrator:
         await self.input_manager.stop()
         logger.info("Stopped input")
 
-        await self.middleware_manager.stop()
-        logger.info("Stopped middleware")
+        await self.router_manager.stop()
+        logger.info("Stopped router")
 
         await self.fixture_manager.stop()
         logger.info("Stopped fixture layer")
@@ -91,18 +91,18 @@ class MainOrchestrator:
         """Verify all critical subsystems are alive."""
         broker_healthy = await self.broker_manager.health_check(timeout=timeout)
 
-        middleware_healthy = self.middleware_manager.is_running()
+        router_healthy = self.router_manager.is_running()
         input_healthy = self.input_manager.is_running()
         fixture_healthy = self.fixture_manager.is_running()
 
-        if not middleware_healthy:
-            logger.error("Health Check Failed: Middleware is not running.")
+        if not router_healthy:
+            logger.error("Health Check Failed: Router is not running.")
         if not input_healthy:
             logger.error("Health Check Failed: Input runtime is not running.")
         if not fixture_healthy:
             logger.error("Health Check Failed: Fixture runtime is not running.")
 
-        return broker_healthy and middleware_healthy and input_healthy and fixture_healthy
+        return broker_healthy and router_healthy and input_healthy and fixture_healthy
 
     def is_running(self) -> bool:
         return self._running
@@ -120,7 +120,7 @@ class MainOrchestrator:
                 await self.input_manager.tick(dt=target_interval)
 
                 # 2. Process one frame of the lighting universe.
-                await self.middleware_manager.tick()
+                await self.router_manager.tick()
 
                 # 3. Process one frame of the fixture layer.
                 await self.fixture_manager.tick(dt=target_interval)

@@ -25,7 +25,7 @@
 
 Apelios is a **Micro-Kernel Architecture** centered on a **Decoupled Event-Driven Pipeline** with a central NATS broker. Data flows in a strictly **unidirectional** path:
 
-**Hardware → Input Layer → Middleware → Fixture Layer → Lights**
+**Hardware → Input Layer → Router → Fixture Layer → Lights**
 
 Each layer has a single responsibility and communicates exclusively via NATS topics using a **standardized JSON payload schema**. Layers have **zero direct code dependencies** on each other.
 
@@ -66,13 +66,13 @@ These principles define the architectural boundaries and design philosophy for A
 #### 1. Strict Separation of Concerns
 Each layer must own a **single domain** with no overlap:
 - **Input Layer:** Physical hardware calibration, normalization, intent tagging
-- **Middleware:** Message routing only (stateless)
+- **Router:** Message routing only (stateless)
 - **Fixture Layer:** Mathematical state integration, clamping, protocol translation
 
 > **Why:** Ensures each component can be developed, tested, and modified independently. Prevents domain logic bleed between layers.
 
 #### 2. Stateless Routing
-The Middleware **must not** hold positional state, perform mathematical conversions, or apply hardware compensations. It routes data **blindly** based solely on NATS topic patterns.
+The Router **must not** hold positional state, perform mathematical conversions, or apply hardware compensations. It routes data **blindly** based solely on NATS topic patterns.
 
 > **Why:** Stateless design enables horizontal scaling, simplifies reasoning, and prevents drift between input and output states.
 
@@ -95,7 +95,7 @@ Data passed between layers **must** carry an intent tag (`absolute_uni`, `absolu
 See: [system-architecture.drawio](../diagrams/system-architecture.drawio) for the visual representation of the architecture.
 
 For additional context diagrams, see:
-- [middleware-architecture.drawio](../diagrams/middleware-architecture.drawio)
+- [router-architecture.drawio](../diagrams/router-architecture.drawio)
 - [C4 Context Diagrams](../c4/) (c1-apelios.drawio through c4-apelios.drawio)
 
 ### Quick Reference: Topic Flow
@@ -103,7 +103,7 @@ For additional context diagrams, see:
 **Data Flow:**
 ```
 Input: {value: 0.5, type: "rate", timestamp: ...}
-    → Middleware (passthrough, no changes)
+    → Router (passthrough, no changes)
     → {value: 0.5, type: "rate", timestamp: ...}
     → Fixture
 ```
@@ -135,7 +135,7 @@ Input: {value: 0.5, type: "rate", timestamp: ...}
 |-------|--------------|---------------|---------|
 | Input | `input.<device>.<axis>` | - | `{value, type, timestamp}` |
 | Input | `input.<device>.manifest` | - | Capabilities manifest |
-| Middleware | `target.<fixture>.<param>` | `input.>` | `{value, type, timestamp}` (unchanged) |
+| Router | `target.<fixture>.<param>` | `input.>` | `{value, type, timestamp}` (unchanged) |
 | Fixture | `output.<universe>.<address>` | `target.>` | `{value, type, timestamp}` processed |
 
 ---
@@ -175,7 +175,7 @@ Input: {value: 0.5, type: "rate", timestamp: ...}
 3. **Base Input Adapter:** Interface contract for all adapters
 4. **Device Adapters:** Steam Deck, Mouse, Fake, etc.
 
-### D. Middleware (Pure Router)
+### D. Router (Pure Router)
 
 **Role:** A **stateless** switchboard that maps input topics to target topics.
 
@@ -187,10 +187,10 @@ Input: {value: 0.5, type: "rate", timestamp: ...}
 - **Passthrough:** Republish identical payload (including `type`) to target topic
 
 #### Components
-1. **Middleware Runtime Manager:** Lifecycle, broker connectivity
-2. **Middleware Input Subscriber:** Receive from `input.>` topics
+1. **Router Runtime Manager:** Lifecycle, broker connectivity
+2. **Router Input Subscriber:** Receive from `input.>` topics
 3. **Topic Router:** Lookup routing table, forward messages
-4. **Middleware Output Publisher:** Publish to `target.>` topics
+4. **Router Output Publisher:** Publish to `target.>` topics
 
 #### Routing Configuration
 ```json
@@ -264,7 +264,7 @@ Let $S_{old}$ = current state, $V_{in}$ = incoming value, $L_{min}, L_{max}$ = p
 | **Target** | Identifier for the fixture parameter, e.g., `movinghead01.pan` | Routing config, target.* topics |
 | **Manifest** | JSON document describing an input device's capabilities | Input Layer publishes to NATS |
 | **Patch** | JSON document describing the lighting rig configuration | Fixture Layer config |
-| **Routing** | JSON document mapping input topics to target topics | Middleware config |
+| **Routing** | JSON document mapping input topics to target topics | Router config |
 
 ---
 

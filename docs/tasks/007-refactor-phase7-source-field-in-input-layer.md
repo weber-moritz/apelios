@@ -6,25 +6,25 @@
 
 ---
 
-## 🎯 Phase Goal: Move source field from middleware to input layer for proper separation of concerns
+## 🎯 Phase Goal: Move source field from router to input layer for proper separation of concerns
 
-**Architectural Issue:** Currently, middleware extracts source from topic and adds it to payload. This violates separation of concerns - the input layer should be self-contained with all data it produces.
+**Architectural Issue:** Currently, router extracts source from topic and adds it to payload. This violates separation of concerns - the input layer should be self-contained with all data it produces.
 
 **Current (Incorrect):**
 ```
 Input:   {value: 0.5, type: "absolute_uni", timestamp: ...} (topic: input.device)
          ↓
-Middleware: extracts source from topic, publishes {value: 0.5, type: "absolute_uni", timestamp: ..., source: "input.device.axis"}
+Router: extracts source from topic, publishes {value: 0.5, type: "absolute_uni", timestamp: ..., source: "input.device.axis"}
 ```
 
 **Target (Correct):**
 ```
 Input:   {value: 0.5, type: "absolute_uni", timestamp: ..., source: "input.device.axis"} (topic: input.device.axis)
          ↓
-Middleware: pure passthrough → {value: 0.5, type: "absolute_uni", timestamp: ..., source: "input.device.axis"}
+Router: pure passthrough → {value: 0.5, type: "absolute_uni", timestamp: ..., source: "input.device.axis"}
 ```
 
-**Why:** Input layer produces the data and knows its identity. Middleware should only route, not transform. This enables true statelessness and better separation of concerns.
+**Why:** Input layer produces the data and knows its identity. Router should only route, not transform. This enables true statelessness and better separation of concerns.
 
 ---
 
@@ -52,31 +52,31 @@ Middleware: pure passthrough → {value: 0.5, type: "absolute_uni", timestamp: .
 
 ---
 
-### 📦 Module: middleware_input_subscriber.py
+### 📦 Module: router_input_subscriber.py
 
 | # | Task | File | Action | Test Command |
 |---|------|------|--------|--------------|
-| [x] 7.3.1 | Test source from payload | `tests/middleware/test_middleware_input_subscriber.py` | Add `test_subscriber_reads_source_from_payload` | `pytest tests/middleware/test_middleware_input_subscriber.py::test_subscriber_reads_source_from_payload -v` |
-| [x] 7.3.2 | Read source from payload | `src/apelios/middleware/middleware_input_subscriber.py` | Extract source from payload, not topic | - |
-| [x] 7.3.3 | Remove topic extraction | `src/apelios/middleware/middleware_input_subscriber.py` | Remove code that extracts source from msg.subject | - |
+| [x] 7.3.1 | Test source from payload | `tests/router/test_router_input_subscriber.py` | Add `test_subscriber_reads_source_from_payload` | `pytest tests/router/test_router_input_subscriber.py::test_subscriber_reads_source_from_payload -v` |
+| [x] 7.3.2 | Read source from payload | `src/apelios/router/router_input_subscriber.py` | Extract source from payload, not topic | - |
+| [x] 7.3.3 | Remove topic extraction | `src/apelios/router/router_input_subscriber.py` | Remove code that extracts source from msg.subject | - |
 
-**Verification:** `pytest tests/middleware/test_middleware_input_subscriber.py -v`
+**Verification:** `pytest tests/router/test_router_input_subscriber.py -v`
 
 ---
 
-### 📦 Module: middleware_core.py
+### 📦 Module: router_core.py
 
 | # | Task | File | Action | Test Command |
 |---|------|------|--------|--------------|
-| [x] 7.4.1 | Remove source addition | `src/apelios/middleware/middleware_core.py` | Remove line that adds `"source": source` to payload | - |
-| [x] 7.4.2 | Source passes through | `src/apelios/middleware/middleware_core.py` | Source from input flows through unchanged | - |
+| [x] 7.4.1 | Remove source addition | `src/apelios/router/router_core.py` | Remove line that adds `"source": source` to payload | - |
+| [x] 7.4.2 | Source passes through | `src/apelios/router/router_core.py` | Source from input flows through unchanged | - |
 
-**Verification:** `pytest tests/middleware/test_middleware_core.py -v`
+**Verification:** `pytest tests/router/test_router_core.py -v`
 
 ---
 
 **Acceptance Criteria:**
 - [x] Input layer publishes source in payload with topic `input.device.axis`
-- [x] Middleware does NOT modify payload (pure passthrough)
+- [x] Router does NOT modify payload (pure passthrough)
 - [x] Source and topic format are consistent (`input.device.axis`)
-- [x] Source flows from input → middleware → fixture unchanged
+- [x] Source flows from input → router → fixture unchanged

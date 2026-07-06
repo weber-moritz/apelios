@@ -72,10 +72,10 @@
                 <mxCell id="147" value="" style="group" parent="104" vertex="1" connectable="0">
                     <mxGeometry x="230" y="430" width="250" height="140" as="geometry"/>
                 </mxCell>
-                <mxCell id="148" value="middleware_main" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0984e3;strokeColor=#74b9ff;fontColor=#ffffff;verticalAlign=top;align=left;spacingLeft=10;spacingTop=10;dashed=1;opacity=20;" parent="147" vertex="1">
+                <mxCell id="148" value="router_main" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0984e3;strokeColor=#74b9ff;fontColor=#ffffff;verticalAlign=top;align=left;spacingLeft=10;spacingTop=10;dashed=1;opacity=20;" parent="147" vertex="1">
                     <mxGeometry width="250" height="140" as="geometry"/>
                 </mxCell>
-                <mxCell id="149" value="middleware_main" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0984e3;fontColor=#ffffff;strokeColor=#74b9ff;" parent="147" vertex="1">
+                <mxCell id="149" value="router_main" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0984e3;fontColor=#ffffff;strokeColor=#74b9ff;" parent="147" vertex="1">
                     <mxGeometry x="62.81" y="40" width="124.38" height="69.41" as="geometry"/>
                 </mxCell>
                 <mxCell id="152" style="edgeStyle=none;html=1;exitX=0;exitY=1;exitDx=0;exitDy=0;" parent="104" source="111" target="149" edge="1">

@@ -12,7 +12,7 @@
 ```
 Input:   {source: "device.axis", value: 0.5}
          ↓
-Middleware: Adds intent from config → {target: "fixture.param", value: 0.5, intent: "rate", timestamp: ...}
+Router: Adds intent from config → {target: "fixture.param", value: 0.5, intent: "rate", timestamp: ...}
          ↓
 Fixture:  Receives intent, applies math
 ```
@@ -21,12 +21,12 @@ Fixture:  Receives intent, applies math
 ```
 Input:   {value: 0.5, type: "rate", timestamp: ...}
          ↓ (topic: input.device.axis)
-Middleware: Pure passthrough → {value: 0.5, type: "rate", timestamp: ...}
+Router: Pure passthrough → {value: 0.5, type: "rate", timestamp: ...}
          ↓ (topic: target.fixture.param)
 Fixture:  Receives type, applies math
 ```
 
-**Key Change:** `type` moves from Middleware config → Input Layer adapters.
+**Key Change:** `type` moves from Router config → Input Layer adapters.
 
 ---
 

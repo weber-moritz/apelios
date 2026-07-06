@@ -65,7 +65,7 @@ state: Draft # [Draft | In Progress | Done]
 This directory contains the following phase documentation from the TDD migration:
 
 - [001-refactor-phase1-input-layer.md](001-refactor-phase1-input-layer.md) - Input Layer migration tasks
-- [002-refactor-phase2-middleware.md](002-refactor-phase2-middleware.md) - Middleware stateless transformation tasks
+- [002-refactor-phase2-router.md](002-refactor-phase2-router.md) - Router stateless transformation tasks
 - [003-refactor-phase3-fixture-layer.md](003-refactor-phase3-fixture-layer.md) - Fixture Layer type migration tasks
 - [004-refactor-phase4-config-cleanup.md](004-refactor-phase4-config-cleanup.md) - Configuration cleanup tasks
 - [005-refactor-phase5-integration.md](005-refactor-phase5-integration.md) - Integration testing tasks
@@ -73,3 +73,4 @@ This directory contains the following phase documentation from the TDD migration
 - [007-refactor-phase7-source-field-in-input-layer.md](007-refactor-phase7-source-field-in-input-layer.md) - Source field migration tasks
 - [008-refactor-phase8-final-validation.md](008-refactor-phase8-final-validation.md) - Final validation and acceptance criteria
 - [009-refactor-phase9-improvement-analysis.md](009-refactor-phase9-improvement-analysis.md) - Improvement analysis, agent execution guide, statistics, and reference documents
+- [010-rename-router-layer.md](010-rename-router-layer.md) - Rename Router to Router layer for naming accuracy

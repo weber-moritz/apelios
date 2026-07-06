@@ -12,7 +12,7 @@
 ```
 Input:   {source: "device.axis", value: 0.5}
          ↓
-Middleware: Adds intent from config → {target: "fixture.param", value: 0.5, intent: "rate", timestamp: ...}
+Router: Adds intent from config → {target: "fixture.param", value: 0.5, intent: "rate", timestamp: ...}
          ↓
 Fixture:  Receives intent, applies math
 ```
@@ -21,12 +21,12 @@ Fixture:  Receives intent, applies math
 ```
 Input:   {value: 0.5, type: "rate", timestamp: ...}
          ↓ (topic: input.device.axis)
-Middleware: Pure passthrough → {value: 0.5, type: "rate", timestamp: ...}
+Router: Pure passthrough → {value: 0.5, type: "rate", timestamp: ...}
          ↓ (topic: target.fixture.param)
 Fixture:  Receives type, applies math
 ```
 
-**Key Change:** `type` moves from Middleware config → Input Layer adapters.
+**Key Change:** `type` moves from Router config → Input Layer adapters.
 
 ---
 
@@ -36,13 +36,13 @@ Fixture:  Receives type, applies math
 
 | # | Task | File | Action | Test Command |
 |---|------|------|--------|--------------|
-| [x] 4.1.1 | Create routing/default.json | `src/apelios/middleware/routing/default.json` | New file: `{"mappings": {"input.device.axis": "target.group.param"}}` | - |
-| [x] 4.1.2 | Create routing/default_steamdeck.json | `src/apelios/middleware/routing/default_steamdeck.json` | Migrate from mapping/, remove intent/sensitivity | - |
-| [x] 4.1.3 | Create routing/steamdeck.json | `src/apelios/middleware/routing/steamdeck.json` | Migrate from mapping/ | - |
-| [x] 4.1.4 | Update runtime manager | `src/apelios/middleware/middleware_runtime_manager.py` | Change _MAPPING_DIR to _ROUTING_DIR | - |
+| [x] 4.1.1 | Create routing/default.json | `src/apelios/router/routing/default.json` | New file: `{"mappings": {"input.device.axis": "target.group.param"}}` | - |
+| [x] 4.1.2 | Create routing/default_steamdeck.json | `src/apelios/router/routing/default_steamdeck.json` | Migrate from mapping/, remove intent/sensitivity | - |
+| [x] 4.1.3 | Create routing/steamdeck.json | `src/apelios/router/routing/steamdeck.json` | Migrate from mapping/ | - |
+| [x] 4.1.4 | Update runtime manager | `src/apelios/router/router_runtime_manager.py` | Change _MAPPING_DIR to _ROUTING_DIR | - |
 | 4.1.5 | Remove old mapping/ | - | - | Delete after all tests pass |
 
-**Verification:** All middleware tests still pass
+**Verification:** All router tests still pass
 
 ---
 

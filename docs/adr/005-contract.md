@@ -10,7 +10,7 @@ The system uses a broker-based pub/sub architecture where each layer publishes a
 ## Event Flow
 
 1. **Input Layer** publishes to `input.<device>.<axis>` with payload: `{value, type, timestamp, source}`
-2. **Middleware** subscribes to `input.>` and publishes to `target.<fixture>.<param>` with payload unchanged (pure passthrough)
+2. **Router** subscribes to `input.>` and publishes to `target.<fixture>.<param>` with payload unchanged (pure passthrough)
 3. **Fixture Layer** subscribes to `target.>` and processes events
 
 ## Payload Formats
@@ -27,7 +27,7 @@ Published to: `input.<device>.<axis>`
 }
 ```
 
-### Middleware Output Payload
+### Router Output Payload
 Published to: `target.<fixture>.<param>`
 
 ```json
@@ -57,7 +57,7 @@ The routing profile maps input sources to fixture targets:
 
 - **Type field in input**: Each input adapter knows its axis types (absolute_uni, absolute_bi, delta, rate) and includes this in the payload
 - **Source field from input layer**: The input layer provides the source identifier so the fixture layer can track which input contributes to which target
-- **No transformation in middleware**: The middleware is stateless, pure passthrough, and only routes messages without modifying payload
+- **No transformation in router**: The router is stateless, pure passthrough, and only routes messages without modifying payload
 - **Fixture applies math**: The fixture layer uses the type field to apply appropriate mathematical transformations
 
 ## Type Definitions

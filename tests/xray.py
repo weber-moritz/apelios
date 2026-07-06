@@ -10,8 +10,8 @@ from apelios.broker.config import NatsConfig
 from apelios.main_orchestrator import MainOrchestrator
 from apelios.broker.broker_runtime_manager import BrokerRuntimeManager
 from apelios.broker.broker_client import BrokerClient
-from apelios.middleware.middleware_runtime_manager import MiddlewareRuntimeManager
-from apelios.middleware.middleware_core import MappingMiddleware
+from apelios.router.router_runtime_manager import RouterRuntimeManager
+from apelios.router.router_core import MappingRouter
 from apelios.fixture.fixture_runtime_manager import FixtureRuntimeManager
 from apelios.input.input_runtime_manager import InputRuntimeManager
 
@@ -47,11 +47,11 @@ async def test_orchestrator_pipeline_xray(tmp_path, patch_config):
     await asyncio.sleep(1) # <--- THIS PREVENTS THE ZOMBIE CONNECTION BUG!
 
     # 2. Setup Managers
-    middleware_profile = {"fader.1": {"target": "group1.dimmer", "intent": "absolute"}}
-    middleware_client = BrokerClient(provider="nats", config=test_config)
-    middleware_manager = MiddlewareRuntimeManager(
-        middleware=MappingMiddleware(profile=middleware_profile),
-        broker_client=middleware_client
+    router_profile = {"fader.1": {"target": "group1.dimmer", "intent": "absolute"}}
+    router_client = BrokerClient(provider="nats", config=test_config)
+    router_manager = RouterRuntimeManager(
+        router=MappingRouter(profile=router_profile),
+        broker_client=router_client
     )
 
     fixture_client = BrokerClient(provider="nats", config=test_config)
@@ -62,13 +62,13 @@ async def test_orchestrator_pipeline_xray(tmp_path, patch_config):
 
     orchestrator = MainOrchestrator(
         broker_manager=broker_manager,
-        middleware_manager=middleware_manager,
+        router_manager=router_manager,
         fixture_manager=fixture_manager,
         input_manager=input_manager,
     )
 
     # 3. Start subsystems (NATS is definitely awake now)
-    await orchestrator.middleware_manager.start()
+    await orchestrator.router_manager.start()
     await orchestrator.fixture_manager.start()
     await orchestrator.input_manager.start()
     orchestrator._running = True 
@@ -79,7 +79,7 @@ async def test_orchestrator_pipeline_xray(tmp_path, patch_config):
         while True:
             loop_start = asyncio.get_event_loop().time()
             await orchestrator.input_manager.tick(dt=target_interval)
-            await orchestrator.middleware_manager.tick()
+            await orchestrator.router_manager.tick()
             await orchestrator.fixture_manager.tick(dt=target_interval)
             elapsed = asyncio.get_event_loop().time() - loop_start
             await asyncio.sleep(max(0, target_interval - elapsed))
@@ -115,10 +115,10 @@ async def test_orchestrator_pipeline_xray(tmp_path, patch_config):
         print("\n\n" + "="*40)
         print("🔍 PIPELINE X-RAY REPORT 🔍")
         print(f"1. NATS Received Input:    {'✅ YES' if xray_input else '❌ NO (NATS is dead)'}")
-        print(f"2. Middleware Outputted:   {'✅ YES' if xray_target else '❌ NO (Middleware dropped it)'}")
+        print(f"2. Router Outputted:   {'✅ YES' if xray_target else '❌ NO (Router dropped it)'}")
         print(f"3. Fixture Core Outputted: {'✅ YES' if xray_output else '❌ NO (Fixture Core dropped it)'}")
         if xray_target:
-            print(f"   -> Middleware payload was: {xray_target[0]}")
+            print(f"   -> Router payload was: {xray_target[0]}")
         print("="*40 + "\n")
 
         assert len(xray_output) >= 1, "The pipeline broke. Check the X-Ray report above!"

@@ -1,7 +1,7 @@
 import json
 import pytest
 from unittest.mock import MagicMock, AsyncMock, call
-from apelios.middleware.middleware_output_publisher import MiddlewareOutputPublisher
+from apelios.router.router_output_publisher import RouterOutputPublisher
 
 @pytest.fixture
 def mock_broker():
@@ -11,7 +11,7 @@ def mock_broker():
 
 @pytest.fixture
 def output_publisher(mock_broker):
-    return MiddlewareOutputPublisher(broker=mock_broker)
+    return RouterOutputPublisher(broker=mock_broker)
 
 @pytest.mark.asyncio
 async def test_publisher_forwards_type_unchanged(output_publisher, mock_broker):

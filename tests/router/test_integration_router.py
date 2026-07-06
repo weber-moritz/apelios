@@ -2,8 +2,8 @@ import json
 import pytest
 from unittest.mock import MagicMock, AsyncMock, call
 
-from apelios.middleware.middleware_core import MappingMiddleware
-from apelios.middleware.middleware_runtime_manager import MiddlewareRuntimeManager
+from apelios.router.router_core import MappingRouter
+from apelios.router.router_runtime_manager import RouterRuntimeManager
 
 
 @pytest.fixture
@@ -27,20 +27,20 @@ def mock_broker():
 
 
 @pytest.mark.asyncio
-async def test_full_middleware_signal_flow(mock_profile, mock_broker):
+async def test_full_router_signal_flow(mock_profile, mock_broker):
     """
     BLACK BOX TEST: 
     Proves data travels from network -> subscriber -> core -> publisher -> network.
-    Middleware now acts as a pure passthrough router (no math).
+    Router now acts as a pure passthrough router (no math).
     """
     
     # ==========================================
     # 1. ARRANGE: Build the Hexagon
     # ==========================================
-    real_core = MappingMiddleware(profile=mock_profile)
+    real_core = MappingRouter(profile=mock_profile)
     
-    manager = MiddlewareRuntimeManager(
-        middleware=real_core,
+    manager = RouterRuntimeManager(
+        router=real_core,
         broker_client=mock_broker
     )
     
@@ -80,7 +80,7 @@ async def test_full_middleware_signal_flow(mock_profile, mock_broker):
     # Reset the mock's call memory
     mock_broker.publish.reset_mock()
     
-    # Send a delta value (middleware will just pass it through unchanged)
+    # Send a delta value (router will just pass it through unchanged)
     msg_2 = MagicMock()
     msg_2.data = json.dumps({"source": "mouse.x", "value": 0.5, "type": "delta", "timestamp": 1234567890.0}).encode("utf-8")
     await captured_subscriber_callback(msg_2)

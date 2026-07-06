@@ -9,7 +9,7 @@ This architecture is a microkernel/hexagonal architecture.
 
 A microkernel means that every module has its own manager (`runtime_manager`) class. It routes information inside the module and has start, stop, and tick functions that are called by the `main_orchestrator`.
 
-The architecture in each module is not identical. The middleware has a very simple hexagonal architecture. The broker has 2 modules: the `broker_runtime_manager` and the `broker_client`. The runtime manager gets started/stopped by the main orchestrator. The client is imported by all modules that require communication.
+The architecture in each module is not identical. The router has a very simple hexagonal architecture. The broker has 2 modules: the `broker_runtime_manager` and the `broker_client`. The runtime manager gets started/stopped by the main orchestrator. The client is imported by all modules that require communication.
 
 It would also be possible to use a single client for all modules and pass the reference from the main orchestrator to the modules, but that would conflict with the modularization targeted by this project.
 
@@ -23,9 +23,9 @@ This architecture fulfills the non-technical requirements (NTR):
 
 ## Layers
 
-### Fixture and Middleware Separation
+### Fixture and Router Separation
 
-Separation of concerns between the middleware and fixture layer is achieved by having **input adapters** include type information (`absolute_uni`, `absolute_bi`, `rate`, `delta`) with each value. The fixture layer reads this type directly and applies the appropriate math, while middleware acts as a pure passthrough—eliminating the state desync and packet loss issues that occurred when middleware performed transformations.
+Separation of concerns between the router and fixture layer is achieved by having **input adapters** include type information (`absolute_uni`, `absolute_bi`, `rate`, `delta`) with each value. The fixture layer reads this type directly and applies the appropriate math, while router acts as a pure passthrough—eliminating the state desync and packet loss issues that occurred when router performed transformations.
 
 ## References
 

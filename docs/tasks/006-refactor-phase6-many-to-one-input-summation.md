@@ -17,7 +17,7 @@
 ```
 Input:   {value: 0.5, type: "absolute_uni", timestamp: ...} (topic: input.fader.1)
          ↓
-Middleware: maps fader.1 → group1.pan, publishes {value: 0.5, type: "absolute_uni", timestamp: ...} (topic: target.group1.pan)
+Router: maps fader.1 → group1.pan, publishes {value: 0.5, type: "absolute_uni", timestamp: ...} (topic: target.group1.pan)
          ↓
 Fixture: inbox["group1.pan"] = {target: "group1.pan", value: 0.5, type: "absolute_uni", timestamp: ...}
          ↓
@@ -28,7 +28,7 @@ Second input to same target: OVERWRITES the first
 ```
 Input:   {value: 0.5, type: "absolute_uni", timestamp: ..., source: "fader.1"} (topic: input.fader.1)
          ↓
-Middleware: maps source→target, publishes {value: 0.5, type: "absolute_uni", timestamp: ..., source: "fader.1"} (topic: target.group1.pan)
+Router: maps source→target, publishes {value: 0.5, type: "absolute_uni", timestamp: ..., source: "fader.1"} (topic: target.group1.pan)
          ↓
 Fixture: inbox["fader.1"] = {source: "fader.1", target: "group1.pan", value: 0.5, type: "absolute_uni", timestamp: ...}
          ↓
@@ -43,14 +43,14 @@ Output: group1.pan = sum of all deltas + initial absolute value
 
 ---
 
-### 📦 Module: middleware_output_publisher.py
+### 📦 Module: router_output_publisher.py
 
 | # | Task | File | Action | Test Command |
 |---|------|------|--------|--------------|
-| [x] 6.1.1 | Add source to payload | `src/apelios/middleware/middleware_core.py` | Include source field in output payload | - |
-| [x] 6.1.2 | Test source in payload | `tests/middleware/test_middleware_core.py` | Add `test_core_includes_source_in_output` | `pytest tests/middleware/test_middleware_core.py::test_core_includes_source_in_output -v` |
+| [x] 6.1.1 | Add source to payload | `src/apelios/router/router_core.py` | Include source field in output payload | - |
+| [x] 6.1.2 | Test source in payload | `tests/router/test_router_core.py` | Add `test_core_includes_source_in_output` | `pytest tests/router/test_router_core.py::test_core_includes_source_in_output -v` |
 
-**Verification:** `pytest tests/middleware/test_middleware_core.py -v`
+**Verification:** `pytest tests/router/test_router_core.py -v`
 
 ---
 
@@ -85,7 +85,7 @@ Output: group1.pan = sum of all deltas + initial absolute value
 
 | # | Task | File | Action | Test Command |
 |---|------|------|--------|--------------|
-| [x] 6.4.1 | Verify source flows through | `src/apelios/fixture/fixture_runtime_manager.py` | Source flows through middleware → subscriber → core | - |
+| [x] 6.4.1 | Verify source flows through | `src/apelios/fixture/fixture_runtime_manager.py` | Source flows through router → subscriber → core | - |
 
 **Verification:** `pytest tests/fixture/test_fixture_runtime_manager.py -v`
 

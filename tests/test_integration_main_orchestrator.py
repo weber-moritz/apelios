@@ -10,8 +10,8 @@ from apelios.broker.config import NatsConfig # (Or wherever this lives)
 from apelios.main_orchestrator import MainOrchestrator
 from apelios.broker.broker_runtime_manager import BrokerRuntimeManager
 from apelios.broker.broker_client import BrokerClient
-from apelios.middleware.middleware_runtime_manager import MiddlewareRuntimeManager
-from apelios.middleware.middleware_core import MappingMiddleware
+from apelios.router.router_runtime_manager import RouterRuntimeManager
+from apelios.router.router_core import MappingRouter
 from apelios.fixture.fixture_runtime_manager import FixtureRuntimeManager
 from apelios.input.input_runtime_manager import InputRuntimeManager
 
@@ -44,15 +44,15 @@ async def test_orchestrator_starts_and_manages_broker_and_fixture(tmp_path, patc
     test_config = NatsConfig(host="127.0.0.1", port=4222)
     broker_manager = BrokerRuntimeManager(provider="nats", config=test_config)
 
-    # Middleware profile: route fader.1 to group1.dimmer (Phase 5 format: source -> target)
-    middleware_profile = {
+    # Router profile: route fader.1 to group1.dimmer (Phase 5 format: source -> target)
+    router_profile = {
         "fader.1": "group1.dimmer"
     }
-    middleware_client = BrokerClient(provider="nats", config=test_config)
-    middleware = MappingMiddleware(profile=middleware_profile)
-    middleware_manager = MiddlewareRuntimeManager(
-        middleware=middleware,
-        broker_client=middleware_client
+    router_client = BrokerClient(provider="nats", config=test_config)
+    router = MappingRouter(profile=router_profile)
+    router_manager = RouterRuntimeManager(
+        router=router,
+        broker_client=router_client
     )
 
     fixture_client = BrokerClient(provider="nats", config=test_config)
@@ -63,7 +63,7 @@ async def test_orchestrator_starts_and_manages_broker_and_fixture(tmp_path, patc
 # ... (Keep all your setup code the same) ...
     orchestrator = MainOrchestrator(
         broker_manager=broker_manager,
-        middleware_manager=middleware_manager,
+        router_manager=router_manager,
         fixture_manager=fixture_manager,
         input_manager=input_manager,
     )
@@ -80,7 +80,7 @@ async def test_orchestrator_starts_and_manages_broker_and_fixture(tmp_path, patc
         while True:
             loop_start = asyncio.get_event_loop().time()
             await orchestrator.input_manager.tick(dt=target_interval)
-            await orchestrator.middleware_manager.tick()
+            await orchestrator.router_manager.tick()
             await orchestrator.fixture_manager.tick(dt=target_interval)
             elapsed = asyncio.get_event_loop().time() - loop_start
             sleep_time = target_interval - elapsed

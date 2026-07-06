@@ -1,14 +1,14 @@
-"""Core mapping middleware for turning raw inputs into virtual outputs."""
+"""Core mapping router for turning raw inputs into virtual outputs."""
 
 from __future__ import annotations
 
 from typing import Any
 
 
-class MappingMiddleware:
+class MappingRouter:
 	"""Pure passthrough mapping engine that routes inputs to targets.
 
-	The middleware accepts raw input events through :meth:`handle_input`
+	The router accepts raw input events through :meth:`handle_input`
 	and immediately returns the mapped output payloads.
 	No math, state, or compensation is applied here (reserved for fixture layer).
 	"""

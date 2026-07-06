@@ -1,6 +1,6 @@
-"""Middleware output publisher for broker events.
+"""Router output publisher for broker events.
 
-This module publishes middleware outputs to target.* subjects.
+This module publishes router outputs to target.* subjects.
 """
 
 from __future__ import annotations
@@ -15,8 +15,8 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-class MiddlewareOutputPublisher:
-    """Publish middleware outputs to broker."""
+class RouterOutputPublisher:
+    """Publish router outputs to broker."""
 
     def __init__(self, broker: BrokerClient) -> None:
         self.broker = broker

@@ -1,6 +1,6 @@
-"""Middleware runtime manager and broker input subscriber.
+"""Router runtime manager and broker input subscriber.
 
-This module owns the middleware-side broker subscription lifecycle and bridges
+This module owns the router-side broker subscription lifecycle and bridges
 broker events into the mapping core.
 """
 
@@ -11,15 +11,15 @@ from pathlib import Path
 from typing import Any
 
 from apelios.broker.broker_client import BrokerClient
-from apelios.middleware.middleware_core import MappingMiddleware
-from apelios.middleware.middleware_input_subscriber import MiddlewareInputSubscriber
-from apelios.middleware.middleware_output_publisher import MiddlewareOutputPublisher
+from apelios.router.router_core import MappingRouter
+from apelios.router.router_input_subscriber import RouterInputSubscriber
+from apelios.router.router_output_publisher import RouterOutputPublisher
 
 _ROUTING_DIR = Path(__file__).parent / "routing"
 
 
 def _load_default_profile() -> dict[str, str]:
-    """Load the base middleware profile mapping sources to targets.
+    """Load the base router profile mapping sources to targets.
     
     Returns simple source->target mapping dict (no nested intent/sensitivity).
     """
@@ -65,25 +65,25 @@ def _load_default_profile() -> dict[str, str]:
     return {}
 
 
-class MiddlewareRuntimeManager:
-    """Single middleware entry point for lifecycle and dependency injection."""
+class RouterRuntimeManager:
+    """Single router entry point for lifecycle and dependency injection."""
 
     def __init__(
         self,
-        middleware: MappingMiddleware | None = None,
+        router: MappingRouter | None = None,
         broker_client: BrokerClient | None = None,
         input_subject: str = "input.>",
     ) -> None:
-        self.middleware = middleware or MappingMiddleware(profile=_load_default_profile())
+        self.router = router or MappingRouter(profile=_load_default_profile())
         self.broker_client = broker_client or BrokerClient(provider="nats")
         self.input_subject = input_subject
-        self.input_subscriber = MiddlewareInputSubscriber(self.middleware, self)
-        self.output_publisher = MiddlewareOutputPublisher(broker=self.broker_client)
+        self.input_subscriber = RouterInputSubscriber(self.router, self)
+        self.output_publisher = RouterOutputPublisher(broker=self.broker_client)
         self._running = False
         self._outputs_to_publish: dict[str, dict[str, Any]] = {}
 
     async def start(self) -> None:
-        """Start middleware runtime by subscribing to broker input events."""
+        """Start router runtime by subscribing to broker input events."""
         if self._running:
             return
         
@@ -93,7 +93,7 @@ class MiddlewareRuntimeManager:
         self._running = True
 
     async def stop(self) -> None:
-        """Stop middleware runtime lifecycle state.
+        """Stop router runtime lifecycle state.
 
         No unsubscribe API exists on the current broker client abstraction yet.
         """
@@ -104,13 +104,13 @@ class MiddlewareRuntimeManager:
         return self._running
 
     def collect_outputs(self, outputs: dict[str, dict[str, Any]]) -> None:
-        """Collect outputs from middleware to be published on next tick."""
+        """Collect outputs from router to be published on next tick."""
         self._outputs_to_publish.update(outputs)
 
     async def tick(self, dt: float = 0.016) -> None:
         """Publish collected outputs to broker.
         
-        In the new stateless architecture, middleware processes inputs immediately
+        In the new stateless architecture, router processes inputs immediately
         and returns outputs. This method publishes any collected outputs and clears the buffer.
         """
         if self._outputs_to_publish:

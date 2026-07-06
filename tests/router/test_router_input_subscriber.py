@@ -3,8 +3,8 @@ import pytest
 from unittest.mock import MagicMock
 from nats.aio.msg import Msg
 
-from apelios.middleware.middleware_core import MappingMiddleware
-from apelios.middleware.middleware_input_subscriber import MiddlewareInputSubscriber
+from apelios.router.router_core import MappingRouter
+from apelios.router.router_input_subscriber import RouterInputSubscriber
 
 
 @pytest.fixture
@@ -17,39 +17,39 @@ def mock_profile():
 
 
 @pytest.fixture
-def middleware_core(mock_profile):
-    """MappingMiddleware instance."""
-    return MappingMiddleware(profile=mock_profile)
+def router_core(mock_profile):
+    """MappingRouter instance."""
+    return MappingRouter(profile=mock_profile)
 
 
 @pytest.fixture
-def subscriber(middleware_core):
-    """MiddlewareInputSubscriber instance."""
-    return MiddlewareInputSubscriber(middleware_core)
+def subscriber(router_core):
+    """RouterInputSubscriber instance."""
+    return RouterInputSubscriber(router_core)
 
 
-def test_subscriber_created_with_injected_core(middleware_core):
-    """Subscriber accepts injected middleware core."""
-    subscriber = MiddlewareInputSubscriber(middleware_core)
-    assert subscriber.middleware is middleware_core
+def test_subscriber_created_with_injected_core(router_core):
+    """Subscriber accepts injected router core."""
+    subscriber = RouterInputSubscriber(router_core)
+    assert subscriber.router is router_core
 
 @pytest.mark.asyncio
-async def test_subscriber_accepts_valid_json_payload(subscriber, middleware_core):
-    """Subscriber parses valid JSON and calls middleware.handle_input()."""
+async def test_subscriber_accepts_valid_json_payload(subscriber, router_core):
+    """Subscriber parses valid JSON and calls router.handle_input()."""
     msg = MagicMock(spec=Msg)
     msg.subject = "input.fader.1"
     msg.data = json.dumps({"source": "fader.1", "value": 0.75, "type": "absolute_uni", "timestamp": 123.0}).encode()
     
     await subscriber(msg)
     
-    # In stateless architecture, verify middleware returns correct outputs
-    outputs = middleware_core.handle_input(source="fader.1", value=0.75, type="absolute_uni", timestamp=123.0)
+    # In stateless architecture, verify router returns correct outputs
+    outputs = router_core.handle_input(source="fader.1", value=0.75, type="absolute_uni", timestamp=123.0)
     assert "group1.dimmer" in outputs
     assert outputs["group1.dimmer"]["value"] == 0.75
 
 
 @pytest.mark.asyncio
-async def test_subscriber_extracts_source_from_payload(subscriber, middleware_core):
+async def test_subscriber_extracts_source_from_payload(subscriber, router_core):
     """Subscriber uses source from JSON payload, not subject."""
     msg = MagicMock(spec=Msg)
     msg.subject = "input.some.topic"
@@ -58,12 +58,12 @@ async def test_subscriber_extracts_source_from_payload(subscriber, middleware_co
     await subscriber(msg)
     
     # Source from payload is used for mapping
-    outputs = middleware_core.handle_input(source="fader.1", value=0.5, type="absolute_uni", timestamp=123.0)
+    outputs = router_core.handle_input(source="fader.1", value=0.5, type="absolute_uni", timestamp=123.0)
     assert "group1.dimmer" in outputs
 
 
 @pytest.mark.asyncio
-async def test_subscriber_coerces_value_to_float(subscriber, middleware_core):
+async def test_subscriber_coerces_value_to_float(subscriber, router_core):
     """Subscriber coerces numeric value to float."""
     msg = MagicMock(spec=Msg)
     msg.subject = "input.test"
@@ -71,13 +71,13 @@ async def test_subscriber_coerces_value_to_float(subscriber, middleware_core):
     
     await subscriber(msg)
     
-    outputs = middleware_core.handle_input(source="fader.1", value=10, type="absolute_uni", timestamp=123.0)
+    outputs = router_core.handle_input(source="fader.1", value=10, type="absolute_uni", timestamp=123.0)
     assert isinstance(outputs["group1.dimmer"]["value"], float)
     assert outputs["group1.dimmer"]["value"] == 10.0
 
 
 @pytest.mark.asyncio
-async def test_subscriber_rejects_missing_source(subscriber, middleware_core):
+async def test_subscriber_rejects_missing_source(subscriber, router_core):
     """Subscriber safely ignores payload missing 'source' field."""
     msg = MagicMock(spec=Msg)
     msg.subject = "input.test"
@@ -88,7 +88,7 @@ async def test_subscriber_rejects_missing_source(subscriber, middleware_core):
 
 
 @pytest.mark.asyncio
-async def test_subscriber_rejects_missing_value(subscriber, middleware_core):
+async def test_subscriber_rejects_missing_value(subscriber, router_core):
     """Subscriber safely ignores payload missing 'value' field."""
     msg = MagicMock(spec=Msg)
     msg.subject = "input.test"
@@ -99,7 +99,7 @@ async def test_subscriber_rejects_missing_value(subscriber, middleware_core):
 
 
 @pytest.mark.asyncio
-async def test_subscriber_rejects_malformed_json(subscriber, middleware_core):
+async def test_subscriber_rejects_malformed_json(subscriber, router_core):
     """Subscriber safely ignores malformed JSON."""
     msg = MagicMock(spec=Msg)
     msg.subject = "input.test"
@@ -110,7 +110,7 @@ async def test_subscriber_rejects_malformed_json(subscriber, middleware_core):
 
 
 @pytest.mark.asyncio
-async def test_subscriber_rejects_non_numeric_value(subscriber, middleware_core):
+async def test_subscriber_rejects_non_numeric_value(subscriber, router_core):
     """Subscriber safely ignores non-numeric value."""
     msg = MagicMock(spec=Msg)
     msg.subject = "input.test"
@@ -121,7 +121,7 @@ async def test_subscriber_rejects_non_numeric_value(subscriber, middleware_core)
 
 
 @pytest.mark.asyncio
-async def test_subscriber_ignores_extra_fields(subscriber, middleware_core):
+async def test_subscriber_ignores_extra_fields(subscriber, router_core):
     """Subscriber ignores optional metadata fields."""
     msg = MagicMock(spec=Msg)
     msg.subject = "input.test"
@@ -137,12 +137,12 @@ async def test_subscriber_ignores_extra_fields(subscriber, middleware_core):
     await subscriber(msg)
     
     # Verify it still works with extra fields
-    outputs = middleware_core.handle_input(source="fader.1", value=0.5, type="absolute_uni", timestamp=1234567890.0)
+    outputs = router_core.handle_input(source="fader.1", value=0.5, type="absolute_uni", timestamp=1234567890.0)
     assert "group1.dimmer" in outputs
 
 
 @pytest.mark.asyncio
-async def test_subscriber_reads_source_from_payload(subscriber, middleware_core):
+async def test_subscriber_reads_source_from_payload(subscriber, router_core):
     """Subscriber reads source from payload, not from msg.subject (7.3.1).
     
     Even if msg.subject differs from payload source, subscriber uses payload source.
@@ -158,15 +158,15 @@ async def test_subscriber_reads_source_from_payload(subscriber, middleware_core)
     
     await subscriber(msg)
     
-    # Verify middleware was called with source from payload ("mouse.x"), not from subject ("input.ignored.topic")
-    outputs = middleware_core.handle_input(source="mouse.x", value=0.5, type="absolute_uni", timestamp=1234567890.123)
+    # Verify router was called with source from payload ("mouse.x"), not from subject ("input.ignored.topic")
+    outputs = router_core.handle_input(source="mouse.x", value=0.5, type="absolute_uni", timestamp=1234567890.123)
     assert "group1.pan" in outputs  # "mouse.x" maps to "group1.pan" in mock_profile
     assert outputs["group1.pan"]["source"] == "mouse.x"
 
 
 @pytest.mark.asyncio
-async def test_subscriber_parses_type_field(subscriber, middleware_core):
-    """Subscriber parses type and timestamp from payload and passes to middleware (2.1.1)."""
+async def test_subscriber_parses_type_field(subscriber, router_core):
+    """Subscriber parses type and timestamp from payload and passes to router (2.1.1)."""
     msg = MagicMock(spec=Msg)
     msg.subject = "input.test"
     msg.data = json.dumps({
@@ -178,15 +178,15 @@ async def test_subscriber_parses_type_field(subscriber, middleware_core):
     
     await subscriber(msg)
     
-    # Verify type and timestamp were passed through to middleware
-    outputs = middleware_core.handle_input(source="fader.1", value=0.5, type="absolute_bi", timestamp=1234567890.123)
+    # Verify type and timestamp were passed through to router
+    outputs = router_core.handle_input(source="fader.1", value=0.5, type="absolute_bi", timestamp=1234567890.123)
     assert "group1.dimmer" in outputs
     assert outputs["group1.dimmer"]["type"] == "absolute_bi"
     assert outputs["group1.dimmer"]["timestamp"] == 1234567890.123
 
 
 @pytest.mark.asyncio
-async def test_subscriber_rejects_missing_type(subscriber, middleware_core):
+async def test_subscriber_rejects_missing_type(subscriber, router_core):
     """Subscriber rejects payload missing required type field (2.1.2)."""
     msg = MagicMock(spec=Msg)
     msg.subject = "input.test"

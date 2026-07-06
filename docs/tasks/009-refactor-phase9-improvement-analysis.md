@@ -12,7 +12,7 @@
 ```
 Input:   {source: "device.axis", value: 0.5}
          ↓
-Middleware: Adds intent from config → {target: "fixture.param", value: 0.5, intent: "rate", timestamp: ...}
+Router: Adds intent from config → {target: "fixture.param", value: 0.5, intent: "rate", timestamp: ...}
          ↓
 Fixture:  Receives intent, applies math
 ```
@@ -21,12 +21,12 @@ Fixture:  Receives intent, applies math
 ```
 Input:   {value: 0.5, type: "rate", timestamp: ...}
          ↓ (topic: input.device.axis)
-Middleware: Pure passthrough → {value: 0.5, type: "rate", timestamp: ...}
+Router: Pure passthrough → {value: 0.5, type: "rate", timestamp: ...}
          ↓ (topic: target.fixture.param)
 Fixture:  Receives type, applies math
 ```
 
-**Key Change:** `type` moves from Middleware config → Input Layer adapters.
+**Key Change:** `type` moves from Router config → Input Layer adapters.
 
 ---
 
@@ -73,7 +73,7 @@ pytest tests/input/test_input_publisher.py::test_publisher_includes_type_in_payl
 
 # 5. After each section, run full module tests
 pytest tests/input/ -v
-pytest tests/middleware/ -v
+pytest tests/router/ -v
 pytest tests/fixture/ -v
 ```
 
@@ -93,7 +93,7 @@ pytest tests/fixture/ -v
 | `KeyError: 'source'` | Old code expects `source` in payload | Use `type` instead of `source` |
 | `KeyError: 'intent'` | Fixture expects `intent` but gets `type` | Change to read `type` |
 | Test fails with wrong type | Adapter not setting type correctly | Check _AXIS_TYPES mapping |
-| Middleware not routing | State dicts still present | Remove current_raw_input, virtual_output_state |
+| Router not routing | State dicts still present | Remove current_raw_input, virtual_output_state |
 | Payload schema wrong | Publisher not updated | Check InputPublisher.publish() |
 | Integration test fails | Layers not connected properly | Verify topic subscriptions |
 
@@ -134,11 +134,11 @@ These tasks must be completed in order:
 4. 1.4.1 - 1.4.5 (MouseAdapter)
 5. 1.5.1 - 1.5.5 (FakeAdapter)
 
-**Phase 2 (Middleware stateless):**
-6. 2.1.1 - 2.1.6 (MiddlewareInputSubscriber)
-7. 2.2.1 - 2.2.12 (MappingMiddleware) ← MOST CRITICAL
-8. 2.3.1 - 2.3.5 (MiddlewareOutputPublisher)
-9. 2.4.1 - 2.4.7 (MiddlewareRuntimeManager)
+**Phase 2 (Router stateless):**
+6. 2.1.1 - 2.1.6 (RouterInputSubscriber)
+7. 2.2.1 - 2.2.12 (MappingRouter) ← MOST CRITICAL
+8. 2.3.1 - 2.3.5 (RouterOutputPublisher)
+9. 2.4.1 - 2.4.7 (RouterRuntimeManager)
 
 **Phase 3 (Fixture type):**
 10. 3.1.1 - 3.1.5 (FixtureInputSubscriber)
@@ -151,7 +151,7 @@ These tasks must be completed in order:
 13. 5.1.1 - 5.2.5 (End-to-End & Full Test Suite)
 
 **Phase 6 (Many-to-One):**
-14. 6.1.1 - 6.1.2 (MiddlewareOutputPublisher)
+14. 6.1.1 - 6.1.2 (RouterOutputPublisher)
 15. 6.2.1 - 6.2.2 (FixtureInputSubscriber)
 16. 6.3.1 - 6.3.7 (FixtureCore)
 17. 6.4.1 (FixtureRuntimeManager)

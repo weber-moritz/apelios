@@ -12,7 +12,7 @@
 ```
 Input:   {source: "device.axis", value: 0.5}
          ↓
-Middleware: Adds intent from config → {target: "fixture.param", value: 0.5, intent: "rate", timestamp: ...}
+Router: Adds intent from config → {target: "fixture.param", value: 0.5, intent: "rate", timestamp: ...}
          ↓
 Fixture:  Receives intent, applies math
 ```
@@ -21,12 +21,12 @@ Fixture:  Receives intent, applies math
 ```
 Input:   {value: 0.5, type: "rate", timestamp: ...}
          ↓ (topic: input.device.axis)
-Middleware: Pure passthrough → {value: 0.5, type: "rate", timestamp: ...}
+Router: Pure passthrough → {value: 0.5, type: "rate", timestamp: ...}
          ↓ (topic: target.fixture.param)
 Fixture:  Receives type, applies math
 ```
 
-**Key Change:** `type` moves from Middleware config → Input Layer adapters.
+**Key Change:** `type` moves from Router config → Input Layer adapters.
 
 ---
 
@@ -40,11 +40,11 @@ This phase ensures all previous phases are working together correctly and the ar
 
 | # | Task | File | Action | Test Command |
 |---|------|------|--------|--------------|
-| [ ] 8.1.1 | Update ADR-004 | `docs/adr/004-stateless-input-adapter.md` | Fix: source now in input layer, not added by middleware. Update payload contracts | - |
+| [ ] 8.1.1 | Update ADR-004 | `docs/adr/004-stateless-input-adapter.md` | Fix: source now in input layer, not added by router. Update payload contracts | - |
 | [ ] 8.1.2 | Update ADR-008 | `docs/adr/008-state-management.md` | Add Phase 7 and Phase 6 details about source field and many-to-one | - |
-| [ ] 8.1.3 | Update ADR-002 | `docs/adr/002-architecture.md` | Update to reflect source in input layer, middleware pure passthrough | - |
+| [ ] 8.1.3 | Update ADR-002 | `docs/adr/002-architecture.md` | Update to reflect source in input layer, router pure passthrough | - |
 | [ ] 8.1.4 | Update ADR-005 | `docs/adr/005-contract.md` | Update event contract to include source in input layer payload | - |
-| [ ] 8.1.5 | Update ADR-003 | `docs/adr/003-60hz-tick.md` | Clarify Fixture Core (not middleware) runs at 60Hz | - |
+| [ ] 8.1.5 | Update ADR-003 | `docs/adr/003-60hz-tick.md` | Clarify Fixture Core (not router) runs at 60Hz | - |
 
 **Verification:** All ADRs accurately reflect Phase 7 and Phase 6 implementation
 
@@ -55,9 +55,9 @@ This phase ensures all previous phases are working together correctly and the ar
 | # | Task | File | Action | Test Command |
 |---|------|------|--------|--------------|
 | [ ] 8.2.1 | Validate all tests pass | - | - | `pytest tests/ -v` |
-| [ ] 8.2.2 | Validate source flows correctly | - | - | Manual check: verify source in input → middleware → fixture |
+| [ ] 8.2.2 | Validate source flows correctly | - | - | Manual check: verify source in input → router → fixture |
 | [ ] 8.2.3 | Validate many-to-one works | - | - | Manual check: multiple inputs to same target |
-| [ ] 8.2.4 | Validate stateless middleware | - | - | Verify no state dicts in middleware_core.py |
+| [ ] 8.2.4 | Validate stateless router | - | - | Verify no state dicts in router_core.py |
 | [ ] 8.2.5 | Run integration tests | - | - | `pytest tests/ -k integration -v` |
 
 **Verification:** All 170+ tests pass, architecture matches all ADRs
@@ -73,12 +73,12 @@ This phase ensures all previous phases are working together correctly and the ar
 - [x] All adapters define types for all axes
 - [x] Topic format is `input.<device>.<axis>`
 
-### Phase 2: Middleware Complete
-- [x] All Middleware tests pass
-- [x] Middleware has ZERO state (no `current_raw_input`, no `virtual_output_state`)
-- [x] Middleware does ZERO math (no delta/rate calculation)
-- [x] Type flows through Middleware unchanged
-- [x] No batch processing in Middleware (no `process_frame()`)
+### Phase 2: Router Complete
+- [x] All Router tests pass
+- [x] Router has ZERO state (no `current_raw_input`, no `virtual_output_state`)
+- [x] Router does ZERO math (no delta/rate calculation)
+- [x] Type flows through Router unchanged
+- [x] No batch processing in Router (no `process_frame()`)
 - [x] Routing config has no `intent` or `sensitivity` fields
 
 ### Phase 3: Fixture Layer Complete
@@ -93,7 +93,7 @@ This phase ensures all previous phases are working together correctly and the ar
 
 ### Phase 5: Integration Complete
 - [x] All 152+ tests pass
-- [x] End-to-end flow verified: Input → Middleware → Fixture
+- [x] End-to-end flow verified: Input → Router → Fixture
 - [x] Architecture matches target design from `architecture-changes.md`
 - [x] No violations of the 4 architectural principles
 
@@ -107,8 +107,8 @@ This phase ensures all previous phases are working together correctly and the ar
 
 ### Phase 7: Source Field in Input Layer Complete
 - [x] Input layer publishes source in payload
-- [x] Middleware does NOT modify payload (pure passthrough)
-- [x] Source flows from input → middleware → fixture unchanged
+- [x] Router does NOT modify payload (pure passthrough)
+- [x] Source flows from input → router → fixture unchanged
 - [x] All input adapters include source field
 
 ### Phase 8: Final Validation Complete

@@ -1,5 +1,5 @@
 """
-Watch mapped output state published by the middleware layer.
+Watch mapped output state published by the router layer.
 
 Replaces:  nats sub "output.>"
 
