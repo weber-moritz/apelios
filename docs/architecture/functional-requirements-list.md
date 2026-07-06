@@ -1,5 +1,51 @@
-- Hardware Ingestion: The system must read physical analog axes, digital buttons, and IMU (gyroscope/accelerometer) data from a Steam Deck adapter.
-- Signal Normalization: The system must translate raw hardware data into standardized mathematical signals: unipolar absolute (0.0 to 1.0), bipolar absolute (-1.0 to 1.0), rate (velocity), and delta (relative change).
-- Dynamic Routing: The system must route a specific hardware input to a specific lighting fixture parameter based on a user-defined routing.json configuration file.
-- State Integration: The system must maintain an internal absolute position for all patched fixtures, mathematically integrating incoming delta and rate signals into that absolute position.
-- Protocol Translation: The system must translate its internal 0.0 - 1.0 floating-point state into the correct physical protocol limits (e.g., 8-bit or 16-bit DMX values) based on a patch.json profile.
+# Functional Requirements List (FRL)
+
+**Document Type:** Functional Requirements Specification  
+**Purpose:** Define WHAT the system must do — the core capabilities and behaviors that Apelios must deliver to fulfill its mission as a professional lighting controller.  
+**Scope:** System-wide functional capabilities  
+**Version:** 2.0  
+**Last Updated:** 2026-07-06  
+**Related Documents:**
+- [Non-Functional Requirements (NFRL)](non-functional-requirements-list.md)
+- [Architecture Overview](architecture.md)
+
+---
+
+## Overview
+
+The Functional Requirements List (FRL) captures the essential **behaviors** and **capabilities** that Apelios must provide. These are the "what" requirements — the features that must be implemented for the system to be considered complete and functional.
+
+Unlike the architectural principles (which define "how" the system should be structured), the FRL defines the concrete functionality that users and downstream systems depend on.
+
+---
+
+## Requirements
+
+### Core Data Pipeline
+
+- **FR-001 Hardware Ingestion:** The system must read physical analog axes, digital buttons, and IMU (gyroscope/accelerometer) data from input devices such as Steam Deck adapters.
+
+- **FR-002 Multi-Device Support:** The system must simultaneously process inputs from multiple physical devices (e.g., Steam Deck, MIDI controllers, mouse) without interference or signal degradation.
+
+- **FR-003 Signal Normalization:** The system must translate raw hardware data into standardized mathematical signals: unipolar absolute (0.0 to 1.0), bipolar absolute (-1.0 to 1.0), rate (velocity), and delta (relative change).
+
+- **FR-004 Intent Tagging:** The system must tag each input value with its mathematical intent type (absolute_uni, absolute_bi, delta, rate) at the source.
+
+### Routing & Mapping
+
+- **FR-005 Dynamic Routing:** The system must route a specific hardware input to a specific lighting fixture parameter based on a user-defined routing.json configuration file.
+
+- **FR-006 Parameter Mapping:** The system must map logical fixture parameters (pan, tilt, intensity, color) to physical DMX addresses according to fixture profiles defined in patch.json.
+
+- **FR-007 Many-to-One Routing:** The system must support multiple input sources contributing to a single fixture parameter (e.g., joystick + gyroscope both controlling pan).
+
+### State Management
+
+- **FR-008 State Integration:** The system must maintain an internal absolute position for all patched fixtures, mathematically integrating incoming delta and rate signals into that absolute position using time-based calculations.
+
+### Protocol & Output
+
+- **FR-009 Protocol Translation:** The system must translate its internal floating-point state (0.0 to 1.0 for unipolar, -1.0 to 1.0 for bipolar) into the correct physical protocol limits (e.g., 8-bit 0-255, 16-bit 0-65535 DMX values) based on a patch.json profile.
+
+- **FR-010 Multi-Protocol Support:** The system must support multiple lighting control protocols including DMX and ArtNet for output to physical lighting fixtures.
+
