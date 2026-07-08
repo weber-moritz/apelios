@@ -1,0 +1,4 @@
+- hot reload for all config files
+- hot load for input and output adapters
+- dis- and reconnect proof adapters
+- gui

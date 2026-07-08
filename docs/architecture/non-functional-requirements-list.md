@@ -25,28 +25,28 @@ This document describes the target architecture and does not necesarrily reflext
 
 ### Performance
 
-- **NFR-001 Real-Time Operation:** The system must operate on a strict 60Hz internal tick rate (16.67ms per frame) synchronized across all layers.
+- **NFR-1.1 Real-Time Operation:** The system must operate on a strict 60Hz internal tick rate (16.67ms per frame) synchronized across all layers.
 
-- **NFR-002 Low Latency:** End-to-end latency (from reading a physical input to dispatching the final DMX/ArtNet packet) must not exceed 16.6 milliseconds to maintain real-time responsiveness.
+- **NFR-1.2 Low Latency:** End-to-end latency (from reading a physical input to dispatching the final DMX/ArtNet packet) must not exceed 16.6 milliseconds to maintain real-time responsiveness.
 
 ### Reliability & Fault Tolerance
 
-- **NFR-003 Device Resilience:** The system must not crash if a physical input device is disconnected mid-operation. Missing or disrupted input sources must be handled gracefully without system failure.
+- **NFR-2.1 Device Resilience:** The system must not crash if a physical input device is disconnected mid-operation. Missing or disrupted input sources must be handled gracefully without system failure.
 
-- **NFR-004 Connection Recovery:** The system must automatically detect and recover from communication broker disconnections without requiring manual intervention or software restart.
+- **NFR-2.2 Connection Recovery:** The system must automatically detect and recover from communication broker disconnections without requiring manual intervention or software restart.
 
-- **NFR-005 Stateless Components:** System components responsible for data routing must not maintain internal state that could cause drift or inconsistency between input and output.
+- **NFR-2.3 Stateless Components:** System components responsible for data routing must not maintain internal state that could cause drift or inconsistency between input and output.
 
 ### Extensibility & Maintainability
 
-- **NFR-006 Input Device Extensibility:** The system must support adding support for new physical input device types without requiring modifications to existing code or components.
+- **NFR-3.1 Input Device Extensibility:** The system must support adding support for new physical input device types without requiring modifications to existing code or components.
 
-- **NFR-007 Fixture Extensibility:** The system must support defining new lighting fixture types through external configuration, without requiring changes to core functionality.
+- **NFR-3.2 Fixture Extensibility:** The system must support defining new lighting fixture types through external configuration, without requiring changes to core functionality.
 
-- **NFR-008 Configuration Management:** System configurations must be defined in human-readable, machine-parseable format with documented structure for easy modification and validation.
+- **NFR-3.3 Configuration Management:** System configurations must be defined in human-readable, machine-parseable format with documented structure for easy modification and validation.
 
 ### Compatibility & Portability
 
-- **NFR-009 Cross-Platform Support:** The system must run on Windows, Linux, and macOS with identical functionality and performance characteristics.
+- **NFR-4.1 Cross-Platform Support:** The system must run on Windows, Linux, and macOS with identical functionality and performance characteristics.
 
-- **NFR-010 Protocol Compatibility:** The system must support multiple industry-standard lighting control protocols to ensure compatibility with diverse professional lighting equipment.
+- **NFR-4.2 Protocol Compatibility:** The system must support multiple industry-standard lighting control protocols to ensure compatibility with diverse professional lighting equipment.
