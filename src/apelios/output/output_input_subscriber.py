@@ -13,45 +13,26 @@ if TYPE_CHECKING:
 
 
 class OutputInputSubscriber:
-    """Subscriber for output layer messages.
-    
-    Receives DMX values from Fixture Layer and forwards to OutputCore.
-    """
+    """Subscriber for output layer messages."""
 
     def __init__(self, core: OutputCore) -> None:
-        """Initialize with reference to OutputCore.
-        
-        Args:
-            core: OutputCore instance to forward messages to.
-        """
+        """Initialize with reference to OutputCore."""
         self.core = core
 
     def __call__(self, subject: str, payload: bytes) -> None:
-        """Handle incoming message from broker.
-        
-        Parses the subject and payload, extracts universe/address/value,
-        and forwards to core buffer.
-        
-        Args:
-            subject: NATS subject (e.g., 'output.1.42').
-            payload: Message payload as bytes.
-        """
+        """Handle incoming message from broker."""
         try:
             data = json.loads(payload.decode('utf-8'))
         except (json.JSONDecodeError, UnicodeDecodeError):
-            # Invalid payload, skip
             return
 
-        # Extract universe and address from payload
         universe = data.get('universe')
         address = data.get('address')
         value = data.get('value')
 
         if universe is None or address is None or value is None:
-            # Missing required fields, skip
             return
 
-        # Forward to core (value may be float from JSON, convert to int)
         self.core.add_to_buffer(
             universe=int(universe),
             address=int(address),

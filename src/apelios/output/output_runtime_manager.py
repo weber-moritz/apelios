@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-fromapelios.broker.broker_client import BrokerClient
+from apelios.broker.broker_client import BrokerClient
 
 if TYPE_CHECKING:
     from .output_core import OutputCore
@@ -48,10 +48,7 @@ class OutputRuntimeManager:
         return OutputInputSubscriber(self.core)
 
     async def _bootstrap_adapters(self) -> None:
-        """Bootstrap output adapters.
-        
-        Loads hardcoded adapters for MVP and registers them with the core.
-        """
+        """Bootstrap output adapters."""
         from .output_adapter_bootstrap import OutputAdapterBootstrap
         
         bootstrap = OutputAdapterBootstrap()
@@ -89,6 +86,6 @@ class OutputRuntimeManager:
         Delegates to core for data processing.
         
         Args:
-            dt: Delta time in seconds (default 1/60 ≈ 0.016).
+            dt: Delta time in seconds (default 1/60 = 0.016).
         """
-        self.core.process_frame(dt=dt)
+        await self.core.process_frame(dt=dt)

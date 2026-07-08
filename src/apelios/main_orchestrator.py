@@ -12,6 +12,7 @@ from apelios.router.router_runtime_manager import RouterRuntimeManager
 logger = logging.getLogger(__name__)
 
 from apelios.fixture.fixture_runtime_manager import FixtureRuntimeManager
+from apelios.output.output_runtime_manager import OutputRuntimeManager
 
 class MainOrchestrator:
     def __init__(
@@ -21,6 +22,7 @@ class MainOrchestrator:
         router_manager: Optional[RouterRuntimeManager] = None,
         input_manager: Optional[InputRuntimeManager] = None,
         fixture_manager: Optional[FixtureRuntimeManager] = None,
+        output_manager: Optional[OutputRuntimeManager] = None,
     ):
         # Dependency injection for testability
         self.broker_manager = broker_manager or BrokerRuntimeManager(provider=broker_provider)
@@ -32,6 +34,9 @@ class MainOrchestrator:
             broker_client=BrokerClient(provider=broker_provider),
         )
         self.fixture_manager = fixture_manager or FixtureRuntimeManager(
+            broker_client=BrokerClient(provider=broker_provider),
+        )
+        self.output_manager = output_manager or OutputRuntimeManager(
             broker_client=BrokerClient(provider=broker_provider),
         )
 
@@ -48,6 +53,9 @@ class MainOrchestrator:
         logger.info("Broker runtime started")
 
         # 2. Layers: starting in reverse dataflow sequence
+        await self.output_manager.start()
+        logger.info("Output runtime started")
+
         await self.fixture_manager.start()
         logger.info("Fixture runtime started")
 
@@ -67,6 +75,8 @@ class MainOrchestrator:
                 await self.input_manager.stop_registered_adapters()
                 await self.input_manager.stop()
             with contextlib.suppress(Exception):
+                await self.output_manager.stop()
+            with contextlib.suppress(Exception):
                 await self.broker_manager.stop_server()
             return
 
@@ -81,6 +91,9 @@ class MainOrchestrator:
         await self.fixture_manager.stop()
         logger.info("Stopped fixture layer")
 
+        await self.output_manager.stop()
+        logger.info("Stopped output layer")
+
         # 2. Stop Infrastructure last
         await self.broker_manager.stop_server()
         logger.info("Stopped broker")
@@ -94,6 +107,7 @@ class MainOrchestrator:
         router_healthy = self.router_manager.is_running()
         input_healthy = self.input_manager.is_running()
         fixture_healthy = self.fixture_manager.is_running()
+        output_healthy = self.output_manager.is_running()
 
         if not router_healthy:
             logger.error("Health Check Failed: Router is not running.")
@@ -101,8 +115,10 @@ class MainOrchestrator:
             logger.error("Health Check Failed: Input runtime is not running.")
         if not fixture_healthy:
             logger.error("Health Check Failed: Fixture runtime is not running.")
+        if not output_healthy:
+            logger.error("Health Check Failed: Output runtime is not running.")
 
-        return broker_healthy and router_healthy and input_healthy and fixture_healthy
+        return broker_healthy and router_healthy and input_healthy and fixture_healthy and output_healthy
 
     def is_running(self) -> bool:
         return self._running
@@ -125,7 +141,10 @@ class MainOrchestrator:
                 # 3. Process one frame of the fixture layer.
                 await self.fixture_manager.tick(dt=target_interval)
 
-                # 4. Calculate how long the math took, and sleep for the exact remainder 
+                # 4. Process one frame of the output layer.
+                await self.output_manager.tick(dt=target_interval)
+
+                # 5. Calculate how long the math took, and sleep for the exact remainder 
                 #    to maintain a perfect 60Hz frequency without drifting.
                 elapsed = time.monotonic() - loop_start
                 sleep_time = target_interval - elapsed

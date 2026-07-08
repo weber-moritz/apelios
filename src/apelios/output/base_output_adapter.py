@@ -1,7 +1,4 @@
-"""Base output adapter interface.
-
-Interface contract for all output protocol adapters.
-"""
+"""Base output adapter interface."""
 
 from __future__ import annotations
 
@@ -12,11 +9,7 @@ class BaseOutputAdapter(ABC):
     """Interface for all output protocol adapters."""
 
     def __init__(self, config: dict | None = None) -> None:
-        """Initialize with protocol-specific configuration.
-        
-        Args:
-            config: Dictionary of protocol-specific settings.
-        """
+        """Initialize with protocol-specific configuration."""
         self.config = config or {}
         self._running = False
 
@@ -30,11 +23,7 @@ class BaseOutputAdapter(ABC):
 
     @abstractmethod
     async def send_dmx(self, dmx_buffer: dict[tuple[int, int], int]) -> None:
-        """Send DMX data. Called on each tick.
-        
-        Args:
-            dmx_buffer: Sparse dict of (universe, address) -> value.
-        """
+        """Send DMX data. Called on each tick."""
         pass
 
     def is_running(self) -> bool:
