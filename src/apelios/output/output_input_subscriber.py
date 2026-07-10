@@ -1,6 +1,8 @@
 """Output input subscriber.
 
 Subscribes to output topics and forwards DMX data to OutputCore.
+This subscriber receives messages from the NATS broker on the 'output.>' topic
+pattern and adds the DMX values to the OutputCore's buffer.
 """
 
 from __future__ import annotations
@@ -13,14 +15,31 @@ if TYPE_CHECKING:
 
 
 class OutputInputSubscriber:
-    """Subscriber for output layer messages."""
+    """Subscriber for output layer messages.
+    
+    Handles incoming messages from the broker and forwards DMX data to the
+    OutputCore for buffering and processing. This class is stateless and
+    only responsible for message parsing and forwarding.
+    
+    Attributes:
+        core: Reference to the OutputCore instance for buffer management.
+    """
 
     def __init__(self, core: OutputCore) -> None:
-        """Initialize with reference to OutputCore."""
+        """Initialize with reference to OutputCore.
+        
+        Args:
+            core: OutputCore instance to forward DMX data to.
+        """
         self.core = core
 
     def __call__(self, subject: str, payload: bytes) -> None:
-        """Handle incoming message from broker."""
+        """Handle incoming message from broker.
+        
+        Args:
+            subject: NATS topic subject (e.g., "output.1.42").
+            payload: JSON-encoded message payload as bytes.
+        """
         try:
             data = json.loads(payload.decode('utf-8'))
         except (json.JSONDecodeError, UnicodeDecodeError):

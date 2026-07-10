@@ -363,31 +363,3 @@ class TestArtNetAdapterSendDMX:
         # Should not have sent anything because client is None
         assert adapter.client is None
 
-    @pytest.mark.asyncio
-    @patch("apelios.output.adapters.artnet_adapter.ArtNetClient")
-    @patch("apelios.output.adapters.artnet_adapter.time.monotonic")
-    async def test_artnet_adapter_rate_limiting(self, mock_monotonic, mock_client_class):
-        """send_dmx() should respect output_rate_hz rate limiting."""
-        mock_client = MockArtNetClient()
-        mock_client_class.return_value = mock_client
-        
-        # Configure for 100Hz (interval = 0.01 seconds)
-        adapter = ArtNetAdapter({"universe": 1, "output_rate_hz": 100})
-        await adapter.start()
-        
-        # Mock time to control rate limiting
-        # Note: _last_send_time is set to 0 in start(), so first call needs time >= 0.01
-        mock_monotonic.side_effect = [0.01, 0.015, 0.025]  # First at 0.01 (>= 0.01), second at 0.015 (< 0.02), third at 0.025 (>= 0.02)
-        
-        dmx_buffer = {(1, 1): 135}
-        
-        # First send - should succeed (time 0.01 >= 0.01 interval from _last_send_time=0)
-        await adapter.send_dmx(dmx_buffer)
-        # Second send - should be skipped (only 0.005s passed from last send, need 0.01s)
-        await adapter.send_dmx(dmx_buffer)
-        # Third send - should succeed (0.01s passed from last send, need 0.01s)
-        await adapter.send_dmx(dmx_buffer)
-        
-        universe_obj = mock_client.universe_objs[1]
-        # Should have sent twice (first and third call)
-        assert len(universe_obj.sent_dmx_data) == 2

@@ -4,6 +4,7 @@ These tests define the expected behavior of the BaseOutputAdapter
 before any implementation exists. All tests should fail initially.
 """
 
+import asyncio
 import pytest
 
 from apelios.output.base_output_adapter import BaseOutputAdapter
@@ -14,6 +15,13 @@ def _create_test_adapter(config=None):
     
     class ConcreteTestAdapter(BaseOutputAdapter):
         """Concrete implementation for testing BaseOutputAdapter."""
+        
+        async def _run_loop(self) -> None:
+            """Test implementation of _run_loop - minimal no-op loop."""
+            # Minimal implementation that satisfies the abstract method requirement
+            # but doesn't actually loop (tests don't need real loop behavior)
+            while self._running:
+                await asyncio.sleep(0.1)
         
         async def send_dmx(self, dmx_buffer: dict[tuple[int, int], int]) -> None:
             """Test implementation of send_dmx."""

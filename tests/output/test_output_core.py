@@ -18,7 +18,7 @@ class TestOutputCoreInitialization:
         
         core = OutputCore()
         
-        assert core.dmx_buffer == {}
+        assert core.dmx_state == {}
         assert core.adapters == []
 
 
@@ -32,7 +32,7 @@ class TestOutputCoreBuffer:
         core = OutputCore()
         core.add_to_buffer(universe=1, address=10, value=135)
         
-        assert core.dmx_buffer == {(1, 10): 135}
+        assert core.dmx_state == {(1, 10): 135}
 
     def test_add_to_buffer_updates_existing_channel(self):
         """add_to_buffer should overwrite existing channel value."""
@@ -42,7 +42,7 @@ class TestOutputCoreBuffer:
         core.add_to_buffer(universe=1, address=10, value=135)
         core.add_to_buffer(universe=1, address=10, value=200)
         
-        assert core.dmx_buffer == {(1, 10): 200}
+        assert core.dmx_state == {(1, 10): 200}
 
     def test_add_to_buffer_handles_multiple_universes(self):
         """add_to_buffer should store across different universes."""
@@ -53,7 +53,7 @@ class TestOutputCoreBuffer:
         core.add_to_buffer(universe=2, address=20, value=200)
         core.add_to_buffer(universe=1, address=11, value=50)
         
-        assert core.dmx_buffer == {
+        assert core.dmx_state == {
             (1, 10): 135,
             (2, 20): 200,
             (1, 11): 50,
@@ -67,8 +67,8 @@ class TestOutputCoreBuffer:
         core.add_to_buffer(universe=1, address=10, value=135)
         
         # Channel (1, 11) should not exist
-        assert (1, 11) not in core.dmx_buffer
-        assert len(core.dmx_buffer) == 1
+        assert (1, 11) not in core.dmx_state
+        assert len(core.dmx_state) == 1
 
 
 class TestOutputCoreAdapterRegistration:
@@ -92,7 +92,11 @@ class TestOutputCoreProcessFrame:
 
     @pytest.mark.asyncio
     async def test_send_to_adapters_calls_all_adapters(self):
-        """process_frame should call send_dmx on all registered adapters."""
+        """process_frame is now a no-op; adapters have independent loops.
+        
+        In the new architecture (ADR-010), adapters read from dmx_state directly
+        via their independent loops and process_frame() no longer sends to adapters.
+        """
         from apelios.output.output_core import OutputCore
         
         core = OutputCore()
@@ -107,12 +111,18 @@ class TestOutputCoreProcessFrame:
         
         await core.process_frame()
         
-        mock_adapter1.send_dmx.assert_awaited_once()
-        mock_adapter2.send_dmx.assert_awaited_once()
+        # In new architecture, process_frame does NOT call send_dmx on adapters
+        # Adapters have their own loops that read from dmx_state
+        mock_adapter1.send_dmx.assert_not_awaited()
+        mock_adapter2.send_dmx.assert_not_awaited()
 
     @pytest.mark.asyncio
     async def test_process_frame_clears_buffer(self):
-        """process_frame should clear buffer after sending."""
+        """process_frame does NOT clear dmx_state; state persists for adapters.
+        
+        In the new architecture (ADR-010), dmx_state persists between frames
+        so adapters can read the latest values at their own rates.
+        """
         from apelios.output.output_core import OutputCore
         
         core = OutputCore()
@@ -125,11 +135,12 @@ class TestOutputCoreProcessFrame:
         
         await core.process_frame()
         
-        assert core.dmx_buffer == {}
+        # In new architecture, dmx_state is NOT cleared
+        assert core.dmx_state == {(1, 10): 135, (1, 11): 200}
 
     @pytest.mark.asyncio
     async def test_process_frame_with_no_buffer_is_noop(self):
-        """process_frame should handle empty buffer without error."""
+        """process_frame handles empty dmx_state without error."""
         from apelios.output.output_core import OutputCore
         
         core = OutputCore()
@@ -137,4 +148,4 @@ class TestOutputCoreProcessFrame:
         # Should not raise any errors
         await core.process_frame()
         
-        assert core.dmx_buffer == {}
+        assert core.dmx_state == {}

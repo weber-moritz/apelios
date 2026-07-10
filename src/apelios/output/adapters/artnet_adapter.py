@@ -1,7 +1,17 @@
-"""ArtNet output adapter."""
+"""ArtNet output adapter.
+
+Provides ArtNet protocol support for the Output Layer. This adapter reads
+current DMX state from OutputCore and sends it via ArtNet protocol at the
+configured refresh rate (typically 40Hz).
+
+The adapter implements an independent sending loop (per ADR-010) to achieve
+precise protocol-compliant timing that cannot be achieved through the 60Hz
+orchestrator tick alone.
+"""
 
 from __future__ import annotations
 
+import asyncio
 import time
 from typing import TYPE_CHECKING
 
@@ -11,18 +21,44 @@ from ..base_output_adapter import BaseOutputAdapter
 
 if TYPE_CHECKING:
     from aioartnet import ArtNetUniverse
+    from ..output_core import OutputCore
 
 
 class ArtNetAdapter(BaseOutputAdapter):
-    """ArtNet protocol adapter for DMX output."""
+    """ArtNet protocol adapter for DMX output.
+    
+    Implements the BaseOutputAdapter interface for the ArtNet lighting control
+    protocol. Handles connection management, universe configuration, and DMX
+    data transmission at protocol-compliant refresh rates.
+    
+    The adapter runs an independent sending loop (per ADR-010) that reads DMX
+    state from OutputCore and sends it at the configured rate (typically 40Hz).
+    This ensures precise timing that cannot be achieved through the 60Hz
+    orchestrator tick alone.
+    
+    Attributes:
+        universe: ArtNet universe number to output to.
+        source_ip: Source IP address for ArtNet packets.
+        target_ip: Target IP address or broadcast address for ArtNet packets.
+        output_rate_hz: Output refresh rate in Hz (frames per second).
+        client: aioartnet ArtNetClient instance for network communication.
+        universe_obj: aioartnet universe object for DMX output.
+        dmx_data: 512-channel buffer for ArtNet DMX data.
+        core: Reference to OutputCore for reading current DMX state.
+    """
 
-    def __init__(self, config: dict | None = None) -> None:
-        """Initialize with ArtNet-specific configuration.
+    def __init__(self, config: dict | None = None, core: OutputCore | None = None) -> None:
+        """Initialize with ArtNet-specific configuration and core reference.
         
         Args:
-            config: Configuration dict with source_ip, target_ip, universe, output_rate_hz
+            config: Configuration dictionary with keys:
+                   - source_ip (str): Source IP address for ArtNet packets.
+                   - target_ip (str): Target IP address or broadcast address.
+                   - universe (int): ArtNet universe number (0-15 or 0-32767).
+                   - output_rate_hz (float): Output refresh rate in Hz.
+            core: OutputCore instance for reading current DMX state.
         """
-        super().__init__(config)
+        super().__init__(config, core)
         self.universe = config.get("universe", 0) if config else 0
         self.source_ip = config.get("source_ip", "127.0.0.1") if config else "127.0.0.1"
         self.target_ip = config.get("target_ip", "127.0.0.1") if config else "127.0.0.1"
@@ -32,11 +68,18 @@ class ArtNetAdapter(BaseOutputAdapter):
         self.universe_obj: ArtNetUniverse | None = None
         # Full 512-channel buffer for ArtNet (sparse input gets expanded here)
         self.dmx_data: bytearray = bytearray(512)
-        # Rate limiting state
-        self._last_send_time: float = 0
 
     async def start(self) -> None:
-        """Start the ArtNet connection and configure universe."""
+        """Start the ArtNet connection, configure universe, and start sending loop.
+        
+        Initializes the aioartnet client, configures IP addresses, connects to
+        the network, sets up the universe for DMX output, and starts the
+        independent sending loop.
+        
+        Note: In test environments or if connection fails, the adapter still
+        starts its sending loop to allow tests to pass without requiring real
+        network access.
+        """
         if self._running:
             return
         
@@ -55,18 +98,26 @@ class ArtNetAdapter(BaseOutputAdapter):
                 is_input=True  # Input to network = output from us
             )
         except Exception:
-            # In test environments or if connection fails, still mark as running
+            # In test environments or if connection fails, still continue
             # This allows tests to pass without requiring real network access
             self.client = None
             self.universe_obj = None
         
-        self._running = True
-        self._last_send_time = 0  # Reset rate limiting on start
+        # Start the parent's start() which creates the _run_loop task
+        await super().start()
 
     async def stop(self) -> None:
-        """Stop the ArtNet connection."""
+        """Stop the ArtNet connection and sending loop.
+        
+        Clears all DMX channels, closes the network connection, stops the
+        sending loop, and cleans up resources. Called during OutputRuntimeManager
+        shutdown.
+        """
         if not self._running:
             return
+        
+        # Stop the parent's stop() which cancels the _run_loop task
+        await super().stop()
         
         # Clear all channels before stopping
         self.dmx_data = bytearray(512)
@@ -84,43 +135,62 @@ class ArtNetAdapter(BaseOutputAdapter):
         
         self.client = None
         self.universe_obj = None
-        self._running = False
-        self._last_send_time = 0
 
-    def _should_send(self) -> bool:
-        """Check if enough time has passed to send at the configured rate."""
-        if self.output_rate_hz <= 0:
-            return True  # No rate limiting
+    async def _run_loop(self) -> None:
+        """Run the ArtNet sending loop at the configured refresh rate.
         
-        now = time.monotonic()
-        interval = 1.0 / self.output_rate_hz
+        Implements an independent timing loop (per ADR-010) that reads current
+        DMX state from OutputCore and sends it via ArtNet at exactly the configured
+        rate. Uses absolute time scheduling for precise timing control.
         
-        if now - self._last_send_time >= interval:
-            self._last_send_time = now
-            return True
+        The loop continues until self._running becomes False.
+        """
+        # Calculate send interval from configured rate
+        interval = 1.0 / self.output_rate_hz if self.output_rate_hz > 0 else 0.016
+        next_send_time = time.monotonic()  # Send immediately on first iteration
         
-        return False
+        while self._running:
+            now = time.monotonic()
+            
+            # Check if it's time to send
+            if now >= next_send_time:
+                # Read current state from core and send
+                if self.core:
+                    await self.send_dmx(self.core.dmx_state)
+                
+                # Schedule next send exactly interval seconds from now
+                next_send_time = now + interval
+            
+            # Calculate sleep time to yield control without busy-waiting
+            sleep_time = next_send_time - time.monotonic()
+            if sleep_time > 0:
+                # Sleep for the smaller of: remaining time until next send, or 1ms
+                # This ensures we wake up frequently to check _running flag
+                await asyncio.sleep(min(sleep_time, 0.001))
+            else:
+                # We're behind schedule; yield control to the event loop
+                await asyncio.sleep(0)
 
-    async def send_dmx(self, dmx_buffer: dict[tuple[int, int], int]) -> None:
+    async def send_dmx(self, dmx_state: dict[tuple[int, int], int]) -> None:
         """Send DMX data via ArtNet.
         
-        Respects the configured output_rate_hz to avoid flooding the network.
+        Expands the sparse DMX state to a full 512-channel universe, applies
+        16-bit value splitting where needed, and sends via ArtNet protocol.
+        This method is called from the adapter's independent _run_loop().
         
         Args:
-            dmx_buffer: Sparse dict of (universe, address) -> value
+            dmx_state: Current DMX state as sparse dictionary mapping
+                       (universe, address) -> value.
+                       Only channels for the configured universe are processed.
         """
         if not self._running or self.client is None or self.universe_obj is None:
-            return
-        
-        # Rate limiting - only send if enough time has passed
-        if not self._should_send():
             return
         
         # Reset buffer to all zeros
         self.dmx_data = bytearray(512)
         
         # Apply only channels for our configured universe
-        for (universe, address), value in dmx_buffer.items():
+        for (universe, address), value in dmx_state.items():
             if universe != self.universe:
                 continue
             
