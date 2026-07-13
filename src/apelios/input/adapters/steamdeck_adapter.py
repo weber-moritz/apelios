@@ -154,10 +154,10 @@ class SteamDeckAdapter(BaseInputAdapter):
 	# Sticks use 0.01x for fine control when used as absolute values
 	_AXIS_SCALES = {
 		"imu.*": 1.5,  # Wildcard matches imu.pitch, imu.yaw, imu.roll
-		"left_stick.x": 0.001,  # Scale down left stick for finer control
-		"left_stick.y": 0.001,  # Scale down left stick for finer control
-		"right_stick.x": 0.001,  # Scale down right stick for finer control
-		"right_stick.y": 0.001,  # Scale down right stick for finer control
+		"left_stick.x": 0.0001,  # Scale down left stick for finer control
+		"left_stick.y": 0.0001,  # Scale down left stick for finer control
+		"right_stick.x": 0.0001,  # Scale down right stick for finer control
+		"right_stick.y": 0.0001,  # Scale down right stick for finer control
 	}
 
 	def __init__(self, device: str = "steamdeck", deck: Any | None = None) -> None:
