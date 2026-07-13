@@ -4,8 +4,8 @@
       "universe": 2,
       "address": 1,
       "parameters": {
-        "pan": {"width": 8, "limits": [0.0, 1.0]},
-        "tilt": {"width": 8, "limits": [0.0, 1.0]},
+        "pan": {"width": 8, "limits": [0.0, 1.0], "start": 0.5},
+        "tilt": {"width": 8, "limits": [0.0, 1.0], "start": 0.5},
         "dimmer": {"width": 8, "limits": [0.0, 1.0]},
         "red": {"width": 8, "limits": [0.0, 1.0]},
         "green": {"width": 8, "limits": [0.0, 1.0]},

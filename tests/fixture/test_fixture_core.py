@@ -350,3 +350,101 @@ def test_core_sums_deltas_from_multiple_sources(patch_config_simple):
     assert (1, 1) in core.dmx_output
     # 0.2 + 0.3 = 0.5, normalized * 255 = 127.5 ≈ 128
     assert core.dmx_output[(1, 1)] == pytest.approx(128, abs=1)
+
+
+@pytest.fixture
+def patch_config_with_start_values():
+    """Patch config with start values for testing initialization."""
+    return {
+        "fixtures": {
+            "movinghead01": {
+                "type": "test",
+                "universe": 1,
+                "address": 1,
+                "parameters": {
+                    "pan": {
+                        "width": 8,
+                        "limits": [0.0, 1.0],
+                        "start": 0.5,
+                    },
+                    "tilt": {
+                        "width": 8,
+                        "limits": [0.0, 1.0],
+                        "start": 0.0,
+                    },
+                    "dimmer": {
+                        "width": 8,
+                        "limits": [0.0, 1.0],
+                        # No start value, should default to 0.0
+                    },
+                    "color": {
+                        "width": 8,
+                        "limits": [-1.0, 1.0],
+                        "start": 0.5,
+                    },
+                },
+            }
+        }
+    }
+
+
+def test_start_value_initialization(patch_config_with_start_values):
+    """Test that parameters initialize with start value when first processed."""
+    core = FixtureCore(patch=patch_config_with_start_values)
+    
+    # Process first frame with no input - parameters should initialize with start values
+    core.process_frame(dt=0.016)
+    
+    # pan has start=0.5
+    assert "movinghead01.pan" in core.internal_state
+    assert core.internal_state["movinghead01.pan"]["value"] == pytest.approx(0.5)
+    assert core.dmx_output[(1, 1)] == pytest.approx(128, abs=1)  # 0.5 * 255 = 127.5
+    
+    # tilt has start=0.0
+    assert "movinghead01.tilt" in core.internal_state
+    assert core.internal_state["movinghead01.tilt"]["value"] == pytest.approx(0.0)
+    assert core.dmx_output[(1, 2)] == pytest.approx(0)
+    
+    # dimmer has no start, defaults to 0.0
+    assert "movinghead01.dimmer" in core.internal_state
+    assert core.internal_state["movinghead01.dimmer"]["value"] == pytest.approx(0.0)
+    assert core.dmx_output[(1, 3)] == pytest.approx(0)
+    
+    # color has start=0.5 with limits [-1.0, 1.0], clamped to [0.0, 1.0]
+    assert "movinghead01.color" in core.internal_state
+    assert core.internal_state["movinghead01.color"]["value"] == pytest.approx(0.5)
+
+
+def test_start_value_clamped_to_limits(patch_config_with_start_values):
+    """Test that start values are clamped to parameter limits."""
+    # Modify config to have start value outside limits
+    config = {
+        "fixtures": {
+            "test": {
+                "type": "test",
+                "universe": 1,
+                "address": 1,
+                "parameters": {
+                    "value": {
+                        "width": 8,
+                        "limits": [0.0, 0.5],
+                        "start": 1.0,  # Outside upper limit
+                    },
+                    "value2": {
+                        "width": 8,
+                        "limits": [0.3, 1.0],
+                        "start": 0.1,  # Below lower limit
+                    },
+                },
+            }
+        }
+    }
+    
+    core = FixtureCore(patch=config)
+    core.process_frame(dt=0.016)
+    
+    # value with start=1.0 should be clamped to 0.5 (upper limit)
+    assert core.internal_state["test.value"]["value"] == pytest.approx(0.5)
+    
+    # value2 with start=0.1 should be clamped to 0.3 (lower limit)
+    assert core.internal_state["test.value2"]["value"] == pytest.approx(0.3)

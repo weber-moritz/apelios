@@ -21,6 +21,7 @@ class FixtureCore:
         - Group inbox entries by target
         - For each target, sum contributions from all sources
         - Track per-target state for absolute value initialization
+        - Initialize targets with start values on first frame
         """
         self.dmx_output = {}
 
@@ -39,8 +40,20 @@ class FixtureCore:
                 targets[target] = []
             targets[target].append(payload)
 
-        # Process each target
-        for target, payloads in targets.items():
+        # Build set of all possible targets from patch + inbox
+        all_targets: set[str] = set(targets.keys())
+        for fixture_name, fixture_config in fixtures.items():
+            if not isinstance(fixture_config, dict):
+                continue
+            parameters = fixture_config.get("parameters", {})
+            if not isinstance(parameters, dict):
+                continue
+            for param_name in parameters:
+                target_name = f"{fixture_name}.{param_name}"
+                all_targets.add(target_name)
+
+        # Process each target (including those with no input for initialization)
+        for target in all_targets:
             fixture_name, parameter_name = self._split_target(target)
             if fixture_name is None or parameter_name is None:
                 continue
@@ -57,8 +70,24 @@ class FixtureCore:
             if not isinstance(parameter_patch, dict):
                 continue
 
-            # Get per-target state
-            target_state = self.internal_state.get(target, {"value": 0.0, "has_first_abs": False, "first_abs_value": 0.0})
+            # Get or initialize per-target state
+            if target not in self.internal_state:
+                # Initialize state with start value if specified, otherwise 0.0
+                start_value = parameter_patch.get("start", 0.0)
+                # Clamp start value to parameter limits
+                limits = parameter_patch.get("limits", [0.0, 1.0])
+                minimum, maximum = self._extract_limits(limits)
+                clamped_start = max(minimum, min(maximum, float(start_value)))
+                self.internal_state[target] = {
+                    "value": clamped_start,
+                    "has_first_abs": False,
+                    "first_abs_value": clamped_start,
+                }
+            
+            target_state = self.internal_state[target]
+            
+            # Get payloads for this target (may be empty if no input this frame)
+            payloads = targets.get(target, [])
             
             # Calculate total contribution for this frame
             total_delta = 0.0
