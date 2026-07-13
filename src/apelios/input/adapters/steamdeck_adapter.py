@@ -152,7 +152,7 @@ class SteamDeckAdapter(BaseInputAdapter):
 	# Per-axis sensitivity scaling factors (default = 1.0)
 	# IMU needs 0.1x to convert 10 real revolutions -> 1 output revolution
 	_AXIS_SCALES = {
-		"imu.*": 0.1,  # Wildcard matches imu.pitch, imu.yaw, imu.roll
+		"imu.*": 1,  # Wildcard matches imu.pitch, imu.yaw, imu.roll
 	}
 
 	def __init__(self, device: str = "steamdeck", deck: Any | None = None) -> None:
