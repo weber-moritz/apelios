@@ -105,7 +105,49 @@ When both files define the same source (e.g., `input.steamdeck.imu.pitch`):
 - `input.steamdeck.imu.yaw`
 - `input.steamdeck.imu.roll`
 
-## Notes
+## Available Input Types
+
+The input adapter defines the type for each axis. Common types include:
+
+- **`absolute_uni`** - Unipolar absolute value (0 to 1)
+  - Buttons, triggers
+- **`absolute_bi`** - Bipolar absolute value (-1 to 1)
+  - Analog sticks (position)
+- **`rate`** - Rate of change (value * dt accumulates over time)
+  - IMU sensors
+  - Analog sticks (when used for rate-based control)
+- **`delta`** - Direct delta value (adds to current value)
+  - Rarely used
+
+The fixture layer handles these types as follows:
+- **First `absolute_uni` or `absolute_bi`** input sets the base value
+- **Subsequent `absolute_uni` or `absolute_bi`** inputs contribute deltas (for many-to-one summation)
+- **`rate`** inputs accumulate over time (value * dt is added each frame)
+- **`delta`** inputs are added directly to the current value
+
+## Important Note: IMU Pitch/Yaw Mapping
+
+The IMU pitch/yaw axes follow aviation/3D coordinate system conventions:
+- **`imu.pitch`** → **tilt** (pitch = nose up/down = tilt movement)
+- **`imu.yaw`** → **pan** (yaw = nose left/right = pan movement)
+
+This may seem counterintuitive at first, but it's the standard convention.
+
+## Tips
+
+1. **To add a new fixture**: Create a new fixture definition in `src/apelios/fixture/patch/` and map inputs to it in a router config file.
+
+2. **To override a default mapping**: Add the same source to a non-default router config file with your desired target.
+
+3. **To temporarily disable a mapping**: You cannot currently disable a mapping, but you can override it to map to an unused fixture/parameter.
+
+4. **To test mappings**: Check the output on the broker topics `target.*` to see what targets are being set.
+
+5. **Rate vs Absolute**: 
+   - Use `absolute_*` types for direct position control (value = position)
+   - Use `rate` types for rate-based control (hold to move, release to maintain position)
+
+## Rules Summary
 
 - Each source can only map to ONE target (1:1 mapping)
 - Later file mappings override earlier ones for the same source
