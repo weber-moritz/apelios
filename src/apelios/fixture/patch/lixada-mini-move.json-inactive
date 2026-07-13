@@ -1,7 +1,7 @@
 {
   "fixtures": {
     "lixada-mini-move": {
-      "universe": 2,
+      "universe": 0,
       "address": 1,
       "parameters": {
         "pan": {
