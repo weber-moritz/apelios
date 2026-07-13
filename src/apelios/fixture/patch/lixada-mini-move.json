@@ -16,7 +16,27 @@
           "width": 8,
           "limits": [0.0, 1.0]
         },
+        "red": {
+          "width": 8,
+          "limits": [0.0, 1.0]
+        },
+        "green": {
+          "width": 8,
+          "limits": [0.0, 1.0]
+        },
+        "blue": {
+          "width": 8,
+          "limits": [0.0, 1.0]
+        },
         "white": {
+          "width": 8,
+          "limits": [0.0, 1.0]
+        },
+        "pan_tilt_speed": {
+          "width": 8,
+          "limits": [0.0, 1.0]
+        },
+        "reset": {
           "width": 8,
           "limits": [0.0, 1.0]
         }

@@ -54,12 +54,26 @@ class ArtNetAdapter(BaseOutputAdapter):
             config: Configuration dictionary with keys:
                    - source_ip (str): Source IP address for ArtNet packets.
                    - target_ip (str): Target IP address or broadcast address.
+                   - universe (int | list[int]): Universe number or list of universe numbers to send.
+                     If not present or empty list, ALL universes will be sent. If defined, only
+                     the selected universes will be sent (whitelist).
                    - output_rate_hz (float): Output refresh rate in Hz.
             core: OutputCore instance for reading current DMX state.
         """
         super().__init__(config, core)
         self.source_ip = config.get("source_ip", "127.0.0.1") if config else "127.0.0.1"
         self.target_ip = config.get("target_ip", "127.0.0.1") if config else "127.0.0.1"
+        
+        # Parse universe config: can be int, list, or None
+        universe_config = config.get("universe") if config else None
+        if universe_config is None:
+            self.universe_whitelist: set[int] = set()  # Empty set = send all
+        elif isinstance(universe_config, list):
+            self.universe_whitelist = set(universe_config)
+        else:
+            # Single universe value
+            self.universe_whitelist = {int(universe_config)}
+        
         self.output_rate_hz = config.get("output_rate_hz", 40) if config else 40
         
         self.client: ArtNetClient | None = None
@@ -174,7 +188,8 @@ class ArtNetAdapter(BaseOutputAdapter):
         Args:
             dmx_state: Current DMX state as sparse dictionary mapping
                        (universe, address) -> value.
-                       All universes present in the state are processed.
+                       All universes present in the state are processed, subject to
+                       the universe whitelist filter.
         """
         if not self._running or self.client is None:
             return
@@ -182,9 +197,13 @@ class ArtNetAdapter(BaseOutputAdapter):
         # Group DMX data by universe
         universes_data: dict[int, dict[int, int]] = {}
         for (universe, address), value in dict(dmx_state).items():
-            if universe not in universes_data:
-                universes_data[universe] = {}
-            universes_data[universe][address] = value
+            # Apply universe whitelist filter
+            # If whitelist is empty (set()), send all universes
+            # Otherwise, only send universes in the whitelist
+            if not self.universe_whitelist or universe in self.universe_whitelist:
+                if universe not in universes_data:
+                    universes_data[universe] = {}
+                universes_data[universe][address] = value
         
         # Send each universe's data
         for universe, address_values in universes_data.items():
