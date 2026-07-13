@@ -150,10 +150,10 @@ class SteamDeckAdapter(BaseInputAdapter):
 	}
 
 	# Per-axis sensitivity scaling factors (default = 1.0)
-	# IMU needs 0.01x to convert 100 real revolutions -> 1 output revolution for rate-based control
+	# IMU at 1.0 (rate-based, needs no scaling)
 	# Sticks use 0.01x for fine control when used as absolute values
 	_AXIS_SCALES = {
-		"imu.*": 0.01,  # Wildcard matches imu.pitch, imu.yaw, imu.roll - heavily scaled down for rate control
+		"imu.*": 1,  # Wildcard matches imu.pitch, imu.yaw, imu.roll
 		"left_stick.x": 0.01,  # Scale down left stick for finer control
 		"left_stick.y": 0.01,  # Scale down left stick for finer control
 		"right_stick.x": 0.01,  # Scale down right stick for finer control
