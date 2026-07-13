@@ -2,8 +2,8 @@
   "mappings": {
     "input.steamdeck.right_stick.x": "test.3",
     "input.steamdeck.right_stick.y": "test.4",
-    "input.steamdeck.imu.pitch": "steamdeck.pan",
-    "input.steamdeck.imu.yaw": "steamdeck.tilt",
+    "input.steamdeck.imu.pitch": "steamdeck-input.pan",
+    "input.steamdeck.imu.yaw": "steamdeck-input.tilt",
     "input.steamdeck.imu.roll": "test.7"
   }
 }

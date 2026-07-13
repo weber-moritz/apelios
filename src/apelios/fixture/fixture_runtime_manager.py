@@ -11,17 +11,48 @@ from apelios.fixture.fixture_input_subscriber import FixtureInputSubscriber
 from apelios.fixture.fixture_output_publisher import FixtureOutputPublisher
 
 _PATCH_DIR = Path(__file__).with_name("patch")
-_PATCH_PATH = _PATCH_DIR / "default.json"
 
 
-def _load_default_patch() -> dict:
-    if not _PATCH_PATH.exists():
+def _load_all_patches() -> dict:
+    """Load and merge all JSON patch files from the patch directory.
+    
+    Similar to the router's multi-file loading approach:
+    - Loads default.json first as base
+    - Then loads all other .json files (except default.json) and merges them
+    - All fixtures are merged into a single fixtures dict
+    """
+    if not _PATCH_DIR.exists():
         return {}
-
-    with _PATCH_PATH.open() as handle:
-        data = json.load(handle)
-
-    return data if isinstance(data, dict) else {}
+    
+    result: dict = {}
+    
+    # Load default.json first as base
+    default_path = _PATCH_DIR / "default.json"
+    if default_path.exists():
+        with default_path.open() as handle:
+            data = json.load(handle)
+        if isinstance(data, dict):
+            result = data
+    
+    # Load all other JSON files and merge fixtures
+    for path in sorted(_PATCH_DIR.glob("*.json")):
+        if path.name == "default.json":
+            continue
+        if path.exists():
+            with path.open() as handle:
+                data = json.load(handle)
+            if isinstance(data, dict):
+                # Merge fixtures
+                if "fixtures" in data and isinstance(data["fixtures"], dict):
+                    if "fixtures" not in result:
+                        result["fixtures"] = {}
+                    result["fixtures"].update(data["fixtures"])
+                # Merge any other top-level keys
+                for key, value in data.items():
+                    if key != "fixtures":
+                        result[key] = value
+    
+    return result
 
 
 class FixtureRuntimeManager:
@@ -33,7 +64,7 @@ class FixtureRuntimeManager:
         broker_client: BrokerClient | None = None,
         patch: dict | None = None,
     ) -> None:
-        self.core = core or FixtureCore(patch=patch or _load_default_patch())
+        self.core = core or FixtureCore(patch=patch or _load_all_patches())
         self.broker_client = broker_client or BrokerClient(provider="nats")
         self.input_subscriber = FixtureInputSubscriber(self.core.inbox)
         self.output_module = FixtureOutputPublisher(self.broker_client)

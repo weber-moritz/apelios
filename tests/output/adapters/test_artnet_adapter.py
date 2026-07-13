@@ -201,6 +201,35 @@ class TestArtNetAdapterLifecycle:
         assert adapter.is_running() is False
 
 
+class TestArtNetAdapterUniverseFilter:
+    """Tests for ArtNetAdapter universe filtering functionality (Task 017)."""
+
+    def test_universe_filter_single_int(self):
+        """universe config as int should create single-universe filter."""
+        adapter = ArtNetAdapter({"universe": 5})
+        assert adapter.universe_filter == [5]
+
+    def test_universe_filter_list_of_ints(self):
+        """universe config as list should create multi-universe filter."""
+        adapter = ArtNetAdapter({"universe": [0, 1, 2]})
+        assert adapter.universe_filter == [0, 1, 2]
+
+    def test_universe_filter_empty_list(self):
+        """universe config as empty list should send all universes."""
+        adapter = ArtNetAdapter({"universe": []})
+        assert adapter.universe_filter == []
+
+    def test_universe_filter_missing(self):
+        """Missing universe config should default to [0]."""
+        adapter = ArtNetAdapter({})
+        assert adapter.universe_filter == [0]
+
+    def test_universe_filter_none(self):
+        """None universe config should default to [0]."""
+        adapter = ArtNetAdapter(None)
+        assert adapter.universe_filter == [0]
+
+
 class TestArtNetAdapterSendDMX:
     """Tests for ArtNetAdapter send_dmx method."""
 
@@ -362,4 +391,121 @@ class TestArtNetAdapterSendDMX:
         
         # Should not have sent anything because client is None
         assert adapter.client is None
+
+
+class TestArtNetAdapterUniverseFilterSending:
+    """Tests for ArtNetAdapter universe filter behavior during send_dmx (Task 017)."""
+
+    @pytest.mark.asyncio
+    @patch("apelios.output.adapters.artnet_adapter.ArtNetClient")
+    async def test_send_dmx_with_multiple_universes_in_filter(self, mock_client_class):
+        """send_dmx() should create and send to multiple universes in filter."""
+        mock_client = MockArtNetClient()
+        mock_client_class.return_value = mock_client
+        
+        # Configure adapter with multiple universes
+        adapter = ArtNetAdapter({"universe": [0, 2]})
+        await adapter.start()
+        
+        # Verify both universes were created
+        assert 0 in mock_client.universe_objs
+        assert 2 in mock_client.universe_objs
+        assert 1 not in mock_client.universe_objs  # Not in filter
+        
+        # Send DMX with data for universes 0, 1, 2
+        dmx_buffer = {
+            (0, 1): 100,
+            (1, 1): 150,  # Should be ignored (not in filter)
+            (2, 1): 200,
+        }
+        await adapter.send_dmx(dmx_buffer)
+        
+        # Verify only universes 0 and 2 received data
+        assert len(mock_client.universe_objs[0].sent_dmx_data) == 1
+        assert len(mock_client.universe_objs[2].sent_dmx_data) == 1
+
+    @pytest.mark.asyncio
+    @patch("apelios.output.adapters.artnet_adapter.ArtNetClient")
+    async def test_send_dmx_with_empty_filter_sends_all_universes_with_data(self, mock_client_class):
+        """send_dmx() with empty filter should send all universes that have data."""
+        mock_client = MockArtNetClient()
+        mock_client_class.return_value = mock_client
+        
+        # Configure adapter with empty filter (send all)
+        adapter = ArtNetAdapter({"universe": []})
+        await adapter.start()
+        
+        # With empty filter, should default to creating universe 0
+        assert 0 in mock_client.universe_objs
+        
+        # Send DMX with data for universes 0, 1, 2
+        dmx_buffer = {
+            (0, 1): 100,
+            (1, 1): 150,
+            (2, 1): 200,
+        }
+        await adapter.send_dmx(dmx_buffer)
+        
+        # With empty filter, all universes with data should be sent
+        # But only universe 0 was created during start (default for empty filter)
+        # So only universe 0 should receive data
+        assert len(mock_client.universe_objs[0].sent_dmx_data) == 1
+
+    @pytest.mark.asyncio
+    @patch("apelios.output.adapters.artnet_adapter.ArtNetClient")
+    async def test_send_dmx_with_filter_sends_whitelisted_universes_only(self, mock_client_class):
+        """send_dmx() should send only whitelisted universes, even if others have data."""
+        mock_client = MockArtNetClient()
+        mock_client_class.return_value = mock_client
+        
+        # Configure adapter with specific universes
+        adapter = ArtNetAdapter({"universe": [0, 2]})
+        await adapter.start()
+        
+        # Send DMX with data for universe 1 only (not in filter)
+        dmx_buffer = {
+            (1, 1): 150,
+        }
+        await adapter.send_dmx(dmx_buffer)
+        
+        # Universe 0 and 2 should still send (even with no data for those universes)
+        assert len(mock_client.universe_objs[0].sent_dmx_data) == 1
+        assert len(mock_client.universe_objs[2].sent_dmx_data) == 1
+        # Universe 1 was not created, so no data sent there
+        assert 1 not in mock_client.universe_objs
+
+    @pytest.mark.asyncio
+    @patch("apelios.output.adapters.artnet_adapter.ArtNetClient")
+    async def test_send_dmx_with_empty_filter_dynamically_creates_universes(self, mock_client_class):
+        """send_dmx() with empty filter should dynamically create universes for any universe with data."""
+        mock_client = MockArtNetClient()
+        mock_client_class.return_value = mock_client
+        
+        # Configure adapter with empty filter (send all universes with data)
+        adapter = ArtNetAdapter({"universe": []})
+        await adapter.start()
+        
+        # With empty filter, only universe 0 should be created during start
+        assert 0 in mock_client.universe_objs
+        assert 1 not in mock_client.universe_objs
+        assert 2 not in mock_client.universe_objs
+        
+        # Send DMX with data for universes 0, 1, and 2
+        dmx_buffer = {
+            (0, 1): 100,
+            (1, 1): 150,
+            (2, 1): 200,
+        }
+        await adapter.send_dmx(dmx_buffer)
+        
+        # All three universes should now have universe objects created
+        # and all should have sent data
+        assert 0 in mock_client.universe_objs
+        assert 1 in mock_client.universe_objs
+        assert 2 in mock_client.universe_objs
+        
+        # Verify data was sent for all universes
+        assert len(mock_client.universe_objs[0].sent_dmx_data) == 1
+        assert len(mock_client.universe_objs[1].sent_dmx_data) == 1
+        assert len(mock_client.universe_objs[2].sent_dmx_data) == 1
 

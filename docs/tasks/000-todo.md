@@ -6,4 +6,4 @@
 - nats is being shut down if apelios crashes to avoid zombie processes
 - create a full flow test to test all layers with fake input and output adapters
 - consistant logging in all layers
-- 
+- output adapter add virtual channels to split dual-mapping of a fewature into different channels? like the lixada has strobe and dim on the same dmx channel?

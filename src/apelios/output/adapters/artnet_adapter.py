@@ -36,13 +36,19 @@ class ArtNetAdapter(BaseOutputAdapter):
     This ensures precise timing that cannot be achieved through the 60Hz
     orchestrator tick alone.
     
+    Supports universe filtering via the 'universe' config:
+    - If universe is a single int: sends only that universe
+    - If universe is a list of ints: sends only those universes (whitelist)
+    - If universe is empty list []: sends ALL universes with data
+    - If universe is None or missing: sends only universe 0
+    
     Attributes:
-        universe: ArtNet universe number to output to.
+        universe_filter: List of universe numbers to send (whitelist).
         source_ip: Source IP address for ArtNet packets.
         target_ip: Target IP address or broadcast address for ArtNet packets.
         output_rate_hz: Output refresh rate in Hz (frames per second).
         client: aioartnet ArtNetClient instance for network communication.
-        universe_obj: aioartnet universe object for DMX output.
+        universe_objs: dict mapping universe number to aioartnet universe object.
         dmx_data: 512-channel buffer for ArtNet DMX data.
         core: Reference to OutputCore for reading current DMX state.
     """
@@ -54,27 +60,51 @@ class ArtNetAdapter(BaseOutputAdapter):
             config: Configuration dictionary with keys:
                    - source_ip (str): Source IP address for ArtNet packets.
                    - target_ip (str): Target IP address or broadcast address.
-                   - universe (int): ArtNet universe number (0-15 or 0-32767).
+                   - universe (int | list[int] | None): ArtNet universe number(s) to send.
+                     Can be a single int, a list of ints (whitelist), or None/empty list
+                     to send all universes with data.
                    - output_rate_hz (float): Output refresh rate in Hz.
             core: OutputCore instance for reading current DMX state.
         """
         super().__init__(config, core)
-        self.universe = config.get("universe", 0) if config else 0
+        
+        # Parse universe config - can be int, list, or None
+        universe_config = config.get("universe", 0) if config else 0
+        if isinstance(universe_config, int):
+            self.universe_filter = [universe_config]
+        elif isinstance(universe_config, list):
+            self.universe_filter = universe_config
+        else:
+            self.universe_filter = [0]
+        
         self.source_ip = config.get("source_ip", "127.0.0.1") if config else "127.0.0.1"
         self.target_ip = config.get("target_ip", "127.0.0.1") if config else "127.0.0.1"
         self.output_rate_hz = config.get("output_rate_hz", 40) if config else 40
         
         self.client: ArtNetClient | None = None
-        self.universe_obj: ArtNetUniverse | None = None
+        self.universe_objs: dict[int, ArtNetUniverse] = {}
         # Full 512-channel buffer for ArtNet (sparse input gets expanded here)
         self.dmx_data: bytearray = bytearray(512)
+
+    @property
+    def universe(self) -> int:
+        """Backward compatibility: return first universe from filter."""
+        return self.universe_filter[0] if self.universe_filter else 0
+    
+    @property
+    def universe_obj(self) -> ArtNetUniverse | None:
+        """Backward compatibility: return first universe object from dict."""
+        return next(iter(self.universe_objs.values())) if self.universe_objs else None
 
     async def start(self) -> None:
         """Start the ArtNet connection, configure universe, and start sending loop.
         
         Initializes the aioartnet client, configures IP addresses, connects to
-        the network, sets up the universe for DMX output, and starts the
+        the network, sets up the universe(s) for DMX output, and starts the
         independent sending loop.
+        
+        If universe_filter is empty, creates a single universe 0 as default.
+        Otherwise, creates universe objects for all universes in the filter.
         
         Note: In test environments or if connection fails, the adapter still
         starts its sending loop to allow tests to pass without requiring real
@@ -92,16 +122,19 @@ class ArtNetAdapter(BaseOutputAdapter):
             # Connect to network
             await self.client.connect()
             
-            # Configure universe for output
-            self.universe_obj = self.client.set_port_config(
-                universe=self.universe,
-                is_input=True  # Input to network = output from us
-            )
+            # Configure universes for output
+            # If filter is empty, use universe 0 as default
+            universes_to_create = self.universe_filter if self.universe_filter else [0]
+            for universe in universes_to_create:
+                self.universe_objs[universe] = self.client.set_port_config(
+                    universe=universe,
+                    is_input=True  # Input to network = output from us
+                )
         except Exception:
             # In test environments or if connection fails, still continue
             # This allows tests to pass without requiring real network access
             self.client = None
-            self.universe_obj = None
+            self.universe_objs = {}
         
         # Start the parent's start() which creates the _run_loop task
         await super().start()
@@ -121,9 +154,9 @@ class ArtNetAdapter(BaseOutputAdapter):
         
         # Clear all channels before stopping
         self.dmx_data = bytearray(512)
-        if self.universe_obj:
+        for universe_obj in self.universe_objs.values():
             try:
-                self.universe_obj.set_dmx(bytes(self.dmx_data))
+                universe_obj.set_dmx(bytes(self.dmx_data))
             except Exception:
                 pass
         
@@ -134,7 +167,7 @@ class ArtNetAdapter(BaseOutputAdapter):
                 pass
         
         self.client = None
-        self.universe_obj = None
+        self.universe_objs = {}
 
     async def _run_loop(self) -> None:
         """Run the ArtNet sending loop at the configured refresh rate.
@@ -178,38 +211,71 @@ class ArtNetAdapter(BaseOutputAdapter):
         16-bit value splitting where needed, and sends via ArtNet protocol.
         This method is called from the adapter's independent _run_loop().
         
+        If universe_filter is empty (or None), sends ALL universes with data.
+        Otherwise, only sends universes in the whitelist.
+        
         Args:
             dmx_state: Current DMX state as sparse dictionary mapping
                        (universe, address) -> value.
-                       Only channels for the configured universe are processed.
         """
-        if not self._running or self.client is None or self.universe_obj is None:
+        if not self._running or self.client is None or not self.universe_objs:
             return
         
-        # Reset buffer to all zeros
-        self.dmx_data = bytearray(512)
-        
-        # Apply only channels for our configured universe
         # Create a copy to avoid "dictionary changed size during iteration" errors
         # if dmx_state is modified concurrently by OutputInputSubscriber
-        for (universe, address), value in dict(dmx_state).items():
-            if universe != self.universe:
-                continue
-            
-            # Clamp address to valid range (1-512)
-            if 1 <= address <= 512:
-                # Handle 16-bit values by splitting into MSB/LSB
-                if value > 255:
-                    # 16-bit value - split across two channels
-                    msb = (value >> 8) & 0xFF
-                    lsb = value & 0xFF
-                    self.dmx_data[address - 1] = msb
-                    # Only set LSB if there's room
-                    if address < 512:
-                        self.dmx_data[address] = lsb
-                else:
-                    # 8-bit value
-                    self.dmx_data[address - 1] = value
+        dmx_state_copy = dict(dmx_state)
         
-        # Send the DMX data
-        self.universe_obj.set_dmx(bytes(self.dmx_data))
+        # Determine which universes to send
+        # If filter is empty, send all universes that have data
+        if not self.universe_filter:
+            universes_to_send = {universe for (universe, _) in dmx_state_copy.keys()}
+        else:
+            # Only send universes in the whitelist (even if they have no data)
+            universes_to_send = set(self.universe_filter)
+        
+        # Send DMX data for each universe
+        for universe in universes_to_send:
+            # Reset buffer to all zeros for this universe
+            self.dmx_data = bytearray(512)
+            
+            # Get or create universe object for this universe
+            # For empty filter (send all), dynamically create universe objects as needed
+            universe_obj = self.universe_objs.get(universe)
+            if universe_obj is None:
+                # Only dynamically create if filter is empty (send all universes)
+                if not self.universe_filter and self.client is not None:
+                    try:
+                        universe_obj = self.client.set_port_config(
+                            universe=universe,
+                            is_input=True
+                        )
+                        self.universe_objs[universe] = universe_obj
+                    except Exception:
+                        # Failed to create universe, skip it
+                        continue
+                else:
+                    # Universe not in filter and not in empty-filter mode, skip
+                    continue
+            
+            # Apply channels for this universe
+            for (univ, address), value in dmx_state_copy.items():
+                if univ != universe:
+                    continue
+                
+                # Clamp address to valid range (1-512)
+                if 1 <= address <= 512:
+                    # Handle 16-bit values by splitting into MSB/LSB
+                    if value > 255:
+                        # 16-bit value - split across two channels
+                        msb = (value >> 8) & 0xFF
+                        lsb = value & 0xFF
+                        self.dmx_data[address - 1] = msb
+                        # Only set LSB if there's room
+                        if address < 512:
+                            self.dmx_data[address] = lsb
+                    else:
+                        # 8-bit value
+                        self.dmx_data[address - 1] = value
+            
+            # Send the DMX data for this universe
+            universe_obj.set_dmx(bytes(self.dmx_data))

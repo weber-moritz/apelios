@@ -1,7 +1,7 @@
 {
   "fixtures": {
     "test": {
-      "universe": 1,
+      "universe": 0,
       "address": 1,
       "parameters": {
         "1": {
@@ -34,8 +34,8 @@
         }
       }
     },
-    "steamdeck": {
-      "universe": 0,
+    "steamdeck-input": {
+      "universe": 1,
       "address": 1,
       "parameters": {
         "pan": {

@@ -1,0 +1,19 @@
+{
+  "fixtures": {
+    "lixada-mini-move": {
+      "universe": 2,
+      "address": 1,
+      "parameters": {
+        "pan": {"width": 8, "limits": [0.0, 1.0]},
+        "tilt": {"width": 8, "limits": [0.0, 1.0]},
+        "dimmer": {"width": 8, "limits": [0.0, 1.0]},
+        "red": {"width": 8, "limits": [0.0, 1.0]},
+        "green": {"width": 8, "limits": [0.0, 1.0]},
+        "blue": {"width": 8, "limits": [0.0, 1.0]},
+        "white": {"width": 8, "limits": [0.0, 1.0]},
+        "pan_tilt_speed": {"width": 8, "limits": [0.0, 1.0]},
+        "reset": {"width": 8, "limits": [0.0, 1.0]}
+      }
+    }
+  }
+}
