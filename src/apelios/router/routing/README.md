@@ -87,7 +87,7 @@ When both files define the same source (e.g., `input.steamdeck.imu.pitch`):
 - `input.steamdeck.button.r_trackpad_touch`, `.r_trackpad_press`
 
 ### Analog Sticks (absolute_bi, -1 to 1)
-- `input.steamdeck.joy.x`, `.joy.y` (left stick)
+- `input.steamdeck.left_stick.x`, `.left_stick.y` (left stick)
 - `input.steamdeck.right_stick.x`, `.right_stick.y`
 
 ### Triggers (absolute_uni, 0 to 1)

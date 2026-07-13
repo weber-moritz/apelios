@@ -77,9 +77,9 @@ class SteamDeckAdapter(BaseInputAdapter):
 		"l_trackpad_press": "button.l_trackpad_press",
 		"r_trackpad_touch": "button.r_trackpad_touch",
 		"r_trackpad_press": "button.r_trackpad_press",
-		# Analog sticks (remap to simpler names)
-		"left_stick_x": "joy.x",
-		"left_stick_y": "joy.y",
+		# Analog sticks
+		"left_stick_x": "left_stick.x",
+		"left_stick_y": "left_stick.y",
 		"right_stick_x": "right_stick.x",
 		"right_stick_y": "right_stick.y",
 		# Triggers
@@ -129,8 +129,8 @@ class SteamDeckAdapter(BaseInputAdapter):
 		"button.r_trackpad_touch": "absolute_uni",
 		"button.r_trackpad_press": "absolute_uni",
 		# Analog sticks: absolute_bi (-1 to 1)
-		"joy.x": "absolute_bi",
-		"joy.y": "absolute_bi",
+		"left_stick.x": "absolute_bi",
+		"left_stick.y": "absolute_bi",
 		"right_stick.x": "absolute_bi",
 		"right_stick.y": "absolute_bi",
 		# Triggers: absolute_uni (0 to 1)
@@ -150,13 +150,14 @@ class SteamDeckAdapter(BaseInputAdapter):
 	}
 
 	# Per-axis sensitivity scaling factors (default = 1.0)
-	# IMU needs 0.1x to convert 10 real revolutions -> 1 output revolution
+	# IMU needs 0.01x to convert 100 real revolutions -> 1 output revolution for rate-based control
+	# Sticks use 0.01x for fine control when used as absolute values
 	_AXIS_SCALES = {
-		"imu.*": 1,  # Wildcard matches imu.pitch, imu.yaw, imu.roll
-		"joy.x": 0.2,  # Scale down left stick for finer control
-		"joy.y": 0.2,  # Scale down left stick for finer control
-		"right_stick.x": 0.2,  # Scale down right stick for finer control
-		"right_stick.y": 0.2,  # Scale down right stick for finer control
+		"imu.*": 0.01,  # Wildcard matches imu.pitch, imu.yaw, imu.roll - heavily scaled down for rate control
+		"left_stick.x": 0.01,  # Scale down left stick for finer control
+		"left_stick.y": 0.01,  # Scale down left stick for finer control
+		"right_stick.x": 0.01,  # Scale down right stick for finer control
+		"right_stick.y": 0.01,  # Scale down right stick for finer control
 	}
 
 	def __init__(self, device: str = "steamdeck", deck: Any | None = None) -> None:

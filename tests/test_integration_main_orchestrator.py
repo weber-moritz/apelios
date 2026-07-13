@@ -128,7 +128,8 @@ async def test_orchestrator_starts_and_manages_broker_and_fixture(tmp_path, patc
         assert len(received_messages) >= 1
         
         # 4. ASSERT MATH: 0.8 * 255 = 204
-        final_data = json.loads(received_messages[0].decode("utf-8"))
+        # Check last message (not first) because Task 021 now outputs initialization messages first
+        final_data = json.loads(received_messages[-1].decode("utf-8"))
         assert final_data["universe"] == 1
         assert final_data["address"] == 10
         assert final_data["value"] == 204
