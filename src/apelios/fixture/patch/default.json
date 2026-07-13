@@ -39,12 +39,176 @@
       "address": 1,
       "parameters": {
         "pan": {
-          "width": 8,
+          "width": 16,
           "limits": [-1.0, 1.0]
         },
         "tilt": {
+          "width": 16,
+          "limits": [-1.0, 1.0]
+        },
+        "roll": {
+          "width": 16,
+          "limits": [-1.0, 1.0]
+        },
+        "a": {
+          "width": 8,
+          "limits": [0.0, 1.0]
+        },
+        "b": {
+          "width": 8,
+          "limits": [0.0, 1.0]
+        },
+        "x": {
+          "width": 8,
+          "limits": [0.0, 1.0]
+        },
+        "y": {
+          "width": 8,
+          "limits": [0.0, 1.0]
+        },
+        "l1": {
+          "width": 8,
+          "limits": [0.0, 1.0]
+        },
+        "r1": {
+          "width": 8,
+          "limits": [0.0, 1.0]
+        },
+        "l2_click": {
+          "width": 8,
+          "limits": [0.0, 1.0]
+        },
+        "r2_click": {
+          "width": 8,
+          "limits": [0.0, 1.0]
+        },
+        "dpad_up": {
+          "width": 8,
+          "limits": [0.0, 1.0]
+        },
+        "dpad_down": {
+          "width": 8,
+          "limits": [0.0, 1.0]
+        },
+        "dpad_left": {
+          "width": 8,
+          "limits": [0.0, 1.0]
+        },
+        "dpad_right": {
+          "width": 8,
+          "limits": [0.0, 1.0]
+        },
+        "select": {
+          "width": 8,
+          "limits": [0.0, 1.0]
+        },
+        "start": {
+          "width": 8,
+          "limits": [0.0, 1.0]
+        },
+        "steam": {
+          "width": 8,
+          "limits": [0.0, 1.0]
+        },
+        "quick_access": {
+          "width": 8,
+          "limits": [0.0, 1.0]
+        },
+        "l_lower_grip": {
+          "width": 8,
+          "limits": [0.0, 1.0]
+        },
+        "r_lower_grip": {
+          "width": 8,
+          "limits": [0.0, 1.0]
+        },
+        "l_upper_grip": {
+          "width": 8,
+          "limits": [0.0, 1.0]
+        },
+        "r_upper_grip": {
+          "width": 8,
+          "limits": [0.0, 1.0]
+        },
+        "l_stick_press": {
+          "width": 8,
+          "limits": [0.0, 1.0]
+        },
+        "r_stick_press": {
+          "width": 8,
+          "limits": [0.0, 1.0]
+        },
+        "l_stick_touch": {
+          "width": 8,
+          "limits": [0.0, 1.0]
+        },
+        "r_stick_touch": {
+          "width": 8,
+          "limits": [0.0, 1.0]
+        },
+        "l_trackpad_touch": {
+          "width": 8,
+          "limits": [0.0, 1.0]
+        },
+        "l_trackpad_press": {
+          "width": 8,
+          "limits": [0.0, 1.0]
+        },
+        "r_trackpad_touch": {
+          "width": 8,
+          "limits": [0.0, 1.0]
+        },
+        "r_trackpad_press": {
+          "width": 8,
+          "limits": [0.0, 1.0]
+        },
+        "joy_x": {
           "width": 8,
           "limits": [-1.0, 1.0]
+        },
+        "joy_y": {
+          "width": 8,
+          "limits": [-1.0, 1.0]
+        },
+        "right_stick_x": {
+          "width": 8,
+          "limits": [-1.0, 1.0]
+        },
+        "right_stick_y": {
+          "width": 8,
+          "limits": [-1.0, 1.0]
+        },
+        "left_trigger": {
+          "width": 8,
+          "limits": [0.0, 1.0]
+        },
+        "right_trigger": {
+          "width": 8,
+          "limits": [0.0, 1.0]
+        },
+        "left_trackpad_x": {
+          "width": 8,
+          "limits": [-1.0, 1.0]
+        },
+        "left_trackpad_y": {
+          "width": 8,
+          "limits": [-1.0, 1.0]
+        },
+        "right_trackpad_x": {
+          "width": 8,
+          "limits": [-1.0, 1.0]
+        },
+        "right_trackpad_y": {
+          "width": 8,
+          "limits": [-1.0, 1.0]
+        },
+        "left_trackpad_pressure": {
+          "width": 8,
+          "limits": [0.0, 1.0]
+        },
+        "right_trackpad_pressure": {
+          "width": 8,
+          "limits": [0.0, 1.0]
         }
       }
     }
