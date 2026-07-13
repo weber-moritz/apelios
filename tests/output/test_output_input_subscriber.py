@@ -31,9 +31,11 @@ class TestOutputInputSubscriberParsing:
         """Subscriber should parse topic like 'output.1.42' correctly."""
         subscriber = OutputInputSubscriber(mock_core)
         
-        # Test valid topic parsing
-        payload = json.dumps({"universe": 1, "address": 42, "value": 135}).encode()
-        subscriber("output.1.42", payload)
+        # Test valid topic parsing - create mock msg object
+        msg = MagicMock()
+        msg.subject = "output.1.42"
+        msg.data = json.dumps({"universe": 1, "address": 42, "value": 135}).encode()
+        subscriber(msg)
         
         # Verify core was called with correct values
         mock_core.add_to_buffer.assert_called_once_with(
@@ -45,8 +47,10 @@ class TestOutputInputSubscriberParsing:
         subscriber = OutputInputSubscriber(mock_core)
         
         # Test with different values
-        payload = json.dumps({"universe": 2, "address": 100, "value": 255}).encode()
-        subscriber("output.2.100", payload)
+        msg = MagicMock()
+        msg.subject = "output.2.100"
+        msg.data = json.dumps({"universe": 2, "address": 100, "value": 255}).encode()
+        subscriber(msg)
         
         mock_core.add_to_buffer.assert_called_once_with(
             universe=2, address=100, value=255
@@ -56,8 +60,10 @@ class TestOutputInputSubscriberParsing:
         """Subscriber should call core.add_to_buffer() with correct arguments."""
         subscriber = OutputInputSubscriber(mock_core)
         
-        payload = json.dumps({"universe": 5, "address": 20, "value": 100}).encode()
-        subscriber("output.5.20", payload)
+        msg = MagicMock()
+        msg.subject = "output.5.20"
+        msg.data = json.dumps({"universe": 5, "address": 20, "value": 100}).encode()
+        subscriber(msg)
         
         mock_core.add_to_buffer.assert_called_once()
         call_args = mock_core.add_to_buffer.call_args
@@ -74,10 +80,12 @@ class TestOutputInputSubscriberErrorHandling:
         subscriber = OutputInputSubscriber(mock_core)
         
         # Test with invalid topic (not following output.<universe>.<address>)
-        payload = json.dumps({"universe": 1, "address": 42, "value": 135}).encode()
+        msg = MagicMock()
+        msg.subject = "invalid.topic"
+        msg.data = json.dumps({"universe": 1, "address": 42, "value": 135}).encode()
         
         # Should not raise an error even with invalid topic
-        subscriber("invalid.topic", payload)
+        subscriber(msg)
         
         # Should still parse payload and call core
         mock_core.add_to_buffer.assert_called_once()
@@ -87,8 +95,10 @@ class TestOutputInputSubscriberErrorHandling:
         subscriber = OutputInputSubscriber(mock_core)
         
         # Test with missing universe field
-        payload = json.dumps({"address": 42, "value": 135}).encode()
-        subscriber("output.1.42", payload)
+        msg = MagicMock()
+        msg.subject = "output.1.42"
+        msg.data = json.dumps({"address": 42, "value": 135}).encode()
+        subscriber(msg)
         
         # Should not call core if required fields are missing
         mock_core.add_to_buffer.assert_not_called()
@@ -98,7 +108,10 @@ class TestOutputInputSubscriberErrorHandling:
         subscriber = OutputInputSubscriber(mock_core)
         
         # Test with invalid JSON
-        subscriber("output.1.42", b"invalid json")
+        msg = MagicMock()
+        msg.subject = "output.1.42"
+        msg.data = b"invalid json"
+        subscriber(msg)
         
         # Should not call core with invalid JSON
         mock_core.add_to_buffer.assert_not_called()
@@ -108,7 +121,10 @@ class TestOutputInputSubscriberErrorHandling:
         subscriber = OutputInputSubscriber(mock_core)
         
         # Test with empty payload
-        subscriber("output.1.42", b"")
+        msg = MagicMock()
+        msg.subject = "output.1.42"
+        msg.data = b""
+        subscriber(msg)
         
         # Should not call core with empty payload
         mock_core.add_to_buffer.assert_not_called()
@@ -117,8 +133,10 @@ class TestOutputInputSubscriberErrorHandling:
         """Subscriber should handle missing universe field."""
         subscriber = OutputInputSubscriber(mock_core)
         
-        payload = json.dumps({"address": 42, "value": 135}).encode()
-        subscriber("output.1.42", payload)
+        msg = MagicMock()
+        msg.subject = "output.1.42"
+        msg.data = json.dumps({"address": 42, "value": 135}).encode()
+        subscriber(msg)
         
         mock_core.add_to_buffer.assert_not_called()
 
@@ -126,8 +144,10 @@ class TestOutputInputSubscriberErrorHandling:
         """Subscriber should handle missing address field."""
         subscriber = OutputInputSubscriber(mock_core)
         
-        payload = json.dumps({"universe": 1, "value": 135}).encode()
-        subscriber("output.1.42", payload)
+        msg = MagicMock()
+        msg.subject = "output.1.42"
+        msg.data = json.dumps({"universe": 1, "value": 135}).encode()
+        subscriber(msg)
         
         mock_core.add_to_buffer.assert_not_called()
 
@@ -135,7 +155,9 @@ class TestOutputInputSubscriberErrorHandling:
         """Subscriber should handle missing value field."""
         subscriber = OutputInputSubscriber(mock_core)
         
-        payload = json.dumps({"universe": 1, "address": 42}).encode()
-        subscriber("output.1.42", payload)
+        msg = MagicMock()
+        msg.subject = "output.1.42"
+        msg.data = json.dumps({"universe": 1, "address": 42}).encode()
+        subscriber(msg)
         
         mock_core.add_to_buffer.assert_not_called()

@@ -151,7 +151,8 @@ class FixtureCore:
         """Get parameter offset, either explicit or sequential.
         
         If parameter has explicit 'address' field, use it.
-        Otherwise, calculate sequential offset based on previous parameters' (offset + width).
+        Otherwise, calculate sequential offset based on previous parameters' channel counts.
+        The 'width' field indicates bit depth (8 or 16), which translates to channel count.
         """
         # If parameter has explicit address, use it
         if "address" in parameter_patch:
@@ -162,9 +163,11 @@ class FixtureCore:
         for param_name, param_patch in parameters.items():
             if param_name == parameter_name:
                 return offset
-            # Add this parameter's width to the offset
+            # Add this parameter's DMX channel count to the offset
+            # width=8 means 8-bit = 1 channel, width=16 means 16-bit = 2 channels
             param_width = int(param_patch.get("width", 8))
-            offset += param_width
+            channel_count = 2 if param_width == 16 else 1
+            offset += channel_count
         
         return offset
 

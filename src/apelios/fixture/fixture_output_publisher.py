@@ -28,4 +28,3 @@ class FixtureOutputPublisher:
             }
             subject = f"output.{universe}.{address}"
             await self.broker.publish(subject, json.dumps(payload).encode("utf-8"))
-            print(f"{universe}:{address}={numeric_value}")

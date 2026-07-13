@@ -33,15 +33,14 @@ class OutputInputSubscriber:
         """
         self.core = core
 
-    def __call__(self, subject: str, payload: bytes) -> None:
+    def __call__(self, msg: Any) -> None:
         """Handle incoming message from broker.
         
         Args:
-            subject: NATS topic subject (e.g., "output.1.42").
-            payload: JSON-encoded message payload as bytes.
+            msg: NATS message object with subject and data attributes.
         """
         try:
-            data = json.loads(payload.decode('utf-8'))
+            data = json.loads(msg.data.decode('utf-8'))
         except (json.JSONDecodeError, UnicodeDecodeError):
             return
 
