@@ -39,15 +39,15 @@
       "address": 1,
       "parameters": {
         "pan": {
-          "width": 16,
+          "width": 8,
           "limits": [-1.0, 1.0]
         },
         "tilt": {
-          "width": 16,
+          "width": 8,
           "limits": [-1.0, 1.0]
         },
         "roll": {
-          "width": 16,
+          "width": 8,
           "limits": [-1.0, 1.0]
         },
         "a": {

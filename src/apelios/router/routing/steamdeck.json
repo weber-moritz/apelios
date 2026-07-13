@@ -30,8 +30,6 @@
     "input.steamdeck.button.r_trackpad_press": "steamdeck-input.r_trackpad_press",
     "input.steamdeck.joy.x": "steamdeck-input.joy_x",
     "input.steamdeck.joy.y": "steamdeck-input.joy_y",
-    "input.steamdeck.right_stick.x": "steamdeck-input.right_stick_x",
-    "input.steamdeck.right_stick.y": "steamdeck-input.right_stick_y",
     "input.steamdeck.left_trigger": "steamdeck-input.left_trigger",
     "input.steamdeck.right_trigger": "steamdeck-input.right_trigger",
     "input.steamdeck.left_trackpad.x": "steamdeck-input.left_trackpad_x",
@@ -40,8 +38,6 @@
     "input.steamdeck.right_trackpad.y": "steamdeck-input.right_trackpad_y",
     "input.steamdeck.left_trackpad.pressure": "steamdeck-input.left_trackpad_pressure",
     "input.steamdeck.right_trackpad.pressure": "steamdeck-input.right_trackpad_pressure",
-    "input.steamdeck.imu.pitch": "steamdeck-input.pan",
-    "input.steamdeck.imu.yaw": "steamdeck-input.tilt",
     "input.steamdeck.imu.roll": "steamdeck-input.roll"
   }
 }

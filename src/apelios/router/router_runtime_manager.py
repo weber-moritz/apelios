@@ -24,24 +24,28 @@ def _load_default_profile() -> dict[str, str]:
     Returns simple source->target mapping dict (no nested intent/sensitivity).
     """
 
-    def _load_mappings(path: Path) -> dict[str, str]:
+    def _load_mappings(path: Path) -> dict[str, str | list[str]]:
         if not path.exists():
             return {}
 
         with path.open() as f:
             data = json.load(f)
 
-        # New format: simple source->target mapping
+        # New format: simple source->target mapping (can be str or list[str])
         mappings = data.get("mappings", {})
         if not isinstance(mappings, dict):
             return {}
 
         # Convert old format (nested dicts) to new format if needed
-        result = {}
+        result: dict[str, str | list[str]] = {}
         for source, mapping in mappings.items():
             if isinstance(mapping, dict):
                 # Old format: {"source": {"target": "target.group1.param", "intent": "..."}}
-                result[source] = mapping.get("target", mapping)
+                target = mapping.get("target", mapping)
+                result[source] = target
+            elif isinstance(mapping, list):
+                # New format: {"source": ["target1.param", "target2.param"]}
+                result[source] = mapping
             else:
                 # New format: {"source": "target.group1.param"}
                 result[source] = mapping

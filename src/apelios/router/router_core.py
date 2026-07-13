@@ -13,19 +13,22 @@ class MappingRouter:
 	No math, state, or compensation is applied here (reserved for fixture layer).
 	"""
 
-	def __init__(self, profile: dict[str, str] | None = None) -> None:
-		"""Initialize with a routing profile mapping source to target.
+	def __init__(self, profile: dict[str, str | list[str]] | None = None) -> None:
+		"""Initialize with a routing profile mapping source to target(s).
 		
 		Args:
-		    profile: Dict mapping input source (e.g., "input.device.axis") to output target (e.g., "target.group1.param")
+		    profile: Dict mapping input source (e.g., "input.device.axis") to output target(s).
+		              Can be a string for single target or list of strings for multiple targets.
 		"""
-		self.profile: dict[str, str] = profile or {}
+		self.profile: dict[str, str | list[str]] = profile or {}
 
 	def handle_input(self, source: str, value: float, type: str | None = None, timestamp: float | None = None, payload: dict[str, Any] | None = None) -> dict[str, dict[str, Any]]:
-		"""Map an input source to its target and return the output payload immediately.
+		"""Map an input source to its target(s) and return the output payload immediately.
 		
 		This is a pure passthrough - no state is stored, no math is applied.
 		The payload from the input layer flows through unchanged.
+		
+		Supports both single target (str) and multiple targets (list of str) per source.
 		
 		Args:
 		    source: The input source identifier (e.g., "input.device.axis")
@@ -41,22 +44,33 @@ class MappingRouter:
 		"""
 		outputs: dict[str, dict[str, Any]] = {}
 		
-		# Look up the target for this source
+		# Look up the target(s) for this source
 		target = self.profile.get(source)
 		if not target:
 			# Source not mapped, return empty dict
 			return outputs
 		
+		# Normalize to list of targets (support both single string and list of strings)
+		if isinstance(target, str):
+			targets = [target]
+		elif isinstance(target, list):
+			targets = target
+		else:
+			# Invalid target type, skip
+			return outputs
+		
 		# For Phase 7: use full payload if provided (pure passthrough)
 		if payload is not None:
-			outputs[target] = payload
+			for target_name in targets:
+				outputs[target_name] = payload
 		else:
 			# Legacy: create payload from individual fields
-			outputs[target] = {
-				"value": float(value),
-				"type": type,
-				"timestamp": timestamp,
-				"source": source,
-			}
+			for target_name in targets:
+				outputs[target_name] = {
+					"value": float(value),
+					"type": type,
+					"timestamp": timestamp,
+					"source": source,
+				}
 		
 		return outputs

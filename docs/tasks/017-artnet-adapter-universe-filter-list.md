@@ -1,1 +1,0 @@
-add the option to add a "universe" field to the artnet adapter config. this can be a list and is a whitelist for universes that the artnet will send. if its not present or empty, ALL universes will be send. if it is defined, only the selected universe or universes will be send.
