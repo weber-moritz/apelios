@@ -2,13 +2,7 @@ This project will be head turning.
 Its to contol moving heads (like the Clay Paky Alpha Profile 1500) with a steam deck.
 
 # USAGE
-use `python -m src.apelios.main` to execute the project
-## Structure:
-I use VScode to write the code.
-If i want to test stuff on the hardware, i use ssh to connect to the steam deck with vscode and code there.
-## Code:
-- `scripts` is for deployment, compiling and stuff like that
-- `src` contains the module that is apelios. this is a self executable module 
+use `python -m apelios.main_orchestrator` to execute the project
 
 
 ## Python:

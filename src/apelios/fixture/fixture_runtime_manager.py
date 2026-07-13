@@ -11,7 +11,7 @@ from apelios.fixture.fixture_input_subscriber import FixtureInputSubscriber
 from apelios.fixture.fixture_output_publisher import FixtureOutputPublisher
 
 _PATCH_DIR = Path(__file__).with_name("patch")
-_PATCH_PATH = _PATCH_DIR / "default.patch"
+_PATCH_PATH = _PATCH_DIR / "default.json"
 
 
 def _load_default_patch() -> dict:
