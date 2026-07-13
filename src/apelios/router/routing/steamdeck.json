@@ -1,7 +1,7 @@
 {
   "mappings": {
-    "input.steamdeck.imu.pitch": "lixada-mini-move.pan",
-    "input.steamdeck.imu.yaw": "lixada-mini-move.tilt",
+    "input.steamdeck.imu.pitch": "lixada-mini-move.tilt",
+    "input.steamdeck.imu.yaw": "lixada-mini-move.pan",
     "input.steamdeck.right_stick.x": "lixada-mini-move.white",
     "input.steamdeck.right_stick.y": "lixada-mini-move.dimmer"
   }

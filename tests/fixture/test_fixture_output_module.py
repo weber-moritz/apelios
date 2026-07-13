@@ -53,12 +53,16 @@ async def test_output_module_publishes_multiple_dmx_values(output_module, mock_b
 
 
 @pytest.mark.asyncio
-async def test_output_module_prints_state(output_module, capsys):
+async def test_output_module_publishes_dmx(output_module, mock_broker):
+    """Test that publish_dmx correctly publishes to broker without printing."""
     dmx_output = {
         (2, 10): 135,
     }
 
     await output_module.publish_dmx(dmx_output)
 
-    captured = capsys.readouterr()
-    assert "2:10=135" in captured.out
+    # Verify the message was published to the broker
+    mock_broker.publish.assert_awaited_once_with(
+        "output.2.10",
+        '{"universe": 2, "address": 10, "value": 135}'.encode("utf-8"),
+    )

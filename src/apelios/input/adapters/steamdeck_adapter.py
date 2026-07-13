@@ -131,8 +131,8 @@ class SteamDeckAdapter(BaseInputAdapter):
 		# Analog sticks: absolute_bi (-1 to 1)
 		"joy.x": "absolute_bi",
 		"joy.y": "absolute_bi",
-		"right_stick.x": "absolute_bi",
-		"right_stick.y": "absolute_bi",
+		"right_stick.x": "rate",
+		"right_stick.y": "rate",
 		# Triggers: absolute_uni (0 to 1)
 		"left_trigger": "absolute_uni",
 		"right_trigger": "absolute_uni",
@@ -153,8 +153,8 @@ class SteamDeckAdapter(BaseInputAdapter):
 	# IMU needs 0.1x to convert 10 real revolutions -> 1 output revolution
 	_AXIS_SCALES = {
 		"imu.*": 1,  # Wildcard matches imu.pitch, imu.yaw, imu.roll
-		"right_stick.x": 0.2,  # Scale down joystick movement for finer control
-		"right_stick.y": 0.2,  # Scale down joystick movement for finer control
+		"right_stick.x": 2.0,  # Scale up joystick rate for reasonable dimmer control speed
+		"right_stick.y": 2.0,  # Scale up joystick rate for reasonable dimmer control speed
 	}
 
 	def __init__(self, device: str = "steamdeck", deck: Any | None = None) -> None:
