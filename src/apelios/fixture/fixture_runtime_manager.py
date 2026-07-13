@@ -14,14 +14,37 @@ _PATCH_DIR = Path(__file__).with_name("patch")
 _PATCH_PATH = _PATCH_DIR / "default.json"
 
 
-def _load_default_patch() -> dict:
-    if not _PATCH_PATH.exists():
+def _load_patch_file(path: Path) -> dict:
+    """Load a single patch file."""
+    if not path.exists():
         return {}
-
-    with _PATCH_PATH.open() as handle:
+    
+    with path.open() as handle:
         data = json.load(handle)
-
+    
     return data if isinstance(data, dict) else {}
+
+
+def _load_default_patch() -> dict:
+    """Load the default fixture patch, merging all JSON files in the patch directory."""
+    if not _PATCH_DIR.exists():
+        return {}
+    
+    # Load base default.json first
+    patch = _load_patch_file(_PATCH_PATH)
+    
+    # Load all other JSON files in the directory, merging their fixtures
+    for path in sorted(_PATCH_DIR.glob("*.json")):
+        if path == _PATCH_PATH:
+            continue
+        file_patch = _load_patch_file(path)
+        # Merge fixtures from this file
+        if "fixtures" in file_patch and isinstance(file_patch["fixtures"], dict):
+            if "fixtures" not in patch:
+                patch["fixtures"] = {}
+            patch["fixtures"].update(file_patch["fixtures"])
+    
+    return patch
 
 
 class FixtureRuntimeManager:

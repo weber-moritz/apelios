@@ -153,6 +153,8 @@ class SteamDeckAdapter(BaseInputAdapter):
 	# IMU needs 0.1x to convert 10 real revolutions -> 1 output revolution
 	_AXIS_SCALES = {
 		"imu.*": 1,  # Wildcard matches imu.pitch, imu.yaw, imu.roll
+		"right_stick.x": 0.2,  # Scale down joystick movement for finer control
+		"right_stick.y": 0.2,  # Scale down joystick movement for finer control
 	}
 
 	def __init__(self, device: str = "steamdeck", deck: Any | None = None) -> None:
