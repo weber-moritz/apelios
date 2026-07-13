@@ -190,7 +190,9 @@ class ArtNetAdapter(BaseOutputAdapter):
         self.dmx_data = bytearray(512)
         
         # Apply only channels for our configured universe
-        for (universe, address), value in dmx_state.items():
+        # Create a copy to avoid "dictionary changed size during iteration" errors
+        # if dmx_state is modified concurrently by OutputInputSubscriber
+        for (universe, address), value in dict(dmx_state).items():
             if universe != self.universe:
                 continue
             

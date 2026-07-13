@@ -28,7 +28,10 @@ class RouterOutputPublisher:
             outputs: dict mapping target name to payload
                 e.g., {"group1.pan": {"value": 0.5, "type": "delta", "timestamp": 123.0}}
         """
-        for target, payload in outputs.items():
+        # Create a copy to avoid "dictionary changed size during iteration" errors
+        # if outputs is modified concurrently (e.g., by collect_outputs)
+        outputs_copy = dict(outputs)
+        for target, payload in outputs_copy.items():
             try:
                 payload_json = json.dumps(payload).encode("utf-8")
             except Exception as e:

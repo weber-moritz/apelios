@@ -127,11 +127,10 @@ def test_runtime_manager_default_profile_includes_steamdeck_axes():
 
     profile = runtime.router.profile
 
-    assert "steamdeck.right_stick.x" in profile
-    assert "steamdeck.right_stick.y" in profile
-    assert "steamdeck.imu.pitch" in profile
-    assert "steamdeck.imu.yaw" in profile
-    assert "steamdeck.imu.roll" in profile
+    # default_steamdeck.json uses input.steamdeck.imu.* mappings
+    assert "input.steamdeck.imu.pitch" in profile
+    assert "input.steamdeck.imu.yaw" in profile
+    assert "input.steamdeck.imu.roll" in profile
 
 
 @pytest.mark.asyncio

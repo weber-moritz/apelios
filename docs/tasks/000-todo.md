@@ -2,3 +2,7 @@
 - hot load for input and output adapters
 - dis- and reconnect proof adapters
 - gui
+- nats port conflict detection
+- nats is being shut down if apelios crashes to avoid zombie processes
+- create a full flow test to test all layers with fake input and output adapters
+- 

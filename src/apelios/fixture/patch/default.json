@@ -1,16 +1,41 @@
 {
   "fixtures": {
-    "movinghead01": {
-      "type": "robe_robospot",
-      "universe": 2,
-      "address": 10,
+    "test": {
+      "type": "generic",
+      "universe": 1,
+      "address": 1,
       "parameters": {
-        "pan": {
+        "1": {
           "type": "absolute_uni",
-          "width": 16,
+          "width": 8,
           "limits": [0.0, 1.0]
         },
-        "tilt": {
+        "2": {
+          "type": "absolute_uni",
+          "width": 8,
+          "limits": [0.0, 1.0]
+        },
+        "3": {
+          "type": "absolute_uni",
+          "width": 8,
+          "limits": [0.0, 1.0]
+        },
+        "4": {
+          "type": "absolute_uni",
+          "width": 8,
+          "limits": [0.0, 1.0]
+        },
+        "5": {
+          "type": "absolute_uni",
+          "width": 8,
+          "limits": [0.0, 1.0]
+        },
+        "6": {
+          "type": "absolute_uni",
+          "width": 8,
+          "limits": [0.0, 1.0]
+        },
+        "7": {
           "type": "absolute_uni",
           "width": 8,
           "limits": [0.0, 1.0]

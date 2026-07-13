@@ -16,7 +16,10 @@ class FixtureOutputPublisher:
         self.broker = broker
 
     async def publish_dmx(self, dmx_output: dict[tuple[int, int], int]) -> None:
-        for (universe, address), value in dmx_output.items():
+        # Create a copy to avoid "dictionary changed size during iteration" errors
+        # if dmx_output is modified concurrently
+        dmx_output_copy = dict(dmx_output)
+        for (universe, address), value in dmx_output_copy.items():
             numeric_value = int(value)
             payload = {
                 "universe": universe,

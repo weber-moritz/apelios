@@ -1,6 +1,6 @@
 {
   "source_ip": "127.0.0.1",
   "target_ip": "127.0.0.1",
-  "universe": 0,
+  "universe": 1,
   "output_rate_hz": 40
 }

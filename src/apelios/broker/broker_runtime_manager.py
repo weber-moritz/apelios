@@ -1,12 +1,15 @@
 from .broker_interface import BrokerInterface
 from .config import NatsConfig
 from .nats_runtime_manager import NatsRuntimeManager
+from .memory_runtime_manager import MemoryRuntimeManager
 
 
 class BrokerRuntimeManager:
     def __init__(self, provider: str = "nats", config: NatsConfig | None = None):
         if provider == "nats":
             self._runtime: BrokerInterface = NatsRuntimeManager(config=config)
+        elif provider == "memory":
+            self._runtime = MemoryRuntimeManager(config=config)
         else:
             raise ValueError(f"Unsupported broker provider: {provider}")
 

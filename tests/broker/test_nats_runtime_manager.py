@@ -13,20 +13,31 @@ async def test_start_server_launches_process_and_waits_for_health(tmp_path, monk
     runtime = NatsRuntimeManager(config) 
 
     fake_process = MagicMock()
-    fake_process.Popen.varialbe = None # <- here
+    fake_process.Popen.varialbe = None
     fake_process.poll.return_value = None
-    popen_mock = MagicMock(return_value=fake_process)
+    fake_pgrep_process = MagicMock()
+    fake_pgrep_process.stdout = ""
+    popen_mock = MagicMock(side_effect=lambda *args, **kwargs: fake_process if "nats-server" in str(args) else fake_pgrep_process)
     health_check_mock = AsyncMock(return_value=True)
+    
+    # Mock pgrep to return empty (no stale processes)
+    pgrep_completed = subprocess.CompletedProcess(args=[], returncode=1, stdout="", stderr="")
+    pgrep_mock = MagicMock(return_value=pgrep_completed)
 
     monkeypatch.setattr(
         "apelios.broker.nats_runtime_manager.subprocess.Popen",
         popen_mock,
     )
+    monkeypatch.setattr(
+        "apelios.broker.nats_runtime_manager.subprocess.run",
+        pgrep_mock,
+    )
     monkeypatch.setattr(runtime, "health_check", health_check_mock)
 
     await runtime.start_server()
 
-    popen_mock.assert_called_once()
+    # Popen is called once for nats-server (pgrep uses subprocess.run, not Popen directly)
+    assert popen_mock.call_count == 1
     health_check_mock.assert_awaited_once_with(timeout=5)
     assert runtime.process is fake_process
     assert runtime.is_running()
@@ -71,7 +82,11 @@ async def test_stop_server_kills_if_terminate_times_out(tmp_path, monkeypatch):
     runtime = NatsRuntimeManager(config) 
 
     fake_process = MagicMock()
-    fake_process.wait.side_effect = subprocess.TimeoutExpired(cmd="nats-server", timeout=3)
+    # First wait() call times out, second succeeds
+    fake_process.wait.side_effect = [
+        subprocess.TimeoutExpired(cmd="nats-server", timeout=3),
+        None  # Second wait() call succeeds
+    ]
     
     monkeypatch.setattr(
         "apelios.broker.nats_runtime_manager.subprocess.Popen",
