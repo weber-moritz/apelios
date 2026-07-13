@@ -128,11 +128,11 @@ class SteamDeckAdapter(BaseInputAdapter):
 		"button.l_trackpad_press": "absolute_uni",
 		"button.r_trackpad_touch": "absolute_uni",
 		"button.r_trackpad_press": "absolute_uni",
-		# Analog sticks: absolute_bi (-1 to 1)
-		"left_stick.x": "absolute_bi",
-		"left_stick.y": "absolute_bi",
-		"right_stick.x": "absolute_bi",
-		"right_stick.y": "absolute_bi",
+		# Analog sticks: rate (for smooth pan/tilt control)
+		"left_stick.x": "rate",
+		"left_stick.y": "rate",
+		"right_stick.x": "rate",
+		"right_stick.y": "rate",
 		# Triggers: absolute_uni (0 to 1)
 		"left_trigger": "absolute_uni",
 		"right_trigger": "absolute_uni",
@@ -150,14 +150,14 @@ class SteamDeckAdapter(BaseInputAdapter):
 	}
 
 	# Per-axis sensitivity scaling factors (default = 1.0)
-	# IMU at 1.0 (rate-based, needs no scaling)
-	# Sticks use 0.01x for fine control when used as absolute values
+	# IMU at 1.5 (rate-based)
+	# Sticks at 0.1 (rate-based, scaled for fine control)
 	_AXIS_SCALES = {
 		"imu.*": 1.5,  # Wildcard matches imu.pitch, imu.yaw, imu.roll
-		"left_stick.x": 0.00001,  # Scale down left stick for finer control
-		"left_stick.y": 0.00001,  # Scale down left stick for finer control
-		"right_stick.x": 0.00001,  # Scale down right stick for finer control
-		"right_stick.y": 0.00001,  # Scale down right stick for finer control
+		"left_stick.x": 0.1,  # Scale down left stick for finer control (rate-based)
+		"left_stick.y": 0.1,  # Scale down left stick for finer control (rate-based)
+		"right_stick.x": 0.1,  # Scale down right stick for finer control (rate-based)
+		"right_stick.y": 0.1,  # Scale down right stick for finer control (rate-based)
 	}
 
 	def __init__(self, device: str = "steamdeck", deck: Any | None = None) -> None:
