@@ -145,6 +145,18 @@ class MouseAdapter(BaseInputAdapter):
 		"middle_button": "absolute_uni",
 	}
 
+	# Default sensitivity scaling for mouse axes
+	# Mouse deltas can be large (50-100+ per frame), so we scale them down
+	# to get smooth, controllable movement.
+	# At 60Hz: 100px/frame * 0.002 scale = 0.2 per frame, ~5 frames to full range
+	# Wheel is more sensitive (0.05) since scroll wheels have finer control
+	_DEFAULT_AXIS_SCALES = {
+		"x": 0.002,
+		"y": 0.002,
+		"wheel": 0.05,
+		"wheel_h": 0.05,
+	}
+
 	def __init__(self, device: str = "mouse", backend: LinuxEvdevMouse | None = None):
 		super().__init__(device=device)
 		self._backend = backend or self._build_backend()
@@ -152,6 +164,10 @@ class MouseAdapter(BaseInputAdapter):
 		# Set axis types for all known axes
 		for axis, axis_type in self._AXIS_TYPES.items():
 			self.set_axis_type(axis, axis_type)
+		
+		# Set default sensitivity scaling for mouse axes
+		for axis, scale in self._DEFAULT_AXIS_SCALES.items():
+			self.set_axis_scale(axis, scale)
 
 	def _build_backend(self) -> LinuxEvdevMouse:
 		"""Create the Linux backend for the current platform."""
