@@ -1,0 +1,1 @@
+if the steam deck scales all axis by the same value (which is sensible) we have the problem that some axis on a movinhead have a smaller range. so to fix that we would need to add a scale factor into the fixture patch. or maybe a deg/bit or so value to scale the movement to the same value.

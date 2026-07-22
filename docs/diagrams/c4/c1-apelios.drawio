@@ -1,0 +1,46 @@
+<mxfile host="Electron">
+  <diagram id="c1-context" name="C1 System Context">
+    <mxGraphModel dx="1414" dy="860" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="850" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="oIqvTXC1jHkSOdLbsCv2-22" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#6c8ebf;fontColor=#ffffff;strokeColor=#405f87;strokeWidth=2;verticalAlign=middle;spacing=10;" value="&lt;h2 style=&quot;margin:0;font-size:14px;&quot;&gt;👤 Lighting Operator&lt;/h2&gt;&lt;p style=&quot;margin:0;font-size:11px;&quot;&gt;[Person]&lt;br&gt;&lt;br&gt;Configures system profiles&lt;br&gt;and performs the live show.&lt;/p&gt;" vertex="1">
+          <mxGeometry height="120" width="240" x="60" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="oIqvTXC1jHkSOdLbsCv2-23" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D3D8DF;fontColor=#000000;strokeColor=#666666;strokeWidth=2;spacing=10;verticalAlign=top;" value="&lt;h2 style=&quot;margin:0;font-size:14px;&quot;&gt;Input Devices&lt;/h2&gt;&lt;p style=&quot;margin:0;font-size:11px;&quot;&gt;[External Hardware]&lt;br&gt;&lt;br&gt;Physical controllers (Steam Deck, MIDI, HID) providing raw inputs.&lt;/p&gt;" vertex="1">
+          <mxGeometry height="140" width="240" x="60" y="240" as="geometry" />
+        </mxCell>
+        <mxCell id="oIqvTXC1jHkSOdLbsCv2-24" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#85bbf0;fontColor=#000000;strokeColor=#0b4884;strokeWidth=2;spacing=10;verticalAlign=top;" value="&lt;h2 style=&quot;margin:0;font-size:14px;&quot;&gt;Apelios&lt;/h2&gt;&lt;p style=&quot;margin:0;font-size:11px;&quot;&gt;[Software System]&lt;br&gt;&lt;br&gt;Intuitive, real-time lighting router. Maps hardware inputs to physical DMX/Art-Net operations.&lt;/p&gt;" vertex="1">
+          <mxGeometry height="140" width="240" x="400" y="240" as="geometry" />
+        </mxCell>
+        <mxCell id="oIqvTXC1jHkSOdLbsCv2-25" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D3D8DF;fontColor=#000000;strokeColor=#666666;strokeWidth=2;spacing=10;verticalAlign=top;" value="&lt;h2 style=&quot;margin:0;font-size:14px;&quot;&gt;Lighting Infrastructure&lt;/h2&gt;&lt;p style=&quot;margin:0;font-size:11px;&quot;&gt;[External System]&lt;br&gt;&lt;br&gt;Physical lighting network, including Art-Net/sACN nodes and DMX fixtures.&lt;/p&gt;" vertex="1">
+          <mxGeometry height="140" width="240" x="740" y="240" as="geometry" />
+        </mxCell>
+        <mxCell id="oIqvTXC1jHkSOdLbsCv2-26" edge="1" parent="1" source="oIqvTXC1jHkSOdLbsCv2-22" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;strokeColor=#444444;fontColor=#333333;strokeWidth=1.5;" target="oIqvTXC1jHkSOdLbsCv2-23">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="oIqvTXC1jHkSOdLbsCv2-27" connectable="0" parent="oIqvTXC1jHkSOdLbsCv2-26" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];backgroundColor=#ffffff;fontColor=#333333;" value="Physically&lt;br&gt;manipulates" vertex="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="oIqvTXC1jHkSOdLbsCv2-28" edge="1" parent="1" source="oIqvTXC1jHkSOdLbsCv2-23" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;strokeColor=#444444;fontColor=#333333;strokeWidth=1.5;" target="oIqvTXC1jHkSOdLbsCv2-24">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="oIqvTXC1jHkSOdLbsCv2-29" connectable="0" parent="oIqvTXC1jHkSOdLbsCv2-28" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];backgroundColor=#ffffff;fontColor=#333333;" value="Hardware&lt;br&gt;signals" vertex="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="oIqvTXC1jHkSOdLbsCv2-30" edge="1" parent="1" source="oIqvTXC1jHkSOdLbsCv2-24" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;strokeColor=#444444;fontColor=#333333;strokeWidth=1.5;" target="oIqvTXC1jHkSOdLbsCv2-25">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="oIqvTXC1jHkSOdLbsCv2-31" connectable="0" parent="oIqvTXC1jHkSOdLbsCv2-30" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];backgroundColor=#ffffff;fontColor=#333333;" value="Outputs&lt;br&gt;Art-Net/sACN" vertex="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

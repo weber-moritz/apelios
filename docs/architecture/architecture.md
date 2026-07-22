@@ -164,7 +164,7 @@ Input: {value: 0.5, type: "rate", timestamp: ...}
 
 #### Responsibilities
 - **Hardware Abstraction:** Support multiple input devices (Steam Deck, Mouse, MIDI, etc.)
-- **Hardware Compensation:** Apply deadzones, jitter filtering, sensitivity curves
+- **Hardware Compensation:** Apply per-axis scaling and deadzones (scale then deadzone to filter in output units)
 - **Normalization:** Convert raw hardware values to standardized floats
 - **Intent Tagging:** Determine and publish the `type` for each axis (absolute_uni, absolute_bi, delta, rate)
 - **Capabilities Manifest:** Publish available axes and their properties on startup

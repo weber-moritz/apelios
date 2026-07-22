@@ -1,0 +1,133 @@
+<mxfile host="65bd71144e">
+    <diagram id="c3-component" name="C3 Component Diagram">
+        <mxGraphModel dx="1096" dy="687" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="900" pageHeight="1100" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="G58tR8-7LvjBWgE-BqXS-80" value="Container: Python Application Runtime (asyncio)" style="swimlane;whiteSpace=wrap;html=1;dashed=1;startSize=23;fillColor=none;strokeColor=#444444;fontColor=#000000;fontStyle=1;rounded=1;strokeWidth=2;" vertex="1" parent="1">
+                    <mxGeometry x="20" y="20" width="760" height="780" as="geometry"/>
+                </mxCell>
+                <mxCell id="G58tR8-7LvjBWgE-BqXS-81" value="&lt;h2 style=&quot;margin:0;font-size:14px;&quot;&gt;Main Orchestrator&lt;/h2&gt;&lt;p style=&quot;margin:0;font-size:11px;&quot;&gt;[Component: Python]&lt;br&gt;&lt;br&gt;System micro-kernel. Starts Broker server, manages component lifecycles, and drives the 60Hz tick() loop.&lt;/p&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#85bbf0;fontColor=#000000;strokeColor=#0b4884;strokeWidth=2;spacing=10;verticalAlign=top;" vertex="1" parent="G58tR8-7LvjBWgE-BqXS-80">
+                    <mxGeometry x="50" y="60" width="240" height="140" as="geometry"/>
+                </mxCell>
+                <mxCell id="G58tR8-7LvjBWgE-BqXS-82" value="&lt;h2 style=&quot;margin:0;font-size:14px;&quot;&gt;Input&lt;/h2&gt;&lt;p style=&quot;margin:0;font-size:11px;&quot;&gt;[Component: Python]&lt;br&gt;&lt;br&gt;Stateless edge modules. Normalizes hardware inputs into absolute, delta, or rate intents.&lt;/p&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#85bbf0;fontColor=#000000;strokeColor=#0b4884;strokeWidth=2;spacing=10;verticalAlign=top;" vertex="1" parent="G58tR8-7LvjBWgE-BqXS-80">
+                    <mxGeometry x="480" y="60" width="240" height="140" as="geometry"/>
+                </mxCell>
+                <mxCell id="G58tR8-7LvjBWgE-BqXS-83" value="&lt;h2 style=&quot;margin:0;font-size:14px;&quot;&gt;Router&lt;/h2&gt;&lt;p style=&quot;margin:0;font-size:11px;&quot;&gt;[Component: Python]&lt;br&gt;&lt;br&gt;Central mapping component. Uses an injected BrokerClient to route incoming inputs to target outputs.&lt;/p&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#85bbf0;fontColor=#000000;strokeColor=#0b4884;strokeWidth=2;spacing=10;verticalAlign=top;" vertex="1" parent="G58tR8-7LvjBWgE-BqXS-80">
+                    <mxGeometry x="480" y="240" width="240" height="140" as="geometry"/>
+                </mxCell>
+                <mxCell id="G58tR8-7LvjBWgE-BqXS-84" value="&lt;h2 style=&quot;margin:0;font-size:14px;&quot;&gt;Fixture&amp;nbsp;&lt;/h2&gt;&lt;p style=&quot;margin:0;font-size:11px;&quot;&gt;[Component: Python]&lt;br&gt;&lt;br&gt;Maintains state across frames. Resolves targets into DMX addresses based on patch definitions.&lt;/p&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#85bbf0;fontColor=#000000;strokeColor=#0b4884;strokeWidth=2;spacing=10;verticalAlign=top;" vertex="1" parent="G58tR8-7LvjBWgE-BqXS-80">
+                    <mxGeometry x="480" y="420" width="240" height="140" as="geometry"/>
+                </mxCell>
+                <mxCell id="G58tR8-7LvjBWgE-BqXS-85" value="&lt;h2 style=&quot;margin:0;font-size:14px;&quot;&gt;Output&lt;/h2&gt;&lt;p style=&quot;margin:0;font-size:11px;&quot;&gt;[Component: Python]&lt;br&gt;&lt;br&gt;Protocol adapter layer. Translates the internal shared DMX state into physical Art-Net/sACN network packets.&lt;/p&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#85bbf0;fontColor=#000000;strokeColor=#0b4884;strokeWidth=2;spacing=10;verticalAlign=top;" vertex="1" parent="G58tR8-7LvjBWgE-BqXS-80">
+                    <mxGeometry x="480" y="600" width="240" height="140" as="geometry"/>
+                </mxCell>
+                <mxCell id="G58tR8-7LvjBWgE-BqXS-86" value="&lt;h2 style=&quot;margin:0;font-size:14px;&quot;&gt;Broker&lt;/h2&gt;&lt;p style=&quot;margin:0;font-size:11px;&quot;&gt;[Component: Python]&lt;br&gt;&lt;br&gt;NATS wrapper and abstraction layer for pub/sub communication between layers.&lt;/p&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D7BDE2;fontColor=#000000;strokeColor=#884EA0;strokeWidth=2;spacing=10;verticalAlign=top;" vertex="1" parent="G58tR8-7LvjBWgE-BqXS-80">
+                    <mxGeometry x="50" y="380" width="240" height="140" as="geometry"/>
+                </mxCell>
+                <mxCell id="G58tR8-7LvjBWgE-BqXS-87" value="await start(),&lt;br&gt;stop()" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;strokeColor=#444444;strokeWidth=1.5;fontColor=#333333;backgroundColor=#ffffff;" edge="1" parent="G58tR8-7LvjBWgE-BqXS-80" source="G58tR8-7LvjBWgE-BqXS-81" target="G58tR8-7LvjBWgE-BqXS-86">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="G58tR8-7LvjBWgE-BqXS-88" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;strokeColor=#444444;strokeWidth=1.5;endArrow=none;" edge="1" parent="G58tR8-7LvjBWgE-BqXS-80">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="400" y="130" as="sourcePoint"/>
+                        <mxPoint x="400" y="670" as="targetPoint"/>
+                        <Array as="points">
+                            <mxPoint x="400" y="130"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="G58tR8-7LvjBWgE-BqXS-89" value="await start(),&lt;br&gt;stop(), tick()" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];backgroundColor=#ffffff;fontColor=#333333;" vertex="1" connectable="0" parent="G58tR8-7LvjBWgE-BqXS-88">
+                    <mxGeometry x="-0.85" relative="1" as="geometry">
+                        <mxPoint x="-60" y="-41" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="G58tR8-7LvjBWgE-BqXS-90" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;strokeColor=#444444;strokeWidth=1.5;endArrow=classic;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="G58tR8-7LvjBWgE-BqXS-80" source="G58tR8-7LvjBWgE-BqXS-81">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="400" y="130" as="sourcePoint"/>
+                        <mxPoint x="480" y="130" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="G58tR8-7LvjBWgE-BqXS-91" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;strokeColor=#444444;strokeWidth=1.5;endArrow=classic;" edge="1" parent="G58tR8-7LvjBWgE-BqXS-80">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="400" y="310" as="sourcePoint"/>
+                        <mxPoint x="480" y="310" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="G58tR8-7LvjBWgE-BqXS-92" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;strokeColor=#444444;strokeWidth=1.5;endArrow=classic;" edge="1" parent="G58tR8-7LvjBWgE-BqXS-80">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="400" y="490" as="sourcePoint"/>
+                        <mxPoint x="480" y="490" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="G58tR8-7LvjBWgE-BqXS-93" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;strokeColor=#444444;strokeWidth=1.5;endArrow=classic;" edge="1" parent="G58tR8-7LvjBWgE-BqXS-80">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="400" y="670" as="sourcePoint"/>
+                        <mxPoint x="480" y="670" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="G58tR8-7LvjBWgE-BqXS-94" value="Publish&lt;br&gt;input.*" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.25;exitY=1;entryX=0.75;entryY=0;strokeColor=#444444;strokeWidth=1.5;fontColor=#333333;backgroundColor=#ffffff;" edge="1" parent="G58tR8-7LvjBWgE-BqXS-80" source="G58tR8-7LvjBWgE-BqXS-82" target="G58tR8-7LvjBWgE-BqXS-86">
+                    <mxGeometry x="-0.102" relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="540" y="220"/>
+                            <mxPoint x="230" y="220"/>
+                        </Array>
+                        <mxPoint as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="G58tR8-7LvjBWgE-BqXS-95" value="Subscribe&lt;br&gt;input.*" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#444444;strokeWidth=1.5;fontColor=#333333;entryX=0;entryY=0.25;exitX=1;exitY=0.15;backgroundColor=#ffffff;" edge="1" parent="G58tR8-7LvjBWgE-BqXS-80" source="G58tR8-7LvjBWgE-BqXS-86" target="G58tR8-7LvjBWgE-BqXS-83">
+                    <mxGeometry x="-0.1709" relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="340" y="401"/>
+                            <mxPoint x="340" y="275"/>
+                        </Array>
+                        <mxPoint as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="G58tR8-7LvjBWgE-BqXS-96" value="Publish&lt;br&gt;target.*" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0;exitY=0.75;strokeColor=#444444;strokeWidth=1.5;fontColor=#333333;entryX=1;entryY=0.35;backgroundColor=#ffffff;" edge="1" parent="G58tR8-7LvjBWgE-BqXS-80" source="G58tR8-7LvjBWgE-BqXS-83" target="G58tR8-7LvjBWgE-BqXS-86">
+                    <mxGeometry x="0.635" relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="430" y="345"/>
+                            <mxPoint x="430" y="429"/>
+                        </Array>
+                        <mxPoint as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="G58tR8-7LvjBWgE-BqXS-97" value="Subscribe&lt;br&gt;target.*" style="edgeStyle=orthogonalEdgeStyle;html=1;entryX=0;entryY=0.25;strokeColor=#444444;strokeWidth=1.5;fontColor=#333333;exitX=1;exitY=0.65;backgroundColor=#ffffff;" edge="1" parent="G58tR8-7LvjBWgE-BqXS-80" source="G58tR8-7LvjBWgE-BqXS-86" target="G58tR8-7LvjBWgE-BqXS-84">
+                    <mxGeometry x="-0.5146" relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="380" y="471"/>
+                            <mxPoint x="380" y="455"/>
+                        </Array>
+                        <mxPoint as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="G58tR8-7LvjBWgE-BqXS-98" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0;exitY=0.75;entryX=1;entryY=0.85;strokeColor=#444444;strokeWidth=1.5;fontColor=#333333;" edge="1" parent="G58tR8-7LvjBWgE-BqXS-80" source="G58tR8-7LvjBWgE-BqXS-84" target="G58tR8-7LvjBWgE-BqXS-86">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="380" y="525"/>
+                            <mxPoint x="380" y="499"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="G58tR8-7LvjBWgE-BqXS-99" value="Publish&lt;br&gt;output.*" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];backgroundColor=#ffffff;fontColor=#333333;" vertex="1" connectable="0" parent="G58tR8-7LvjBWgE-BqXS-98">
+                    <mxGeometry x="-0.15" relative="1" as="geometry">
+                        <mxPoint x="-48" y="-15" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="G58tR8-7LvjBWgE-BqXS-100" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.75;exitY=1;entryX=0;entryY=0.25;strokeColor=#444444;strokeWidth=1.5;fontColor=#333333;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="G58tR8-7LvjBWgE-BqXS-80" source="G58tR8-7LvjBWgE-BqXS-86" target="G58tR8-7LvjBWgE-BqXS-85">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="230" y="635"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="G58tR8-7LvjBWgE-BqXS-101" value="Subscribe&lt;br&gt;output.*" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];backgroundColor=#ffffff;fontColor=#333333;" vertex="1" connectable="0" parent="G58tR8-7LvjBWgE-BqXS-100">
+                    <mxGeometry x="0.25" relative="1" as="geometry">
+                        <mxPoint x="-3" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>

@@ -250,7 +250,7 @@ async def test_adapter_publish_snapshot_includes_source(mock_publisher):
 
 
 # =============================================================================
-# AXIS SCALING TESTS (TDD - RED PHASE)
+# AXIS SCALING TESTS
 # =============================================================================
 
 
@@ -360,3 +360,227 @@ async def test_publish_snapshot_applies_scaling(mock_publisher):
     assert joy_x_call["value"] == 0.5   # 1.0 * 0.5
     assert joy_y_call["value"] == 1.0   # 0.5 * 2.0
     assert imu_pitch_call["value"] == 1.0  # 1.0 * 1.0 (default)
+
+
+# =============================================================================
+# DEADZONE TESTS
+# =============================================================================
+
+
+@pytest.mark.asyncio
+async def test_get_axis_deadzone_returns_zero_by_default(mock_publisher):
+    """get_axis_deadzone should return 0.0 for axes with no deadzone defined."""
+    adapter = ConcreteTestAdapter(device="test_device")
+    await adapter.start(input_publisher=mock_publisher)
+    
+    # No deadzones have been set, should default to 0.0
+    assert adapter.get_axis_deadzone("any_axis") == 0.0
+    assert adapter.get_axis_deadzone("imu.pitch") == 0.0
+    assert adapter.get_axis_deadzone("joy.x") == 0.0
+
+
+@pytest.mark.asyncio
+async def test_set_axis_deadzone_stores_exact_match(mock_publisher):
+    """set_axis_deadzone should store and get_axis_deadzone should retrieve exact matches."""
+    adapter = ConcreteTestAdapter(device="test_device")
+    await adapter.start(input_publisher=mock_publisher)
+    
+    adapter.set_axis_deadzone("imu.pitch", 0.1)
+    adapter.set_axis_deadzone("joy.x", 0.05)
+    
+    assert adapter.get_axis_deadzone("imu.pitch") == 0.1
+    assert adapter.get_axis_deadzone("joy.x") == 0.05
+    # Other axes should still default to 0.0
+    assert adapter.get_axis_deadzone("imu.yaw") == 0.0
+
+
+@pytest.mark.asyncio
+async def test_get_axis_deadzone_wildcard_match(mock_publisher):
+    """get_axis_deadzone should match wildcard patterns like 'imu.*'."""
+    adapter = ConcreteTestAdapter(device="test_device")
+    await adapter.start(input_publisher=mock_publisher)
+    
+    adapter.set_axis_deadzone("imu.*", 0.05)
+    
+    # All imu.* axes should match
+    assert adapter.get_axis_deadzone("imu.pitch") == 0.05
+    assert adapter.get_axis_deadzone("imu.yaw") == 0.05
+    assert adapter.get_axis_deadzone("imu.roll") == 0.05
+
+
+@pytest.mark.asyncio
+async def test_get_axis_deadzone_wildcard_no_match(mock_publisher):
+    """get_axis_deadzone should return 0.0 for axes not matching any wildcard."""
+    adapter = ConcreteTestAdapter(device="test_device")
+    await adapter.start(input_publisher=mock_publisher)
+    
+    adapter.set_axis_deadzone("imu.*", 0.05)
+    
+    # Non-imu axes should not match and return default
+    assert adapter.get_axis_deadzone("joy.x") == 0.0
+    assert adapter.get_axis_deadzone("button.a") == 0.0
+
+
+@pytest.mark.asyncio
+async def test_get_axis_deadzone_exact_takes_precedence_over_wildcard(mock_publisher):
+    """Exact axis match should take precedence over wildcard match."""
+    adapter = ConcreteTestAdapter(device="test_device")
+    await adapter.start(input_publisher=mock_publisher)
+    
+    adapter.set_axis_deadzone("imu.*", 0.1)
+    adapter.set_axis_deadzone("imu.pitch", 0.2)  # Override for pitch specifically
+    
+    assert adapter.get_axis_deadzone("imu.pitch") == 0.2  # Exact match wins
+    assert adapter.get_axis_deadzone("imu.yaw") == 0.1   # Wildcard still applies
+
+
+@pytest.mark.asyncio
+async def test_publish_applies_deadzone_to_rate(mock_publisher):
+    """publish should apply deadzone to rate axes (symmetric around 0.0)."""
+    adapter = ConcreteTestAdapter(device="test_device")
+    await adapter.start(input_publisher=mock_publisher)
+    
+    # Set axis type to rate and deadzone
+    adapter.set_axis_type("stick.x", "rate")
+    adapter.set_axis_deadzone("stick.x", 0.1)
+    
+    # Value within deadzone should become 0.0
+    await adapter.publish("stick.x", 0.05)
+    call_args = mock_publisher.publish.await_args
+    assert call_args[1]["value"] == 0.0  # 0.05 is within [-0.1, 0.1]
+    
+    # Value outside deadzone should pass through
+    await adapter.publish("stick.x", 0.5)
+    call_args = mock_publisher.publish.await_args
+    assert call_args[1]["value"] == 0.5  # 0.5 is outside [-0.1, 0.1]
+
+
+@pytest.mark.asyncio
+async def test_publish_applies_deadzone_to_absolute_bi(mock_publisher):
+    """publish should apply deadzone to absolute_bi axes (symmetric around 0.0)."""
+    adapter = ConcreteTestAdapter(device="test_device")
+    await adapter.start(input_publisher=mock_publisher)
+    
+    # Set axis type to absolute_bi and deadzone
+    adapter.set_axis_type("stick.x", "absolute_bi")
+    adapter.set_axis_deadzone("stick.x", 0.1)
+    
+    # Value within deadzone should become 0.0
+    await adapter.publish("stick.x", -0.05)
+    call_args = mock_publisher.publish.await_args
+    assert call_args[1]["value"] == 0.0  # -0.05 is within [-0.1, 0.1]
+    
+    # Negative value outside deadzone should pass through
+    await adapter.publish("stick.x", -0.5)
+    call_args = mock_publisher.publish.await_args
+    assert call_args[1]["value"] == -0.5  # -0.5 is outside [-0.1, 0.1]
+
+
+@pytest.mark.asyncio
+async def test_publish_applies_deadzone_to_absolute_uni(mock_publisher):
+    """publish should apply deadzone to absolute_uni axes (only positive side)."""
+    adapter = ConcreteTestAdapter(device="test_device")
+    await adapter.start(input_publisher=mock_publisher)
+    
+    # Set axis type to absolute_uni and deadzone
+    adapter.set_axis_type("fader", "absolute_uni")
+    adapter.set_axis_deadzone("fader", 0.05)
+    
+    # Small positive value within deadzone should become 0.0
+    await adapter.publish("fader", 0.03)
+    call_args = mock_publisher.publish.await_args
+    assert call_args[1]["value"] == 0.0  # 0.03 is within [0, 0.05]
+    
+    # Larger positive value outside deadzone should pass through
+    await adapter.publish("fader", 0.5)
+    call_args = mock_publisher.publish.await_args
+    assert call_args[1]["value"] == 0.5  # 0.5 is outside [0, 0.05]
+
+
+@pytest.mark.asyncio
+async def test_publish_no_deadzone_for_delta(mock_publisher):
+    """publish should NOT apply deadzone to delta axes."""
+    adapter = ConcreteTestAdapter(device="test_device")
+    await adapter.start(input_publisher=mock_publisher)
+    
+    # Set axis type to delta and deadzone
+    adapter.set_axis_type("mouse.x", "delta")
+    adapter.set_axis_deadzone("mouse.x", 0.1)
+    
+    # Even small delta values should pass through unchanged
+    await adapter.publish("mouse.x", 0.01)
+    call_args = mock_publisher.publish.await_args
+    assert call_args[1]["value"] == 0.01  # No deadzone applied to delta
+
+
+@pytest.mark.asyncio
+async def test_publish_deadzone_after_scaling(mock_publisher):
+    """publish should apply deadzone AFTER scaling."""
+    adapter = ConcreteTestAdapter(device="test_device")
+    await adapter.start(input_publisher=mock_publisher)
+    
+    # Set axis type to rate, deadzone, and scale
+    adapter.set_axis_type("stick.x", "rate")
+    adapter.set_axis_deadzone("stick.x", 1.0)  # Deadzone in scaled units
+    adapter.set_axis_scale("stick.x", 10.0)  # Large scale to test order
+    
+    # Value 0.05 * 10.0 = 0.5, which is within deadzone [0, 1.0] -> becomes 0.0
+    await adapter.publish("stick.x", 0.05)
+    call_args = mock_publisher.publish.await_args
+    assert call_args[1]["value"] == 0.0  # scaling first: 0.05 * 10.0 = 0.5, then deadzone: 0.5 -> 0.0
+    
+    # Value 0.2 * 10.0 = 2.0, which is outside deadzone [0, 1.0] -> stays 2.0
+    await adapter.publish("stick.x", 0.2)
+    call_args = mock_publisher.publish.await_args
+    assert call_args[1]["value"] == 2.0  # scaling first: 0.2 * 10.0 = 2.0, then deadzone: 2.0 unchanged
+
+
+@pytest.mark.asyncio
+async def test_publish_snapshot_applies_deadzone(mock_publisher):
+    """publish_snapshot should apply deadzone to all axes."""
+    adapter = ConcreteTestAdapter(device="test_device")
+    await adapter.start(input_publisher=mock_publisher)
+    
+    # Set up different deadzones for different axes
+    adapter.set_axis_type("stick.x", "rate")
+    adapter.set_axis_type("fader", "absolute_uni")
+    adapter.set_axis_type("mouse.x", "delta")
+    adapter.set_axis_deadzone("stick.x", 0.1)
+    adapter.set_axis_deadzone("fader", 0.05)
+    adapter.set_axis_deadzone("mouse.x", 0.1)  # Should be ignored for delta
+    
+    snapshot = {"stick.x": 0.05, "fader": 0.03, "mouse.x": 0.01}
+    await adapter.publish_snapshot(snapshot)
+    
+    # Get all published calls
+    calls = [call[1] for call in mock_publisher.publish.await_args_list]
+    
+    # Find each axis call
+    stick_x_call = next(c for c in calls if c["axis"] == "stick.x")
+    fader_call = next(c for c in calls if c["axis"] == "fader")
+    mouse_x_call = next(c for c in calls if c["axis"] == "mouse.x")
+    
+    # stick.x (rate): 0.05 is within deadzone [-0.1, 0.1] -> 0.0
+    assert stick_x_call["value"] == 0.0
+    
+    # fader (absolute_uni): 0.03 is within deadzone [0, 0.05] -> 0.0
+    assert fader_call["value"] == 0.0
+    
+    # mouse.x (delta): deadzone should not apply -> 0.01
+    assert mouse_x_call["value"] == 0.01
+
+
+@pytest.mark.asyncio
+async def test_publish_negative_deadzone_ignored(mock_publisher):
+    """publish should ignore negative deadzone values (treat as 0.0)."""
+    adapter = ConcreteTestAdapter(device="test_device")
+    await adapter.start(input_publisher=mock_publisher)
+    
+    # Set axis type to rate and negative deadzone (should be ignored)
+    adapter.set_axis_type("stick.x", "rate")
+    adapter.set_axis_deadzone("stick.x", -0.1)  # Negative deadzone
+    
+    # Small value should pass through unchanged
+    await adapter.publish("stick.x", 0.05)
+    call_args = mock_publisher.publish.await_args
+    assert call_args[1]["value"] == 0.05  # Negative deadzone ignored, value passes through

@@ -150,14 +150,40 @@ class SteamDeckAdapter(BaseInputAdapter):
 	}
 
 	# Per-axis sensitivity scaling factors (default = 1.0)
-	# IMU at 1.5 (rate-based)
-	# Sticks at 0.1 (rate-based, scaled for fine control)
+	# Now that bitsteam outputs normalized values (-1 to 1, 0 to 1)
+	# IMU at 1.5 (rate-based) - moderate sensitivity for gyro control
+	# Sticks at 0.5 (rate-based) - good sensitivity for pan/tilt with some damping
+	# Trackpads at 0.8 (absolute_bi) - slightly reduced for precise fader control
 	_AXIS_SCALES = {
 		"imu.*": 1.5,  # Wildcard matches imu.pitch, imu.yaw, imu.roll
-		"left_stick.x": 0.00001,  # Scale down left stick for finer control (rate-based)
-		"left_stick.y": 0.00001,  # Scale down left stick for finer control (rate-based)
-		"right_stick.x": 0.00001,  # Scale down right stick for finer control (rate-based)
-		"right_stick.y": 0.00001,  # Scale down right stick for finer control (rate-based)
+		"left_stick.x": 0.5,   # Scale for left stick (rate-based pan/tilt)
+		"left_stick.y": 0.5,   # Scale for left stick (rate-based pan/tilt)
+		"right_stick.x": 0.5,  # Scale for right stick (rate-based pan/tilt)
+		"right_stick.y": 0.5,  # Scale for right stick (rate-based pan/tilt)
+		"left_trackpad.x": 0.8,  # Slightly reduce trackpad for fader control
+		"left_trackpad.y": 0.8,
+		"right_trackpad.x": 0.8,
+		"right_trackpad.y": 0.8,
+	}
+
+	# Per-axis deadzone values to eliminate stick drift and jitter
+	# Applied AFTER scaling, so values are in scaled output units
+	# With normalized input (-1 to 1, 0 to 1) and scales applied:
+	#   Sticks: scale 0.5 -> range [-0.5, 0.5], deadzone 0.05 filters values < 0.1 in raw
+	#   IMU: scale 1.5 -> range [-1.5, 1.5], deadzone 0.1 filters values < ~0.07 in raw
+	#   Triggers: scale 1.0 -> range [0, 1], deadzone 0.02 filters values < 0.02 in raw
+	_AXIS_DEADZONES = {
+		"left_stick.x": 0.05,   # Filter stick drift (scaled: 0.1 raw -> 0.05 output)
+		"left_stick.y": 0.05,   # Filter stick drift
+		"right_stick.x": 0.05,  # Filter stick drift
+		"right_stick.y": 0.05,  # Filter stick drift
+		"imu.*": 0.1,          # Filter IMU drift (scaled: ~0.07 raw -> 0.1 output)
+		"left_trigger": 0.02,  # Filter trigger noise
+		"right_trigger": 0.02, # Filter trigger noise
+		"left_trackpad.x": 0.02,    # Filter trackpad jitter
+		"left_trackpad.y": 0.02,
+		"right_trackpad.x": 0.02,
+		"right_trackpad.y": 0.02,
 	}
 
 	def __init__(self, device: str = "steamdeck", deck: Any | None = None) -> None:
@@ -177,6 +203,10 @@ class SteamDeckAdapter(BaseInputAdapter):
 		# Set axis scales for all known axes
 		for axis, scale in self._AXIS_SCALES.items():
 			self.set_axis_scale(axis, scale)
+		
+		# Set axis deadzones for all known axes
+		for axis, deadzone in self._AXIS_DEADZONES.items():
+			self.set_axis_deadzone(axis, deadzone)
 
 	async def start(self, input_publisher) -> None:
 		"""Attach the shared publisher and start the Steam Deck listener."""
