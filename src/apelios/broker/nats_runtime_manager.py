@@ -5,6 +5,8 @@ import asyncio
 import signal
 import time
 import socket
+import atexit
+import ctypes
 
 from .broker_interface import BrokerInterface
 from .config import NatsConfig, load_nats_config
@@ -22,25 +24,28 @@ class NatsRuntimeManager(BrokerInterface):
         self.log_dir.mkdir(parents=True, exist_ok=True)
         self.server_url = f"nats://{self.host}:{self.port}"
 
+        # Register cleanup handlers for automatic process cleanup
+        atexit.register(self._cleanup_on_exit)
+        signal.signal(signal.SIGINT, self._handle_exit_signal)
+        signal.signal(signal.SIGTERM, self._handle_exit_signal)
+
     async def start_server(self) -> None:
         if self.process is not None:
             raise RuntimeError("NATS server already running")
 
-        # Kill any stale nats-server processes on our port
-        self._kill_stale_nats_servers()
-
-        # Wait for killed processes to release the port
-        await asyncio.sleep(0.5)
-
-        # Check if port is already in use before starting
+        # Check if port is already in use before starting - fail fast
         if self._is_port_in_use(self.port):
             raise RuntimeError(
                 f"Port {self.port} is already in use. "
-                "Another NATS server may be running, or a previous instance crashed."
+                f"Another process may be using it. "
+                f"Check with: lsof -i :{self.port} or ss -tlnp | grep {self.port}"
             )
 
         log_path = self.log_dir / "nats-server.log"
         self.log_file = open(log_path, "a", buffering=1)
+
+        # Setup OS-level auto-cleanup on Linux (child dies when parent dies)
+        self._setup_auto_cleanup()
 
         self.process = subprocess.Popen(
             ["nats-server", "-p", str(self.port)],
@@ -58,28 +63,12 @@ class NatsRuntimeManager(BrokerInterface):
             raise
 
     async def stop_server(self) -> None:
-        if self.process is None:
-            return
-
-        try:
-            self.process.terminate()
-            try:
-                self.process.wait(timeout=3)
-            except subprocess.TimeoutExpired:
-                self.process.kill()
-                self.process.wait(timeout=3)
-        except ProcessLookupError:
-            # Process already dead, still try to clean up
-            pass
-        finally:
-            self.process = None
-
-        if self.log_file is not None:
-            try:
-                self.log_file.close()
-            except Exception:
-                pass
-            self.log_file = None
+        """Stop the NATS server process and clean up resources.
+        
+        This method is called explicitly and also registered with atexit
+        for automatic cleanup on normal exit.
+        """
+        self._cleanup_on_exit()
 
     async def health_check(self, timeout: int = 5) -> bool:
         import nats
@@ -95,6 +84,7 @@ class NatsRuntimeManager(BrokerInterface):
 
         raise RuntimeError(f"NATS server not responding after {timeout}s")
 
+
     def _is_port_in_use(self, port: int) -> bool:
         """Check if a port is already in use."""
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
@@ -105,26 +95,53 @@ class NatsRuntimeManager(BrokerInterface):
             except OSError:
                 return True
 
-    def _kill_stale_nats_servers(self) -> None:
-        """Kill any existing nats-server processes that might be using our port."""
+    def _setup_auto_cleanup(self) -> None:
+        """Setup OS-level auto-cleanup of child process on parent death (Linux)."""
         try:
-            # Find all nats-server processes
-            result = subprocess.run(
-                ["pgrep", "-f", "nats-server"],
-                capture_output=True,
-                text=True,
-                timeout=5
-            )
-            if result.returncode == 0 and result.stdout.strip():
-                for pid_str in result.stdout.strip().split('\n'):
-                    try:
-                        pid = int(pid_str.strip())
-                        os.kill(pid, signal.SIGTERM)
-                    except (ValueError, ProcessLookupError, PermissionError):
-                        pass
+            # Linux: automatically send SIGTERM to child when parent dies
+            libc = ctypes.CDLL("libc.so.6")
+            PR_SET_PDEATHSIG = 1
+            SIGTERM = 15
+            libc.prctl(PR_SET_PDEATHSIG, SIGTERM, 0, 0, 0)
         except Exception:
-            pass  # Ignore errors, we'll catch them in the port check
+            pass  # Not on Linux, rely on atexit + signal handlers
+
+
+    def _handle_exit_signal(self, signum, frame) -> None:
+        """Handle SIGINT/SIGTERM by triggering cleanup and exiting."""
+        self._cleanup_on_exit()
+        raise SystemExit(1)
+
+
+    def _cleanup_on_exit(self) -> None:
+        """Clean up NATS server process and log file on exit.
+        
+        Called automatically via atexit and signal handlers.
+        Also called by stop_server() for explicit cleanup.
+        """
+        if self.process is not None and self.process.poll() is None:
+            try:
+                self.process.terminate()
+                try:
+                    self.process.wait(timeout=3)
+                except subprocess.TimeoutExpired:
+                    self.process.kill()
+                    self.process.wait(timeout=3)
+            except ProcessLookupError:
+                # Process already dead
+                pass
+            except Exception:
+                pass
+        
+        if self.log_file is not None:
+            try:
+                self.log_file.close()
+            except Exception:
+                pass
+            self.log_file = None
+        
+        self.process = None
+
 
     def is_running(self) -> bool:
         return self.process is not None and self.process.poll() is None
-
