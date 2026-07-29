@@ -60,7 +60,6 @@ class RouterInputSubscriber:
 			logger.warning("Ignoring router input without valid 'type'")
 			return
 
-		# For Phase 7: pass full payload for pure passthrough
 		# Call router which returns outputs dict
 		outputs = self.router.handle_input(
 			source=source, 
