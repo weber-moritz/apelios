@@ -16,9 +16,10 @@ The orchestrator creates all layer instances in a central location. This guarant
 ## Startup Sequence
 
 1. Broker
-2. Fixture layer
-3. Router
-4. Input layer
+2. Output Layer
+3. Fixture layer
+4. Router
+5. Input layer
 
 All other layers depend on the broker to communicate. Starting it at a later stage would break the broker clients as they cannot connect.
 
@@ -31,7 +32,8 @@ The sequence order is less critical as the actual calculation and data flow only
 1. Input layer
 2. Router
 3. Fixture layer
-4. Broker layer
+4. Output Layer
+5. Broker layer
 
 The stop sequence follows the data flow direction to halt new data flow immediately.
 
