@@ -46,6 +46,10 @@ coverage.xml
 # General:
 *.log
 
+# Generated performance-analysis data (keep rendered PDF/SVG plots only)
+docs/analysis/latency/**/*.csv
+docs/analysis/latency/**/*.json
+
 
 # Continue (AI Coding Assistant)
 .continue/index/

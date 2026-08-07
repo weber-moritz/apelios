@@ -15,6 +15,7 @@ class InputRuntimeManager:
         self,
         broker_client: BrokerClient | None = None,
         input_publish_prefix: str = "input",
+        bootstrap_adapters: bool = True,
     ) -> None:
         self.broker_client = broker_client or BrokerClient(provider="nats")
         self.input_publish_prefix = input_publish_prefix
@@ -23,6 +24,7 @@ class InputRuntimeManager:
         self.registered_adapters: list[object] = []
         self._running_adapters: list[object] = []
         self.failed_adapters: list[object] = []
+        self.bootstrap_adapters = bootstrap_adapters
         
     async def _bootstrap_adapters(self) -> None:
         """Bootstrap default adapters on startup.
@@ -41,7 +43,8 @@ class InputRuntimeManager:
             return
         
         await self.broker_client.connect()
-        await self._bootstrap_adapters()
+        if self.bootstrap_adapters:
+            await self._bootstrap_adapters()
         
         self._running = True
         

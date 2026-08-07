@@ -31,6 +31,17 @@ class FakeAdapter(BaseInputAdapter):
 		The `InputRuntimeManager` or tests call `tick()` which will invoke this
 		method and then publish the populated `snapshot` using the base
 		implementation.
+		
+		For performance testing with multiple axes, this generates values
+		for all registered axes.
 		"""
-		self.snapshot["left_stick.x"] = 0.5
-		self.snapshot["fader_1"] = 0.75
+		# Generate values for all registered axes
+		for axis in self._axis_types:
+			# Use a simple pattern that varies with axis name for uniqueness
+			if axis.endswith(".x") or "left" in axis:
+				value = 0.5
+			elif axis.endswith(".value") or "value" in axis or "fader" in axis:
+				value = 0.75
+			else:
+				value = 0.5
+			self.snapshot[axis] = value

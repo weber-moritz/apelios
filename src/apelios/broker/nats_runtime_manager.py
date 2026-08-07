@@ -7,6 +7,8 @@ import time
 import socket
 import atexit
 import ctypes
+import shutil
+import sys
 
 from .broker_interface import BrokerInterface
 from .config import NatsConfig, load_nats_config
@@ -29,6 +31,22 @@ class NatsRuntimeManager(BrokerInterface):
         signal.signal(signal.SIGINT, self._handle_exit_signal)
         signal.signal(signal.SIGTERM, self._handle_exit_signal)
 
+    def _find_nats_server(self) -> str | None:
+        """Find the nats-server binary in common locations."""
+        path_binary = shutil.which("nats-server")
+        paths = [
+            path_binary,
+            str(Path(sys.executable).with_name("nats-server")),
+            "/usr/local/bin/nats-server",
+            str(Path.home() / "nats-server" / "nats-server"),
+            str(Path(__file__).parent.parent.parent.parent / "vendor" / "nats-server" / "nats-server"),
+        ]
+
+        for path in paths:
+            if path and Path(path).is_file():
+                return path
+        return None
+
     async def start_server(self) -> None:
         if self.process is not None:
             raise RuntimeError("NATS server already running")
@@ -47,8 +65,15 @@ class NatsRuntimeManager(BrokerInterface):
         # Setup OS-level auto-cleanup on Linux (child dies when parent dies)
         self._setup_auto_cleanup()
 
+        # Try to find nats-server binary
+        nats_server_path = self._find_nats_server()
+        if not nats_server_path:
+            raise RuntimeError(
+                "NATS server binary not found. Please install NATS server or set the PATH."
+            )
+
         self.process = subprocess.Popen(
-            ["nats-server", "-p", str(self.port)],
+            [nats_server_path, "-p", str(self.port)],
             stdout=self.log_file,
             stderr=self.log_file,
             stdin=subprocess.DEVNULL,

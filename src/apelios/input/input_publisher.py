@@ -32,6 +32,6 @@ class InputPublisher:
         # Use provided source or construct from input_publish_prefix.device.axis
         payload_source = source if source is not None else f"{self.input_publish_prefix}.{device}.{axis}"
         
-        msg = json.dumps({"source": payload_source, "value": value, "type": type, "timestamp": time.time()}).encode("utf-8")
+        msg = json.dumps({"source": payload_source, "value": value, "type": type, "timestamp": time.perf_counter()}).encode("utf-8")
 
         await self.broker_client.publish(subject, msg)
