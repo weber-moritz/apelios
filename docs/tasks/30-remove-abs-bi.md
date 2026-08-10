@@ -1,0 +1,1 @@
+remove the bs bi. we only want to deal with abs (0-1) rate or delta.

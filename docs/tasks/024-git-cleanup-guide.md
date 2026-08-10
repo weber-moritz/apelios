@@ -1,284 +1,397 @@
-# Git Repository Cleanup Guide (Open Source Prep)
+# Git Repository Cleanup Guide (Open-Source Preparation)
 
-Complete workflow to sanitize a Git repository before making it public. Remove sensitive data, embarrassing notes, prototype code, or anything you don't want in the public history.
+Use this guide to audit and, only when necessary, rewrite the Git history before
+making Apelios public. Work slowly: a history rewrite changes commit IDs and can
+disrupt every existing clone.
 
----
+This guide changes Git history only. A complete open-source review must also cover
+licensing, dependency licenses, documentation, security reporting, CI, and release
+configuration.
 
-## Prerequisites
+> **Important:** Read the entire guide before running any destructive command. Do
+> not copy the commands unchanged: replace every placeholder and verify it first.
 
-- Install [`git-filter-repo`](https://github.com/newren/git-filter-repo):
-  ```bash
-  pip install git-filter-repo
-  ```
-- Have write access to the repository
-- **Read this entire guide before executing anything**
+## 1. Decide what will be published
 
----
+Write down the exact publication scope before inspecting or rewriting anything:
 
-## Phase 1: Safety Backup (DO NOT SKIP)
+- repository and remote URL;
+- branch or branches to publish (normally only `main`);
+- tags to publish;
+- branches and tags that must remain private;
+- files, strings, identities, or generated artifacts that must be removed.
 
-Create a **full local backup** of your repository including `.git` folder:
+Do not use `git push --all` for publication. It can expose local backup, prototype,
+or personal branches.
+
+## 2. Prepare safely
+
+### 2.1 Freeze repository changes
+
+Coordinate with collaborators so nobody pushes during the cleanup. Confirm that
+the working tree is clean:
 
 ```bash
-# Navigate to parent directory of your repo
+git status --short --branch
+git remote -v
+git branch --all
+git tag --list
+```
+
+Commit or deliberately preserve any uncommitted work before continuing.
+
+### 2.2 Create two independent backups
+
+Keep the normal working copy untouched. From its parent directory, create a
+filesystem backup and a mirror backup:
+
+```bash
 cd /path/to/parent
-
-# Create a complete backup (includes all branches, tags, history)
-cp -r your-repo your-repo-backup-$(date +%Y%m%d)
-
-# Verify the backup
-ls -la your-repo-backup-*/.git
+cp -a apelios apelios-backup-YYYYMMDD
+git clone --mirror /path/to/apelios apelios-backup-YYYYMMDD.git
 ```
 
-**Keep this backup until you confirm the cleaned repo is perfect.**
-
----
-
-## Phase 2: Find Problematic Content
-
-### 2.1 Find files by name
-
-List all files ever committed, sorted and unique:
-```bash
-cd your-repo
-git log --all --name-only --format="" | sort -u
-```
-
-Look for: `notes.txt`, `todo.md`, `prof_*.*`, `private.*`, `secrets.*`, etc.
-
-### 2.2 Find by content
-
-Search all commit history for specific text (case insensitive):
-```bash
-# Search for a name
-git log --all -i -S "ProfName" -p
-
-# Search for email
-git log --all -i -S "email@example.com" -p
-
-# Search for password/secret patterns
-git log --all -i -S "password" -p
-git log --all -i -S "api_key" -p
-git log --all -i -S "secret" -p
-```
-
-### 2.3 List all large files
-
-Find large files that might contain sensitive data:
-```bash
-git rev-list --objects --all | git cat-file --batch-check='%(objecttype) %(objectname) %(objectsize) %(rest)' | awk '/^blob/ {print substr($0,6)}' | sort --numeric-sort --key=2 | tail -n 20
-```
-
-### 2.4 Document what you found
-
-Create a list of what needs removal:
-```
-Files to remove completely:
-- path/to/file1.txt
-- path/to/file2.md
-
-Strings to remove from file contents:
-- "MySecretPassword"
-- "api_key=abc123"
-
-Branches to verify:
-- old-prototype-branch
-- experimental-feature
-```
-
----
-
-## Phase 3: Clean History
-
-### 3.1 Remove entire files from history
-
-For each file that should never have existed:
-```bash
-# Remove a single file from all history
-git filter-repo --force --invert-paths --path path/to/file.txt
-
-# Remove multiple files at once
-git filter-repo --force --invert-paths --path path/to/file1.txt --path path/to/file2.md
-```
-
-### 3.2 Remove strings from file contents
-
-For sensitive strings that appear in files you want to keep:
-```bash
-# Replace text in all files across all commits
-git filter-repo --force --replace-text <(echo "MySecretPassword==>REDACTED")
-
-# Multiple replacements from a file
-echo "old-text==>new-text" > replacements.txt
-echo "secret-key==>REDACTED" >> replacements.txt
-git filter-repo --force --replace-text replacements.txt
-```
-
-### 3.3 Remove specific commits
-
-If entire commits are problematic:
-```bash
-# Find commit hash
-git log --oneline --all
-
-# Remove a specific commit
-git filter-repo --force --invert-paths --path-glob '*' --ref HEAD~5..HEAD~4
-```
-
-### 3.4 Clean up branches and tags
-
-Remove branches you don't want to publish:
-```bash
-# Delete local branches
-git branch -D old-prototype-branch
-git branch -D experimental-feature
-
-# Delete remote branches (after pushing)
-git push origin --delete old-prototype-branch
-```
-
----
-
-## Phase 4: Verify Cleanup
-
-### 4.1 Check history again
-
-Re-run your search commands from Phase 2:
-```bash
-git log --all --name-only --format="" | sort -u
-git log --all -i -S "ProfName" -p
-git log --all -i -S "password" -p
-```
-
-### 4.2 Check file sizes
-
-Verify large files were removed:
-```bash
-git rev-list --objects --all | git cat-file --batch-check='%(objecttype) %(objectname) %(objectsize) %(rest)' | awk '/^blob/ {print substr($0,6)}' | sort --numeric-sort --key=2 | tail -n 20
-```
-
----
-
-## Phase 5: Decide on History Strategy
-
-### Option A: Keep Full History (Recommended if clean)
-
-If Phase 4 shows no sensitive data remains:
-```bash
-# Force push cleaned history to ALL remote branches
-git push origin --all --force
-git push origin --tags --force
-
-# Anyone who cloned before must re-clone
-```
-
-### Option B: Squash Early History (Fresh Start)
-
-If early commits are messy prototype code:
+Verify both backups:
 
 ```bash
-# Create a new orphan branch from current state
-git checkout --orphan new-master
-
-# Add all current files
-git add -A
-git commit -m "Initial commit: Clean project state"
-
-# Create new main branch
-git branch -m new-master main
-
-# Force push this as the new history
-git push origin main --force
-
-# Delete old branches on remote
-git push origin --delete old-master
+test -d apelios-backup-YYYYMMDD/.git
+git -C apelios-backup-YYYYMMDD.git fsck --full
 ```
 
-**Warning**: This completely rewrites history. All contributors must re-clone.
+Store the backups somewhere private. Do not push a backup branch or mirror to the
+public remote.
 
----
+### 2.3 Create a disposable cleanup clone
 
-## Phase 6: Final Checks
+Perform history rewriting in a fresh clone, not in the everyday working copy:
 
-### 6.1 Clone fresh and verify
+```bash
+git clone --mirror <PRIVATE_REMOTE_URL> apelios-cleanup.git
+cd apelios-cleanup.git
+git remote -v
+git show-ref
+```
+
+A mirror contains all remote branches and tags, so audit all of them even if only
+`main` will be published.
+
+Install `git-filter-repo` using your preferred isolated tool installer, for
+example:
+
+```bash
+pipx install git-filter-repo
+git filter-repo --version
+```
+
+## 3. Audit the repository
+
+### 3.1 Inventory all paths ever committed
+
+```bash
+git log --all --name-only --format= | sort -u
+```
+
+Look for raw benchmark results, archives, database dumps, environment files,
+credentials, private notes, personal data, generated assets, and editor or IDE
+files.
+
+### 3.2 Find the largest historical blobs
+
+```bash
+git rev-list --objects --all |
+  git cat-file --batch-check='%(objecttype) %(objectname) %(objectsize) %(rest)' |
+  awk '$1 == "blob" {print $3, $4}' |
+  sort -nr |
+  head -50
+```
+
+The first column is the size in bytes. GitHub rejects individual files larger
+than 100 MiB and recommends keeping repositories substantially smaller than its
+hard limits. Large generated artifacts should normally be regenerated or stored
+as release assets instead of being committed.
+
+### 3.3 Search current files
+
+Use a secret scanner if one is available, and supplement it with targeted searches:
+
+```bash
+rg -n --hidden \
+  --glob '!.git/**' \
+  '(password|passwd|secret|api[_-]?key|access[_-]?token|private[_-]?key)'
+```
+
+Also search for machine-specific paths and personal identifiers:
+
+```bash
+rg -n --hidden --glob '!.git/**' '(/home/|/Users/|C:\\Users\\)'
+rg -n --hidden --glob '!.git/**' '<PERSONAL_EMAIL_OR_NAME>'
+```
+
+Review every match manually. Variable names such as `password` are not themselves
+secrets, while an innocent-looking token can still be sensitive.
+
+### 3.4 Search history for known strings
+
+`git log -S` finds commits where the number of occurrences changed:
+
+```bash
+git log --all -i -S '<KNOWN_SECRET_OR_IDENTIFIER>' --oneline --patch
+```
+
+This is useful for known values, but it is not a complete secret scan.
+
+### 3.5 Review metadata and publication files
+
+Inspect:
+
+```bash
+git log --all --format='%h %an <%ae> %s'
+git shortlog --summary --email --all
+git status --ignored --short
+```
+
+Confirm that author identities are acceptable to publish and that `.gitignore`
+excludes local configuration, credentials, logs, coverage data, raw performance
+results, virtual environments, and build output.
+
+Before proceeding, record findings in a private checklist. Never put actual secret
+values into that checklist or a commit message.
+
+## 4. Respond to exposed credentials first
+
+If a credential has ever been committed:
+
+1. revoke or rotate it immediately;
+2. remove it from the current files;
+3. rewrite history if the old value should not remain visible;
+4. check CI variables, releases, issues, pull requests, forks, caches, and logs;
+5. verify that the replacement credential was never committed.
+
+History rewriting does **not** make a credential safe again. Treat every committed
+credential as compromised even if the repository was private.
+
+## 5. Rewrite history only when required
+
+Make one planned `git filter-repo` invocation where practical. Repeated rewrites
+make review harder.
+
+### 5.1 Remove complete paths from every ref
+
+Create a file containing one exact repository-relative path per line:
+
+```text
+results/e2e/large-result.csv
+path/to/private-file.txt
+```
+
+Then run:
+
+```bash
+git filter-repo --invert-paths --paths-from-file paths-to-remove.txt
+```
+
+Use `--path-glob` only when the pattern has been reviewed carefully. A broad glob
+can remove more history than intended.
+
+### 5.2 Replace sensitive text while keeping files
+
+Create `replacements.txt` outside the repository. Follow the `git-filter-repo`
+replacement format, for example:
+
+```text
+literal:OLD_VALUE==>REDACTED
+glob:prefix-*==>REDACTED
+regex:example[0-9]+==>REDACTED
+```
+
+Run:
+
+```bash
+git filter-repo --replace-text /private/path/replacements.txt
+```
+
+Do not commit the replacement file. Delete it securely after the audit if it
+contains sensitive values.
+
+### 5.3 Removing a commit is exceptional
+
+Do not use an `--invert-paths --path-glob '*'` command to “remove a commit”; that
+removes file content and can corrupt the history.
+
+If a commit only introduced unwanted files or strings, remove those paths or
+replace those strings across history instead. If the commit itself must disappear
+while later changes remain, stop and design the rewrite with an experienced
+reviewer using `git rebase --rebase-merges` or a tested commit-callback. This is
+case-specific and should not be reduced to a generic copy-paste command.
+
+### 5.4 Check remotes after filtering
+
+`git filter-repo` may remove the `origin` remote as a safety measure. Inspect it:
+
+```bash
+git remote -v
+```
+
+If it was removed, restore the correct private remote only after verification:
+
+```bash
+git remote add origin <PRIVATE_REMOTE_URL>
+```
+
+## 6. Verify the rewritten repository
+
+Do not push until every check passes.
+
+### 6.1 Verify repository integrity and refs
+
+```bash
+git fsck --full
+git show-ref
+git log --oneline --decorate --graph --all
+```
+
+Compare the resulting branch tips and tags with the publication scope from step 1.
+
+### 6.2 Repeat the complete audit
+
+Repeat all searches from section 3, including the path inventory, large-blob list,
+secret scan, identity review, and known-string searches. Confirm explicitly that
+every recorded finding is resolved.
+
+For a known removed path:
+
+```bash
+git log --all -- path/to/removed-file
+```
+
+For a known removed value:
+
+```bash
+git log --all -i -S '<REMOVED_VALUE>' --oneline --patch
+```
+
+Both commands should produce no relevant match.
+
+### 6.3 Test a normal checkout
+
+Clone the cleaned mirror locally into a temporary directory:
 
 ```bash
 cd /tmp
-rm -rf your-repo-verify
-git clone https://github.com/your-account/your-repo.git your-repo-verify
-cd your-repo-verify
-
-# Run your searches again
-git log --all --name-only --format="" | sort -u
-git log --all -i -S "sensitive-term" -p
+git clone /path/to/apelios-cleanup.git apelios-verify
+cd apelios-verify
+git status --short --branch
 ```
 
-### 6.2 Verify GitHub/GitLab
+Follow the documented setup from scratch, run the full automated test suite, build
+the documentation, and regenerate representative performance plots. This catches
+files that were accidentally removed from history or silently relied on a local
+machine path.
 
-- Check the repository is private until you're sure
-- Verify no sensitive data appears in GitHub's code search
-- Check GitHub's "Insights" > "Code frequency" and "Contributors" look correct
+## 7. Publish deliberately
 
----
+### 7.1 Prefer a new public repository when possible
 
-## Important Notes
-
-### Force Push Warning
-
-- **Force pushing rewrites history**
-- Anyone who cloned before must **delete their local clone and re-clone**
-- Communicate this clearly to all collaborators
-
-### What `filter-repo` Doesn't Touch
-
-- **Reflog**: Local reflog entries remain (not pushed to remote)
-- **Working directory**: Uncommitted files are untouched
-- **Stashes**: Git stashes are not affected
-
-### Large File Considerations
-
-If you had large binary files:
-- Consider using `git lfs` for files >100MB
-- GitHub has a 100MB file limit
-
----
-
-## Recovery (If Something Goes Wrong)
-
-If the cleanup broke something:
+The safest publication flow is to push only the reviewed branch and intentional
+tags to a new, empty public repository:
 
 ```bash
-# From your backup (created in Phase 1)
-cd /path/to/parent
-cp -r your-repo-backup-*/.git your-repo/
-cd your-repo
-git reset --hard HEAD
+git remote add public <NEW_PUBLIC_REMOTE_URL>
+git push public refs/heads/main:refs/heads/main
+git push public <TAG_NAME>
 ```
 
----
+Push tags individually or from a reviewed list. Do not push `--mirror`, `--all`,
+backup refs, pull-request refs, or every tag by default.
 
-## Quick Start (TL;DR)
+### 7.2 Replacing history on an existing remote
 
-For most cases, this is sufficient:
+Only do this after freezing pushes. Record the current remote tip without fetching
+it into the rewritten mirror:
 
 ```bash
-# 1. Backup
-cp -r your-repo your-repo-backup
-
-# 2. Remove sensitive files
-git filter-repo --force --invert-paths --path path/to/sensitive/file
-
-# 3. Remove sensitive strings
-git filter-repo --force --replace-text <(echo "sensitive-text==>REDACTED")
-
-# 4. Verify
-git log --all -i -S "sensitive-text" -p
-
-# 5. Push (if clean)
-git push origin --all --force
-git push origin --tags --force
+git ls-remote origin refs/heads/main
 ```
+
+Review `main` locally and compare it with the pre-cleanup backup. Then use the
+recorded remote object ID as an explicit lease:
+
+```bash
+git log --oneline --decorate main
+git push \
+  --force-with-lease=refs/heads/main:<OLD_REMOTE_MAIN_OID> \
+  origin refs/heads/main:refs/heads/main
+```
+
+In a mirror clone, a normal fetch can map remote refs directly onto local refs and
+undo the rewrite. The explicit lease protects against overwriting a branch that
+changed after its object ID was recorded.
+
+If the lease fails, stop. Someone may have pushed after the cleanup began. Do not
+replace `--force-with-lease` with `--force` until the new remote state has been
+understood and reconciled.
+
+Tell all collaborators that commit IDs changed and require them to re-clone or
+carefully reset their clones. Open pull requests based on the old history may need
+to be recreated.
+
+## 8. Verify the published repository
+
+Clone from the final public URL into a new directory:
+
+```bash
+cd /tmp
+git clone <PUBLIC_REMOTE_URL> apelios-public-verify
+cd apelios-public-verify
+git remote -v
+git branch --all
+git tag --list
+```
+
+Then:
+
+- repeat the secret, path, size, and identity checks;
+- run the documented installation and full test suite;
+- inspect the repository through the hosting website;
+- verify that only intended branches and tags exist;
+- inspect releases, actions artifacts, issues, pull requests, wikis, packages, and
+  cached pages for sensitive material;
+- confirm branch protection, required checks, dependency alerts, and secret
+  scanning settings;
+- keep the old repository private until this review is complete.
+
+## 9. Recovery
+
+If verification fails, do not keep layering unreviewed fixes onto a bad rewrite.
+Discard the disposable cleanup clone, return to the untouched backup, update the
+private findings checklist, and repeat the procedure.
+
+If incorrect history was already pushed, immediately make the repository private,
+notify collaborators, rotate any exposed credentials, and restore or redo the
+history from the private mirror backup. Hosting-provider caches and existing clones
+may retain removed data, so contact the provider when sensitive data was exposed.
+
+Keep the private backups until the public repository has been verified and all
+collaborators have migrated. Dispose of them deliberately afterward; they still
+contain everything removed from public history.
+
+## Final go/no-go checklist
+
+Publish only when every item is true:
+
+- [ ] Exact public branches and tags are documented.
+- [ ] Files and history have been scanned for secrets and personal data.
+- [ ] Every discovered credential has been revoked or rotated.
+- [ ] Raw results, generated data, and machine-specific paths are excluded.
+- [ ] No unintended large blobs remain in reachable public history.
+- [ ] Commit author names and email addresses are acceptable to publish.
+- [ ] Repository integrity checks pass.
+- [ ] A fresh clone installs, tests, builds, and regenerates outputs successfully.
+- [ ] Licensing and dependency-license review is complete.
+- [ ] Only reviewed refs will be pushed.
+- [ ] The published repository has been cloned and audited again.
+- [ ] Private backups remain available until final sign-off.
 
 ---
 
-*Last Updated: 2026-07-15*
+*Last updated: 2026-08-07*
