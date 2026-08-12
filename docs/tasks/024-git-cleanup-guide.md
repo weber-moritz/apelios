@@ -437,15 +437,15 @@ during the audit.
 
 #### History and repository contents
 
-- [ ] Remove the historical old-code archive from all intended public refs. It is
+- [x] Remove the historical old-code archive from all intended public refs. It is
   already absent from the current `main` tree but remains recoverable from older
   commits. Preserve it only in the private backup.
-- [ ] Perform that history removal only with a clean working tree. Preserve or
+- [x] Perform that history removal only with a clean working tree. Preserve or
   commit the current README, packaging, requirements, license, and guide changes
   before running another filter.
-- [ ] After the final rewrite, confirm that only the three intended public branch
+- [x] After the final rewrite, confirm that only the three intended public branch
   refs exist and that no tags or auxiliary refs will be published.
-- [ ] Repeat `git fsck --full`, the path inventory, identity searches, personal
+- [x] Repeat `git fsck --full`, the path inventory, identity searches, personal
   path searches, and largest-blob inventory after the final rewrite.
 
 #### Benchmark artifacts
@@ -502,8 +502,8 @@ during the audit.
 
 - [ ] Confirm the hosting account has both email privacy and protection against
   command-line pushes that expose a private address enabled.
-- [ ] Rerun Gitleaks and TruffleHog after all final commits and history changes.
-- [ ] Repeat the targeted personal-name, email, absolute-path, note-path, log-path,
+- [x] Rerun Gitleaks and TruffleHog after all final commits and history changes.
+- [x] Repeat the targeted personal-name, email, absolute-path, note-path, log-path,
   key-file, and credential-pattern searches on every intended public ref.
 - [ ] Record only locations and classifications of any findings; never place an
   actual secret in this guide, a report committed to Git, or a commit message.
