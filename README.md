@@ -1,22 +1,27 @@
 # Apelios
 
-Apelios is an experimental, low-latency control pipeline for moving-head
-lighting fixtures. It reads normalized controller input, routes it to fixture
-parameters, converts those parameters to DMX values, and publishes the result
-over Art-Net.
+Apelios is an open-source, modular, soft real-time control system for moving-head
+lighting fixtures. It aims to make remote follow-spot control more accessible
+and provides an alternative to commercial systems.
 
-The current reference setup targets a Steam Deck and a Lixada Mini Moving Head,
-but the input, routing, fixture, and output layers are designed to be replaced or
-extended independently.
+It reads normalized controller input, maps it to fixture parameters, converts
+those parameters to DMX values, and publishes the result over Art-Net.
+
+The current reference setup targets a Steam Deck, but the input, routing,
+fixture, and output layers can be replaced or extended independently. In
+particular, the input and output layers use adapters so that support for new
+hardware and protocols can be added without changing the rest of the pipeline.
 
 ## Architecture
 
-Apelios processes data through five asynchronous components:
+Apelios processes data through four asynchronous layers connected by a message
+broker:
 
 ```text
-input -> router -> fixture -> output -> Art-Net
-             NATS message broker
+hardware -> input-layer -> router-layer -> fixture-layer -> output-layer -> Art-Net
 ```
+
+Communication between the layers runs through the NATS message broker.
 
 - **Input** samples registered controllers and publishes normalized values.
 - **Router** maps input controls to fixture targets.
@@ -31,6 +36,7 @@ Architectural decisions and diagrams are available in [`docs/adr`](docs/adr) and
 ## Requirements
 
 - Python 3.10 or newer
+- [uv](https://docs.astral.sh/uv/getting-started/installation/)
 - Linux for the current hardware input adapters and process-management behavior
 - Network access to the Art-Net target when using real lighting hardware
 
@@ -40,18 +46,15 @@ The Python environment installs a bundled `nats-server` executable through
 ## Installation
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/weber-moritz/apelios.git
 cd apelios
-python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install --upgrade pip
-python -m pip install -e .
+uv sync
 ```
 
 For development and performance tooling:
 
 ```bash
-python -m pip install -e '.[dev,performance]'
+uv sync --all-extras
 ```
 
 ## Configuration
@@ -68,7 +71,7 @@ Review the Art-Net source and target addresses before connecting real fixtures.
 ## Running
 
 ```bash
-python -m apelios.main_orchestrator
+uv run python -m apelios.main_orchestrator
 ```
 
 Stop the process with `Ctrl+C`. Apelios shuts down its adapters and bundled NATS
@@ -79,7 +82,7 @@ server during normal termination.
 Install the development dependencies, then run:
 
 ```bash
-python -m pytest
+uv run pytest
 ```
 
 Tests marked `integration` or `e2e` start or connect to supporting services. The
@@ -88,8 +91,8 @@ performance framework has additional usage documentation in
 
 ## Project status
 
-Apelios is a research prototype. Configuration formats and public Python APIs may
-change while the system is being refined.
+Apelios is a work-in-progress prototype. Configuration formats, adapter
+interfaces, and public contracts may change while the system is being refined.
 
 ## License
 
