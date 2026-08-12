@@ -392,6 +392,138 @@ Publish only when every item is true:
 - [ ] The published repository has been cloned and audited again.
 - [ ] Private backups remain available until final sign-off.
 
+## Apelios cleanup handoff (anonymized)
+
+This section records the repository-specific cleanup state without retaining the
+personal identifiers, addresses, machine paths, or private note contents found
+during the audit.
+
+### Completed
+
+- [x] A separate filesystem backup was located and verified with `git fsck`.
+- [x] All important pre-rewrite branch tips in the backup were compared with the
+  original working repository and matched exactly.
+- [x] Commit author and committer addresses were rewritten to the repository
+  owner's hosting-provider no-reply address.
+- [x] The global Git configuration now uses that no-reply address for future
+  commits.
+- [x] Historical private notes, scratch-note directories, runtime logs,
+  editor-generated diagram backups, and a personal absolute path were removed or
+  anonymized across the intended public history.
+- [x] Personal backup, stash, and assistant-tool refs were removed from the
+  cleaned working repository. They remain available in the private backup.
+- [x] Public branch names were normalized. The intended public branches are
+  `main`, `archive/gui-prototype`, and `snapshot/freeze-1`.
+- [x] The previous remote was removed during filtering, preventing an accidental
+  push of partially reviewed rewritten history.
+- [x] Targeted searches found no occurrences of the reviewed third-party personal
+  names in the cleaned public history.
+- [x] Targeted searches found no old personal commit addresses or personal home
+  directory paths in the cleaned public history.
+- [x] Gitleaks scanned the original and cleaned histories without finding a leak.
+- [x] TruffleHog scanned the original and cleaned histories without finding a
+  verified or unknown secret after excluding one confirmed detector false
+  positive caused by ordinary test-function names.
+- [x] The README was rewritten to describe the current architecture, setup,
+  configuration, execution, testing, and research-prototype status.
+- [x] Packaging metadata now declares actual runtime, development, and performance
+  dependencies; discovers all subpackages; and includes runtime JSON data.
+- [x] The editable package builds successfully with the existing environment.
+- [x] The MIT license was selected as the final project license and matching
+  package metadata was added.
+- [x] The focused test run completed with 236 passing and 5 skipped tests.
+
+### Remaining cleanup decisions and tasks
+
+#### History and repository contents
+
+- [ ] Remove the historical old-code archive from all intended public refs. It is
+  already absent from the current `main` tree but remains recoverable from older
+  commits. Preserve it only in the private backup.
+- [ ] Perform that history removal only with a clean working tree. Preserve or
+  commit the current README, packaging, requirements, license, and guide changes
+  before running another filter.
+- [ ] After the final rewrite, confirm that only the three intended public branch
+  refs exist and that no tags or auxiliary refs will be published.
+- [ ] Repeat `git fsck --full`, the path inventory, identity searches, personal
+  path searches, and largest-blob inventory after the final rewrite.
+
+#### Benchmark artifacts
+
+- [x] Keep the benchmark methodology, scripts, representative plots, concise
+  summaries, and raw data necessary to reproduce published performance claims.
+- [x] Review the analysis directory for redundant formats and intermediate data.
+- [x] Remove or optimize four generated SVG plots of approximately 12 MB each when
+  equivalent, substantially smaller PDF or raster versions are sufficient.
+- [x] Review tracked CSV/JSON result files individually. The ignore rules prevent
+  new generated result files but do not remove data already tracked.
+- [x] Keep the curated raw benchmark snapshot in Git so the documented baseline is
+  independently reviewable and reproducible. Consider release attachments only
+  for larger future datasets.
+- [ ] From a fresh environment, regenerate representative plots from retained raw
+  data and document the exact command and environment used.
+- [x] Ensure documentation does not make performance claims unsupported by the
+  retained data and methodology.
+
+#### License and dependency review
+
+- [x] MIT was confirmed as the final project license. Commercial and closed-source
+  reuse is intentionally permitted as long as the copyright and license notice
+  are preserved.
+- [x] The final copyright holder and year in `LICENSE` were confirmed.
+- [x] The declared runtime dependencies were checked against installed metadata
+  and upstream sources and use permissive MIT or Apache-2.0 terms compatible with
+  this project.
+- [ ] Decide whether a third-party notices or dependency-attribution document is
+  desirable, especially if binaries or dependency source are ever redistributed
+  rather than installed separately.
+
+#### Packaging, documentation, and tests
+
+- [ ] Review the pending README, `pyproject.toml`, `requirements.txt`, license, and
+  cleanup-guide changes, then commit them with the no-reply identity.
+- [ ] Validate a non-editable wheel/sdist build in a fresh environment and inspect
+  the artifacts to confirm all packages, JSON configuration files, README, and
+  license are included.
+- [ ] Install from the built artifact in a fresh virtual environment and run a
+  smoke test.
+- [ ] Resolve or document the known NATS lifecycle-test isolation issue: several
+  tests assume the default broker port is free. This is known technical work, not
+  a cleanup regression.
+- [ ] Run the complete unit, integration, end-to-end, and performance suites when
+  the broker port is available. Do not treat the focused passing run as the final
+  release test.
+- [ ] Review whether `SECURITY.md`, `CONTRIBUTING.md`, and a code of conduct are
+  appropriate before inviting external contributions.
+- [ ] Review documentation and configuration defaults for safe behavior before
+  connecting real lighting hardware or broadcasting Art-Net traffic.
+
+#### Final privacy and secret verification
+
+- [ ] Confirm the hosting account has both email privacy and protection against
+  command-line pushes that expose a private address enabled.
+- [ ] Rerun Gitleaks and TruffleHog after all final commits and history changes.
+- [ ] Repeat the targeted personal-name, email, absolute-path, note-path, log-path,
+  key-file, and credential-pattern searches on every intended public ref.
+- [ ] Record only locations and classifications of any findings; never place an
+  actual secret in this guide, a report committed to Git, or a commit message.
+
+#### Publication
+
+- [ ] Keep the verified pre-rewrite backup private until the public repository has
+  been cloned, tested, and audited successfully.
+- [ ] Create or select the final public repository and add its remote only after
+  the complete audit passes.
+- [ ] Push `main`, `archive/gui-prototype`, and `snapshot/freeze-1` explicitly.
+  Do not use `--all` or `--mirror`.
+- [ ] Clone the public repository into a fresh directory and repeat the ref,
+  identity, secret, path, artifact, installation, and test checks.
+- [ ] Inspect the hosting website for branches, releases, actions artifacts,
+  packages, issues, pull requests, wiki content, and cached files that are not
+  visible from a normal clone.
+- [ ] Enable appropriate branch protection, required checks, dependency alerts,
+  and secret scanning before announcing the repository.
+
 ---
 
-*Last updated: 2026-08-07*
+*Last updated: 2026-08-12*

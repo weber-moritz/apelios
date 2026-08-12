@@ -49,6 +49,7 @@ coverage.xml
 # Generated performance-analysis data (keep rendered PDF/SVG plots only)
 docs/analysis/latency/**/*.csv
 docs/analysis/latency/**/*.json
+!docs/analysis/latency/**/test_metadata.json
 
 
 # Continue (AI Coding Assistant)
