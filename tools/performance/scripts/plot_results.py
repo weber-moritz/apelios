@@ -431,7 +431,12 @@ def generate_p95_requirement_plot(data: pd.DataFrame, output_path: Path):
     )
     ax.set_xticks(p95.index)
     ax.set_ylim(bottom=0)
-    ax.set_title('E2E p95 Frame Latency by I/O Count', pad=20, fontsize=12, fontweight='bold')
+    ax.set_title(
+        'Cross-Layer Pipeline p95 Latency by I/O Count',
+        pad=20,
+        fontsize=12,
+        fontweight='bold',
+    )
     ax.set_xlabel('Number of Inputs / Outputs', fontsize=10, labelpad=10)
     ax.set_ylabel('95th-percentile frame latency (ms)', fontsize=10, labelpad=10)
     ax.grid(True, alpha=0.3)
@@ -544,7 +549,7 @@ def generate_plots_for_test_type(test_dir: Path, test_type: str, layer_name: str
     if layer_name:
         base_title = f"{layer_name.capitalize()} Layer"
     elif test_type == "e2e":
-        base_title = "E2E"
+        base_title = "Cross-Layer Pipeline"
     elif test_type == "module":
         # Extract module and function from path
         parts = test_dir.relative_to(test_dir.parent.parent.parent).parts
@@ -562,7 +567,11 @@ def generate_plots_for_test_type(test_dir: Path, test_type: str, layer_name: str
     generate_boxplot(data, boxplot_title, plots_dir / "boxplot", color, x_label)
     
     # Generate scaling plot
-    scaling_title = f"{base_title} Latency vs Input Count"
+    scaling_title = (
+        "Cross-Layer Pipeline Latency vs I/O Count"
+        if test_type == "e2e"
+        else f"{base_title} Latency vs Input Count"
+    )
     generate_scaling_plot(
         data,
         scaling_title,
@@ -676,7 +685,7 @@ def generate_combined_layer_plot(layer_dir: Path):
 
     ax.axhline(y=TARGET_30MS, color=TARGET_MAX_COLOR, linestyle=':', linewidth=2, label=f'{TARGET_30MS}ms Target (Max)')
     ax.axhline(y=TARGET_16_67MS, color=FRAME_BUDGET_COLOR, linestyle=':', linewidth=2, label=f'{TARGET_16_67MS}ms (Frame Budget)')
-    ax.set_title('Individual and Combined Layer Latency', pad=20, fontsize=12, fontweight='bold')
+    ax.set_title('Sum of Median Layer Latencies', pad=20, fontsize=12, fontweight='bold')
     ax.set_xlabel('Workload Size (Items per Frame)', fontsize=10, labelpad=10)
     ax.set_ylabel('Median Latency (ms)', fontsize=10, labelpad=10)
     ax.grid(True, alpha=0.3)
