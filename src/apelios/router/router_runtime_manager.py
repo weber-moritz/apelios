@@ -97,6 +97,7 @@ class RouterRuntimeManager:
 
         No unsubscribe API exists on the current broker client abstraction yet.
         """
+        await self.broker_client.disconnect()
         self._running = False
 
     def is_running(self) -> bool:

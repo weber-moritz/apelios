@@ -50,6 +50,7 @@ class InputRuntimeManager:
         
     async def stop(self) -> None:
         """Stop input runtime lifecycle state."""
+        await self.broker_client.disconnect()
         self._running = False
     
     def is_running(self) -> bool:

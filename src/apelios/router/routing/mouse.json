@@ -1,0 +1,6 @@
+{
+  "mappings": {
+    "input.mouse.x": "lixada-mini-move.pan",
+    "input.mouse.y": "lixada-mini-move.tilt"
+  }
+}

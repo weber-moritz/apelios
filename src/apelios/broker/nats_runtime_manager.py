@@ -3,15 +3,26 @@ import os
 import subprocess
 import asyncio
 import signal
-import time
 import socket
 import atexit
 import ctypes
 import shutil
 import sys
+from functools import partial
 
 from .broker_interface import BrokerInterface
 from .config import NatsConfig, load_nats_config
+
+
+def _set_parent_death_signal(expected_parent_pid: int) -> None:
+    """Configure the spawned child, not the parent, to die with Apelios."""
+    libc = ctypes.CDLL("libc.so.6", use_errno=True)
+    if libc.prctl(1, signal.SIGTERM, 0, 0, 0) != 0:  # PR_SET_PDEATHSIG
+        raise OSError(ctypes.get_errno(), "prctl(PR_SET_PDEATHSIG) failed")
+
+    # The parent could have died between Popen() and prctl().
+    if os.getppid() != expected_parent_pid:
+        os.kill(os.getpid(), signal.SIGTERM)
 
 
 class NatsRuntimeManager(BrokerInterface):
@@ -26,10 +37,9 @@ class NatsRuntimeManager(BrokerInterface):
         self.log_dir.mkdir(parents=True, exist_ok=True)
         self.server_url = f"nats://{self.host}:{self.port}"
 
-        # Register cleanup handlers for automatic process cleanup
+        # Fallback for normal interpreter exit. Ordered application shutdown is
+        # owned by MainOrchestrator.
         atexit.register(self._cleanup_on_exit)
-        signal.signal(signal.SIGINT, self._handle_exit_signal)
-        signal.signal(signal.SIGTERM, self._handle_exit_signal)
 
     def _find_nats_server(self) -> str | None:
         """Find the nats-server binary in common locations."""
@@ -62,9 +72,6 @@ class NatsRuntimeManager(BrokerInterface):
         log_path = self.log_dir / "nats-server.log"
         self.log_file = open(log_path, "a", buffering=1)
 
-        # Setup OS-level auto-cleanup on Linux (child dies when parent dies)
-        self._setup_auto_cleanup()
-
         # Try to find nats-server binary
         nats_server_path = self._find_nats_server()
         if not nats_server_path:
@@ -78,6 +85,7 @@ class NatsRuntimeManager(BrokerInterface):
             stderr=self.log_file,
             stdin=subprocess.DEVNULL,
             start_new_session=True,
+            preexec_fn=self._parent_death_guard(),
         )
 
         try:
@@ -96,16 +104,28 @@ class NatsRuntimeManager(BrokerInterface):
         self._cleanup_on_exit()
 
     async def health_check(self, timeout: int = 5) -> bool:
-        import nats
+        """Wait until the NATS TCP listener is ready without noisy client logs."""
+        loop = asyncio.get_running_loop()
+        deadline = loop.time() + timeout
 
-        start_time = time.time()
-        while time.time() - start_time < timeout:
+        while loop.time() < deadline:
+            if self.process is not None and self.process.poll() is not None:
+                raise RuntimeError(
+                    f"NATS server exited with code {self.process.returncode} before becoming ready"
+                )
+
+            remaining = deadline - loop.time()
             try:
-                nc = await nats.connect(self.server_url)
-                await nc.close()
+                reader, writer = await asyncio.wait_for(
+                    asyncio.open_connection(self.host, self.port),
+                    timeout=min(0.2, remaining),
+                )
+                del reader
+                writer.close()
+                await writer.wait_closed()
                 return True
-            except Exception:
-                await asyncio.sleep(0.2)
+            except (OSError, asyncio.TimeoutError):
+                await asyncio.sleep(min(0.05, max(0.0, deadline - loop.time())))
 
         raise RuntimeError(f"NATS server not responding after {timeout}s")
 
@@ -120,22 +140,11 @@ class NatsRuntimeManager(BrokerInterface):
             except OSError:
                 return True
 
-    def _setup_auto_cleanup(self) -> None:
-        """Setup OS-level auto-cleanup of child process on parent death (Linux)."""
-        try:
-            # Linux: automatically send SIGTERM to child when parent dies
-            libc = ctypes.CDLL("libc.so.6")
-            PR_SET_PDEATHSIG = 1
-            SIGTERM = 15
-            libc.prctl(PR_SET_PDEATHSIG, SIGTERM, 0, 0, 0)
-        except Exception:
-            pass  # Not on Linux, rely on atexit + signal handlers
-
-
-    def _handle_exit_signal(self, signum, frame) -> None:
-        """Handle SIGINT/SIGTERM by triggering cleanup and exiting."""
-        self._cleanup_on_exit()
-        raise SystemExit(1)
+    def _parent_death_guard(self):
+        """Return a Linux child hook that terminates NATS if Apelios disappears."""
+        if not sys.platform.startswith("linux"):
+            return None
+        return partial(_set_parent_death_signal, os.getpid())
 
 
     def _cleanup_on_exit(self) -> None:

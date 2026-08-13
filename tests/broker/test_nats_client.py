@@ -57,19 +57,17 @@ async def test_disconnect_noop_when_not_connected(tmp_path):
 
 
 @pytest.mark.asyncio
-async def test_disconnect_drains_closes_and_clears_state(tmp_path):
+async def test_disconnect_closes_and_clears_state(tmp_path):
     client = _client(tmp_path)
 
     fake_nc = MagicMock()
     fake_nc.is_closed = False
-    fake_nc.drain = AsyncMock()
     fake_nc.close = AsyncMock()
     client._nc = fake_nc
     client._subscriptions = [object()]
 
     await client.disconnect()
 
-    fake_nc.drain.assert_awaited_once()
     fake_nc.close.assert_awaited_once()
     assert client._nc is None
     assert client._subscriptions == []

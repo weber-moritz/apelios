@@ -1,10 +1,17 @@
 import subprocess
+import sys
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
 from apelios.broker.config import NatsConfig
 from apelios.broker.nats_runtime_manager import NatsRuntimeManager
+
+
+@pytest.fixture(autouse=True)
+def assume_default_port_is_free(monkeypatch):
+    """Unit tests must not open real sockets to inspect the default port."""
+    monkeypatch.setattr(NatsRuntimeManager, "_is_port_in_use", lambda self, port: False)
 
 
 @pytest.mark.asyncio
@@ -16,10 +23,8 @@ async def test_start_server_launches_process_and_waits_for_health(tmp_path, monk
     fake_process.poll.return_value = None
     health_check_mock = AsyncMock(return_value=True)
 
-    monkeypatch.setattr(
-        "apelios.broker.nats_runtime_manager.subprocess.Popen",
-        MagicMock(return_value=fake_process),
-    )
+    popen_mock = MagicMock(return_value=fake_process)
+    monkeypatch.setattr("apelios.broker.nats_runtime_manager.subprocess.Popen", popen_mock)
     monkeypatch.setattr(runtime, "health_check", health_check_mock)
 
     await runtime.start_server()
@@ -28,6 +33,8 @@ async def test_start_server_launches_process_and_waits_for_health(tmp_path, monk
     assert runtime.is_running()
     assert runtime.port == 4222
     health_check_mock.assert_awaited_once_with(timeout=5)
+    if sys.platform.startswith("linux"):
+        assert callable(popen_mock.call_args.kwargs["preexec_fn"])
 
 
 @pytest.mark.asyncio
@@ -101,6 +108,17 @@ async def test_start_server_fails_on_port_conflict(tmp_path, monkeypatch):
 
 
 @pytest.mark.asyncio
+async def test_health_check_fails_immediately_if_server_process_exits(tmp_path):
+    runtime = NatsRuntimeManager(NatsConfig(log_dir=tmp_path))
+    runtime.process = MagicMock()
+    runtime.process.poll.return_value = 7
+    runtime.process.returncode = 7
+
+    with pytest.raises(RuntimeError, match="exited with code 7"):
+        await runtime.health_check(timeout=1)
+
+
+@pytest.mark.asyncio
 async def test_stop_server_cleans_up_even_if_process_already_dead(tmp_path, monkeypatch):
     """Verify that stop_server handles already-dead processes without error."""
     config = NatsConfig(log_dir=tmp_path)
@@ -123,3 +141,14 @@ async def test_stop_server_cleans_up_even_if_process_already_dead(tmp_path, monk
     fake_process.terminate.assert_not_called()
     assert runtime.process is None
     assert runtime.log_file is None
+
+
+def test_parent_death_guard_is_installed_only_on_linux(tmp_path):
+    runtime = NatsRuntimeManager(NatsConfig(log_dir=tmp_path))
+
+    guard = runtime._parent_death_guard()
+
+    if sys.platform.startswith("linux"):
+        assert callable(guard)
+    else:
+        assert guard is None

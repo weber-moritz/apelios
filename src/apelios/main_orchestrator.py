@@ -1,6 +1,6 @@
 import asyncio
-import contextlib
 import logging
+import signal
 import time
 from typing import Optional
 
@@ -70,35 +70,28 @@ class MainOrchestrator:
 
     async def stop(self) -> None:
         logger.info("Stopping...")
-        if not self._running:
-            with contextlib.suppress(Exception):
-                await self.input_manager.stop_registered_adapters()
-                await self.input_manager.stop()
-            with contextlib.suppress(Exception):
-                await self.output_manager.stop()
-            with contextlib.suppress(Exception):
-                await self.broker_manager.stop_server()
-            return
+        cleanup_errors = []
 
-        # 1. Stop gracefully in reverse order (Subsystems first)
-        await self.input_manager.stop_registered_adapters()
-        await self.input_manager.stop()
-        logger.info("Stopped input")
+        async def cleanup(label: str, operation) -> None:
+            try:
+                await operation()
+                logger.info("Stopped %s", label)
+            except Exception as exc:
+                logger.exception("Failed to stop %s", label)
+                cleanup_errors.append(exc)
 
-        await self.router_manager.stop()
-        logger.info("Stopped router")
-
-        await self.fixture_manager.stop()
-        logger.info("Stopped fixture layer")
-
-        await self.output_manager.stop()
-        logger.info("Stopped output layer")
-
-        # 2. Stop Infrastructure last
-        await self.broker_manager.stop_server()
-        logger.info("Stopped broker")
+        # Stop clients before infrastructure. Run every cleanup step even if an
+        # earlier layer fails so the owned NATS process cannot be orphaned.
+        await cleanup("input adapters", self.input_manager.stop_registered_adapters)
+        await cleanup("input", self.input_manager.stop)
+        await cleanup("router", self.router_manager.stop)
+        await cleanup("fixture layer", self.fixture_manager.stop)
+        await cleanup("output layer", self.output_manager.stop)
+        await cleanup("broker", self.broker_manager.stop_server)
 
         self._running = False
+        if cleanup_errors:
+            raise cleanup_errors[0]
 
     async def health_check(self, timeout: int = 5) -> bool:
         """Verify all critical subsystems are alive."""
@@ -123,13 +116,14 @@ class MainOrchestrator:
     def is_running(self) -> bool:
         return self._running
 
-    async def run_forever(self) -> None:
-        await self.start()
+    async def run_forever(self, stop_event: asyncio.Event | None = None) -> None:
+        stop_event = stop_event or asyncio.Event()
         try:
+            await self.start()
             # The 60Hz Engine (1 second / 60 frames = 0.0166 seconds per frame)
             target_interval = 1.0 / 60.0
 
-            while True:
+            while not stop_event.is_set():
                 loop_start = time.monotonic()
 
                 # 1. Collect one frame of normalized input events.
@@ -168,7 +162,30 @@ async def main() -> None:
     )
     
     orchestrator = MainOrchestrator(broker_provider="nats")
-    await orchestrator.run_forever()
+    loop = asyncio.get_running_loop()
+    stop_event = asyncio.Event()
+    installed_signals = []
+
+    # Request shutdown between frames instead of cancelling a NATS operation in
+    # progress. This avoids leaving nats-py's internal flush state half-cancelled.
+    for signum in (signal.SIGINT, signal.SIGTERM, getattr(signal, "SIGHUP", None)):
+        if signum is None:
+            continue
+        try:
+            loop.add_signal_handler(signum, stop_event.set)
+            installed_signals.append(signum)
+        except (NotImplementedError, RuntimeError):
+            pass
+
+    try:
+        await orchestrator.run_forever(stop_event=stop_event)
+    except asyncio.CancelledError:
+        # SIGINT/SIGTERM/SIGHUP cancel the main task; run_forever's finally
+        # block has already completed ordered shutdown.
+        pass
+    finally:
+        for signum in installed_signals:
+            loop.remove_signal_handler(signum)
 
 if __name__ == "__main__":
     asyncio.run(main())

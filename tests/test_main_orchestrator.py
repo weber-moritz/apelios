@@ -1,3 +1,5 @@
+import asyncio
+
 import pytest
 from unittest.mock import AsyncMock, MagicMock, call
 
@@ -177,6 +179,51 @@ async def test_run_forever_executes_tick_and_cleans_up(mock_broker, mock_router,
     mock_input.stop.assert_called_once()
     mock_router.stop.assert_called_once()
     mock_fixture.stop.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_stop_continues_through_cleanup_failure(
+    mock_broker, mock_router, mock_input, mock_fixture, mock_output
+):
+    orchestrator = MainOrchestrator(
+        broker_manager=mock_broker,
+        router_manager=mock_router,
+        input_manager=mock_input,
+        fixture_manager=mock_fixture,
+        output_manager=mock_output,
+    )
+    orchestrator._running = True
+    mock_router.stop.side_effect = RuntimeError("router cleanup failed")
+
+    with pytest.raises(RuntimeError, match="router cleanup failed"):
+        await orchestrator.stop()
+
+    mock_fixture.stop.assert_awaited_once()
+    mock_output.stop.assert_awaited_once()
+    mock_broker.stop_server.assert_awaited_once()
+    assert not orchestrator.is_running()
+
+
+@pytest.mark.asyncio
+async def test_run_forever_stops_cleanly_when_event_is_set(
+    mock_broker, mock_router, mock_input, mock_fixture, mock_output
+):
+    orchestrator = MainOrchestrator(
+        broker_manager=mock_broker,
+        router_manager=mock_router,
+        input_manager=mock_input,
+        fixture_manager=mock_fixture,
+        output_manager=mock_output,
+    )
+    stop_event = asyncio.Event()
+    stop_event.set()
+
+    await orchestrator.run_forever(stop_event=stop_event)
+
+    mock_broker.start_server.assert_awaited_once()
+    mock_broker.stop_server.assert_awaited_once()
+    mock_input.tick.assert_not_awaited()
+    assert not orchestrator.is_running()
     
 
 @pytest.mark.asyncio

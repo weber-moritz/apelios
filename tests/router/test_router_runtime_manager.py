@@ -80,6 +80,7 @@ async def test_runtime_manager_stop_is_safe_without_start(mock_broker_client):
     
     # Should not raise
     await runtime.stop()
+    mock_broker_client.disconnect.assert_awaited_once()
 
 @pytest.mark.asyncio
 async def test_runtime_manager_start_is_safe_when_already_running(mock_broker_client):
@@ -119,6 +120,7 @@ async def test_runtime_manager_is_running_false_after_stop(mock_broker_client):
     await runtime.stop()
     
     assert runtime.is_running() is False
+    mock_broker_client.disconnect.assert_awaited_once()
 
 
 def test_runtime_manager_default_profile_includes_steamdeck_axes():
@@ -131,6 +133,13 @@ def test_runtime_manager_default_profile_includes_steamdeck_axes():
     assert "input.steamdeck.imu.pitch" in profile
     assert "input.steamdeck.imu.yaw" in profile
     assert "input.steamdeck.imu.roll" in profile
+
+
+def test_default_profile_routes_mouse_to_moving_head():
+    runtime = RouterRuntimeManager()
+
+    assert runtime.router.profile["input.mouse.x"] == "lixada-mini-move.pan"
+    assert runtime.router.profile["input.mouse.y"] == "lixada-mini-move.tilt"
 
 
 @pytest.mark.asyncio

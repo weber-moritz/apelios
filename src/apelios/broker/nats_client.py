@@ -28,7 +28,6 @@ class NatsClient(BrokerClientInterface):
             return
 
         if not self._nc.is_closed:
-            await self._nc.drain()
             await self._nc.close()
 
         self._nc = None

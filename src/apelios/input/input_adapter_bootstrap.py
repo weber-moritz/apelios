@@ -25,7 +25,7 @@ class InputAdapterBootstrap:
 			adapter_list: List of adapter names to register (default: ["mouse", "steamdeck"]).
 				Supported names: "fake", "mouse", "steamdeck".
 		"""
-		self.adapter_list = adapter_list or ["steamdeck"] #, "steamdeck", "fake"]  # Only mouse active
+		self.adapter_list = adapter_list or ["mouse"]
 
 	async def bootstrap(self, runtime_manager) -> None:
 		"""Register adapters with the runtime manager.

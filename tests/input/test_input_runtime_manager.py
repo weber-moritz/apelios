@@ -103,6 +103,8 @@ async def test_runtime_manager_stop_is_safe_without_start(mock_broker_client):
     runtime = InputRuntimeManager(broker_client=mock_broker_client)
     await runtime.stop()
 
+    mock_broker_client.disconnect.assert_awaited_once()
+
 
 @pytest.mark.asyncio
 async def test_runtime_manager_start_is_safe_when_already_running(mock_broker_client):

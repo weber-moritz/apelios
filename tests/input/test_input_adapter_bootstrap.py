@@ -32,6 +32,17 @@ async def test_bootstrap_registers_adapters(mock_broker_client):
 
 
 @pytest.mark.asyncio
+async def test_default_bootstrap_registers_mouse_only(mock_broker_client):
+    runtime_manager = InputRuntimeManager(broker_client=mock_broker_client)
+
+    bootstrap = InputAdapterBootstrap()
+    await bootstrap.bootstrap(runtime_manager)
+
+    assert bootstrap.adapter_list == ["mouse"]
+    assert [type(adapter) for adapter in runtime_manager.registered_adapters] == [MouseAdapter]
+
+
+@pytest.mark.asyncio
 async def test_bootstrap_with_custom_adapter_list(mock_broker_client):
     """Test that bootstrap respects custom adapter list."""
     # Create a runtime manager
