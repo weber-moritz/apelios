@@ -124,7 +124,7 @@ If the adapter manages an open resource, override `stop()` and close it after ca
 
 ## Steam Deck runtime dependency
 
-Apelios pins `bitsteam==0.3.0`. Its `get_analog_values()` API supplies the
+Apelios pins `bitsteam==0.3.1`. Its `get_analog_values()` API supplies the
 normalized values used by the input contract: sticks and trackpads are in
 `[-1.0, 1.0]`, while triggers and trackpad pressure are in `[0.0, 1.0]`.
 Raw HID values must be read through bitsteam's `get_raw_analog_values()` and

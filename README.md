@@ -70,7 +70,7 @@ Review the Art-Net source and target addresses before connecting real fixtures.
 
 ### Steam Deck
 
-The reference input uses `bitsteam==0.3.0`, installed by `uv sync`. It reads
+The reference input uses `bitsteam==0.3.1`, installed by `uv sync`. It reads
 normalized sticks and trackpads (`-1.0` to `1.0`) and normalized triggers
 (`0.0` to `1.0`). Complete bitsteam's udev and Steam Input setup on the Deck so
 raw HID input, including the IMU, is available to Apelios.

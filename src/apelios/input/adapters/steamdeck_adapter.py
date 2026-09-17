@@ -131,7 +131,7 @@ class SteamDeckAdapter(BaseInputAdapter):
 		"imu.roll": "rate",
 	}
 
-	# bitsteam 0.3.0 returns normalized analog values: sticks and trackpads
+	# bitsteam 0.3.1 returns normalized analog values: sticks and trackpads
 	# are [-1, 1], while triggers and pressure are [0, 1]. IMU values remain
 	# angular rates in degrees per second.
 	#
@@ -199,8 +199,8 @@ class SteamDeckAdapter(BaseInputAdapter):
 		if self._is_running:
 			return
 		if self._deck is None:
-			logger.error("Steam Deck input is unavailable: bitsteam==0.3.0 is not installed")
-			raise RuntimeError("Steam Deck input requires bitsteam==0.3.0") from _BitSteamImportError
+			logger.error("Steam Deck input is unavailable: bitsteam==0.3.1 is not installed")
+			raise RuntimeError("Steam Deck input requires bitsteam==0.3.1") from _BitSteamImportError
 
 		await super().start(input_publisher)
 		try:
@@ -227,7 +227,7 @@ class SteamDeckAdapter(BaseInputAdapter):
 		if not self._is_deck_started:
 			raise RuntimeError("SteamDeckAdapter must be started before polling")
 
-		# bitsteam 0.3.0 returns normalized values from get_analog_values().
+		# bitsteam 0.3.1 returns normalized values from get_analog_values().
 		# Raw HID integers are available separately through get_raw_analog_values()
 		# and must not enter the Apelios normalized input contract.
 		normalized_analogs = await self._call_backend(self._deck.get_analog_values) or {}
