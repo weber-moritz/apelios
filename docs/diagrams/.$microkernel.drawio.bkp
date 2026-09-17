@@ -1,0 +1,48 @@
+<mxfile host="Electron">
+  <diagram id="d6_orchestrator" name="system">
+    <mxGraphModel dx="998" dy="783" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" background="none" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="jodIDkZcyk3bQArfouEg-1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#0B4884;fillColor=#85BBF0;" value="&lt;font style=&quot;color: rgb(0, 0, 0);&quot;&gt;Broker&lt;/font&gt;" vertex="1">
+          <mxGeometry height="40" width="90" x="10" y="100" as="geometry" />
+        </mxCell>
+        <mxCell id="jodIDkZcyk3bQArfouEg-2" parent="1" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#0B4884;fillColor=#85BBF0;" value="&lt;font style=&quot;color: rgb(0, 0, 0);&quot;&gt;Input&lt;/font&gt;" vertex="1">
+          <mxGeometry height="40" width="90" x="10" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="jodIDkZcyk3bQArfouEg-9" edge="1" parent="1" source="jodIDkZcyk3bQArfouEg-3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;endArrow=diamondThin;endFill=0;strokeColor=default;" target="jodIDkZcyk3bQArfouEg-6">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="jodIDkZcyk3bQArfouEg-3" parent="1" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#0B4884;fillColor=#85BBF0;" value="&lt;font style=&quot;color: rgb(0, 0, 0);&quot;&gt;Router&lt;/font&gt;" vertex="1">
+          <mxGeometry height="40" width="90" x="150" y="10" as="geometry" />
+        </mxCell>
+        <mxCell id="jodIDkZcyk3bQArfouEg-4" parent="1" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#0B4884;fillColor=#85BBF0;" value="&lt;font style=&quot;color: rgb(0, 0, 0);&quot;&gt;Fixture&lt;/font&gt;" vertex="1">
+          <mxGeometry height="40" width="90" x="290" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="jodIDkZcyk3bQArfouEg-5" parent="1" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#0B4884;fillColor=#85BBF0;" value="&lt;font style=&quot;color: rgb(0, 0, 0);&quot;&gt;Output&lt;/font&gt;" vertex="1">
+          <mxGeometry height="40" width="90" x="290" y="95" as="geometry" />
+        </mxCell>
+        <mxCell id="jodIDkZcyk3bQArfouEg-6" parent="1" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#0B4884;fillColor=#85BBF0;" value="&lt;font style=&quot;color: rgb(0, 0, 0);&quot;&gt;&lt;b&gt;MainOrchestrator&lt;/b&gt;&lt;/font&gt;&lt;div&gt;&lt;font color=&quot;#000000&quot;&gt;[Core]&lt;/font&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="60" width="120" x="135" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="jodIDkZcyk3bQArfouEg-7" edge="1" parent="1" source="jodIDkZcyk3bQArfouEg-1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.01;entryY=0.604;entryDx=0;entryDy=0;entryPerimeter=0;endArrow=diamondThin;endFill=0;strokeColor=default;" target="jodIDkZcyk3bQArfouEg-6">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="78" y="116" />
+            </Array>
+            <mxPoint x="130" y="115" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="jodIDkZcyk3bQArfouEg-8" edge="1" parent="1" source="jodIDkZcyk3bQArfouEg-2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.001;entryY=0.074;entryDx=0;entryDy=0;entryPerimeter=0;endArrow=diamondThin;endFill=0;curved=1;strokeColor=default;" target="jodIDkZcyk3bQArfouEg-6">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="jodIDkZcyk3bQArfouEg-10" edge="1" parent="1" source="jodIDkZcyk3bQArfouEg-4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1.003;entryY=0.099;entryDx=0;entryDy=0;entryPerimeter=0;endArrow=diamondThin;endFill=0;curved=1;strokeColor=default;" target="jodIDkZcyk3bQArfouEg-6">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="jodIDkZcyk3bQArfouEg-11" edge="1" parent="1" source="jodIDkZcyk3bQArfouEg-5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1.01;entryY=0.59;entryDx=0;entryDy=0;entryPerimeter=0;endArrow=diamondThin;endFill=0;strokeColor=default;" target="jodIDkZcyk3bQArfouEg-6">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
