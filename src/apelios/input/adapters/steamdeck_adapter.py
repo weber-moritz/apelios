@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 import inspect
+import logging
 from collections.abc import Mapping
 from typing import Any
 
 from apelios.input.base_input_adapter import BaseInputAdapter
 
+logger = logging.getLogger(__name__)
 
 try:
 	from bitsteam import SteamDeck
@@ -21,26 +23,6 @@ except ImportError:
 		_BitSteamImportError = None
 else:
 	_BitSteamImportError = None
-
-
-class _NullSteamDeck:
-	"""Fallback backend used when bitsteam is unavailable."""
-
-	def get_button_state(self, button_name: str) -> bool:
-		del button_name
-		return False
-
-	def start(self) -> None:
-		return None
-
-	def stop(self) -> None:
-		return None
-
-	def get_analog_values(self) -> dict[str, float]:
-		return {}
-
-	def get_imu_rates(self) -> dict[str, float]:
-		return {}
 
 
 class SteamDeckAdapter(BaseInputAdapter):
@@ -149,13 +131,17 @@ class SteamDeckAdapter(BaseInputAdapter):
 		"imu.roll": "rate",
 	}
 
-	# Per-axis sensitivity scaling factors (default = 1.0)
-	# Now that bitsteam outputs normalized values (-1 to 1, 0 to 1)
-	# IMU at 1.5 (rate-based) - moderate sensitivity for gyro control
+	# bitsteam 0.3.0 returns normalized analog values: sticks and trackpads
+	# are [-1, 1], while triggers and pressure are [0, 1]. IMU values remain
+	# angular rates in degrees per second.
+	#
+	# The Fixture Core integrates rate values with its 60 Hz dt. A scale of
+	# 0.01 turns a 60 degree/s Deck rotation into 0.6 normalized fixture
+	# units/s, providing a useful follow-spot starting sensitivity.
 	# Sticks at 0.5 (rate-based) - good sensitivity for pan/tilt with some damping
 	# Trackpads at 0.8 (absolute_bi) - slightly reduced for precise fader control
 	_AXIS_SCALES = {
-		"imu.*": 1.5,  # Wildcard matches imu.pitch, imu.yaw, imu.roll
+		"imu.*": 0.01,
 		"left_stick.x": 0.5,   # Scale for left stick (rate-based pan/tilt)
 		"left_stick.y": 0.5,   # Scale for left stick (rate-based pan/tilt)
 		"right_stick.x": 0.5,  # Scale for right stick (rate-based pan/tilt)
@@ -168,16 +154,16 @@ class SteamDeckAdapter(BaseInputAdapter):
 
 	# Per-axis deadzone values to eliminate stick drift and jitter
 	# Applied AFTER scaling, so values are in scaled output units
-	# With normalized input (-1 to 1, 0 to 1) and scales applied:
+	# With normalized analog input and scales applied:
 	#   Sticks: scale 0.5 -> range [-0.5, 0.5], deadzone 0.05 filters values < 0.1 in raw
-	#   IMU: scale 1.5 -> range [-1.5, 1.5], deadzone 0.1 filters values < ~0.07 in raw
+	#   IMU: scale 0.01 -> deadzone 0.02 filters rotation rates below 2 degrees/s
 	#   Triggers: scale 1.0 -> range [0, 1], deadzone 0.02 filters values < 0.02 in raw
 	_AXIS_DEADZONES = {
 		"left_stick.x": 0.05,   # Filter stick drift (scaled: 0.1 raw -> 0.05 output)
 		"left_stick.y": 0.05,   # Filter stick drift
 		"right_stick.x": 0.05,  # Filter stick drift
 		"right_stick.y": 0.05,  # Filter stick drift
-		"imu.*": 0.1,          # Filter IMU drift (scaled: ~0.07 raw -> 0.1 output)
+		"imu.*": 0.02,         # Filter IMU drift below 2 degrees/s
 		"left_trigger": 0.02,  # Filter trigger noise
 		"right_trigger": 0.02, # Filter trigger noise
 		"left_trackpad.x": 0.02,    # Filter trackpad jitter
@@ -193,7 +179,7 @@ class SteamDeckAdapter(BaseInputAdapter):
 		elif SteamDeck is not None:
 			self._deck = SteamDeck()
 		else:
-			self._deck = _NullSteamDeck()
+			self._deck = None
 		self._is_deck_started = False
 		
 		# Set axis types for all known axes
@@ -212,6 +198,9 @@ class SteamDeckAdapter(BaseInputAdapter):
 		"""Attach the shared publisher and start the Steam Deck listener."""
 		if self._is_running:
 			return
+		if self._deck is None:
+			logger.error("Steam Deck input is unavailable: bitsteam==0.3.0 is not installed")
+			raise RuntimeError("Steam Deck input requires bitsteam==0.3.0") from _BitSteamImportError
 
 		await super().start(input_publisher)
 		try:
@@ -238,7 +227,10 @@ class SteamDeckAdapter(BaseInputAdapter):
 		if not self._is_deck_started:
 			raise RuntimeError("SteamDeckAdapter must be started before polling")
 
-		analogs = await self._call_backend(self._deck.get_analog_values) or {}
+		# bitsteam 0.3.0 returns normalized values from get_analog_values().
+		# Raw HID integers are available separately through get_raw_analog_values()
+		# and must not enter the Apelios normalized input contract.
+		normalized_analogs = await self._call_backend(self._deck.get_analog_values) or {}
 		imu_rates = await self._call_backend(self._deck.get_imu_rates) or {}
 
 		snapshot: dict[str, float] = {}
@@ -254,7 +246,7 @@ class SteamDeckAdapter(BaseInputAdapter):
 				snapshot[apelios_name] = float(imu_rates.get(raw_name, 0.0))
 			else:
 				# Analog: use get_analog_values
-				snapshot[apelios_name] = float(analogs.get(raw_name, 0.0))
+				snapshot[apelios_name] = float(normalized_analogs.get(raw_name, 0.0))
 
 		self.snapshot = snapshot
 

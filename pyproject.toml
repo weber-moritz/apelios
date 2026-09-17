@@ -12,6 +12,7 @@ license = "MIT"
 license-files = ["LICENSE"]
 dependencies = [
     "aioartnet==0.2.1",
+    "bitsteam==0.3.0",
     "nats-py>=2.7",
     "nats-server-bin>=2.12.6",
 ]

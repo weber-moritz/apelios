@@ -72,7 +72,8 @@ Current built-in names are:
 - `mouse` -> `MouseAdapter`
 - `steamdeck` -> `SteamDeckAdapter`
 
-The default runtime bootstrap currently registers `mouse` and `steamdeck`.
+The default runtime bootstrap registers `steamdeck`. Select `mouse` explicitly
+when developing with pointer input instead.
 
 The bootstrap currently creates adapters with:
 
@@ -120,6 +121,15 @@ If the adapter manages an open resource, override `stop()` and close it after ca
 - `FakeAdapter` is the smallest example of a stateless adapter.
 - `MouseAdapter` shows how to wrap a Linux backend and publish normalized relative motion.
 - `SteamDeckAdapter` shows how to publish every controller axis from the bitsteam library.
+
+## Steam Deck runtime dependency
+
+Apelios pins `bitsteam==0.3.0`. Its `get_analog_values()` API supplies the
+normalized values used by the input contract: sticks and trackpads are in
+`[-1.0, 1.0]`, while triggers and trackpad pressure are in `[0.0, 1.0]`.
+Raw HID values must be read through bitsteam's `get_raw_analog_values()` and
+are not used by Apelios. Configure bitsteam's udev and Steam Input prerequisites
+on the Deck so it can access the controller's raw HID device.
 
 `MouseAdapter` is currently Linux-only because its backend depends on Linux `evdev`, but the adapter package itself should still be treated as cross-platform in design.
 

@@ -32,14 +32,14 @@ async def test_bootstrap_registers_adapters(mock_broker_client):
 
 
 @pytest.mark.asyncio
-async def test_default_bootstrap_registers_mouse_only(mock_broker_client):
+async def test_default_bootstrap_registers_steamdeck_only(mock_broker_client):
     runtime_manager = InputRuntimeManager(broker_client=mock_broker_client)
 
     bootstrap = InputAdapterBootstrap()
     await bootstrap.bootstrap(runtime_manager)
 
-    assert bootstrap.adapter_list == ["mouse"]
-    assert [type(adapter) for adapter in runtime_manager.registered_adapters] == [MouseAdapter]
+    assert bootstrap.adapter_list == ["steamdeck"]
+    assert [type(adapter) for adapter in runtime_manager.registered_adapters] == [SteamDeckAdapter]
 
 
 @pytest.mark.asyncio
